@@ -3,7 +3,7 @@
 #include <ostream>
 #include <vector>
 
-class Spectrum {
+class Spectrum final {
 public:
   Spectrum(const std::size_t);
 
