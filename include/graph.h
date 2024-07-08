@@ -8,15 +8,9 @@
 #include <unordered_map>
 #include <vector>
 
-struct Vertex final {
-  std::size_t id;
+using Vertex = std::size_t;
 
-  Vertex(void) = default;
-
-  Vertex(const std::size_t);
-};
-
-using Path = std::vector<std::size_t>;
+using Path = std::vector<Vertex>;
 
 constexpr auto __MAX_HOPS__ = std::numeric_limits<int>::max();
 
@@ -29,7 +23,7 @@ constexpr auto __MAX_WEIGHT__ = std::numeric_limits<Weight>::max();
 constexpr auto __MIN_WEIGHT__ = static_cast<Weight>(0);
 
 struct Edge final {
-  std::size_t destination;
+  Vertex destination;
   Weight weight;
 };
 
@@ -46,12 +40,13 @@ public:
 
   [[nodiscard]] auto to_string(void) const noexcept -> std::string;
 
-  [[nodiscard]] auto dijkstra(const std::size_t, const std::size_t) noexcept
-      -> Path;
+  [[nodiscard]] auto dijkstra(const Vertex, const Vertex) noexcept -> Path;
 
-  auto add_vertex(const std::size_t) -> void;
+  [[nodiscard]] auto random_path(void) noexcept -> Path;
 
-  auto add_edge(const std::size_t, const std::size_t, const Weight) -> void;
+  auto add_vertex(const Vertex) -> void;
+
+  auto add_edge(const Vertex, const Vertex, const Weight) -> void;
 
 private:
   std::unordered_map<std::size_t, Vertex> vertices;

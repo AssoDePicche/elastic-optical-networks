@@ -2,11 +2,12 @@
 
 #include <algorithm>
 #include <fstream>
+#include <memory>
 #include <queue>
 #include <sstream>
 #include <utility>
 
-Vertex::Vertex(const std::size_t id) : id{id} {}
+#include "distribution.h"
 
 Graph::Graph(const std::size_t vertices) {
   for (auto vertex{0u}; vertex < vertices; ++vertex) {
@@ -60,7 +61,7 @@ auto Graph::to_string(void) const noexcept -> std::string {
   auto matrix = std::vector(size(), std::vector(size(), __MIN_WEIGHT__));
 
   for (const auto &[vertex, edges] : adjacency_list) {
-    for (auto &[adjacent, weight] : edges) {
+    for (auto &[adjacent, weight, spectrum] : edges) {
       matrix[vertex][adjacent] = weight;
     }
   }
@@ -76,8 +77,12 @@ auto Graph::to_string(void) const noexcept -> std::string {
   return buffer;
 }
 
-auto Graph::dijkstra(const std::size_t origin,
-                     const std::size_t destination) noexcept -> Path {
+auto Graph::dijkstra(const Vertex origin, const Vertex destination) noexcept
+    -> Path {
+  if (origin == destination) {
+    return {};
+  }
+
   std::unordered_map<int, Weight> weights;
 
   std::unordered_map<int, int> predecessors;
@@ -94,7 +99,7 @@ auto Graph::dijkstra(const std::size_t origin,
 
     predecessors[id] = -1;
 
-    edge_hops[id] = std::numeric_limits<int>::max();
+    edge_hops[id] = __MAX_HOPS__;
   }
 
   weights[origin] = __MIN_WEIGHT__;
@@ -124,7 +129,7 @@ auto Graph::dijkstra(const std::size_t origin,
       continue;
     }
 
-    for (const auto &[adjacent, weight] : adjacency_list[vertex]) {
+    for (const auto &[adjacent, weight, spectrum] : adjacency_list[vertex]) {
       const auto new_weight = current_weight + weight;
 
       if (new_weight > weights[adjacent]) {
@@ -168,11 +173,29 @@ auto Graph::dijkstra(const std::size_t origin,
   return path;
 }
 
-auto Graph::add_vertex(const std::size_t id) -> void {
-  vertices[id] = Vertex(id);
+auto Graph::random_path(void) noexcept -> Path {
+  auto distribution = std::make_unique<Uniform>(0, size() - 1);
+
+  auto origin = static_cast<std::size_t>(distribution->next());
+
+  auto destination = static_cast<std::size_t>(distribution->next());
+
+  Path path;
+
+  while (path.empty()) {
+    destination = static_cast<std::size_t>(distribution->next());
+
+    path = dijkstra(origin, destination);
+  }
+
+  return path;
 }
 
-auto Graph::add_edge(const std::size_t origin, const std::size_t destination,
+auto Graph::add_vertex(const Vertex vertex) -> void {
+  vertices[vertex] = vertex;
+}
+
+auto Graph::add_edge(const Vertex origin, const Vertex destination,
                      const Weight weight) -> void {
   adjacency_list[origin].emplace_back(destination, weight);
 }
