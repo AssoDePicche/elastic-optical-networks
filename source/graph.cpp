@@ -1,65 +1,17 @@
 #include "graph.h"
 
+#include <algorithm>
 #include <fstream>
+#include <queue>
 #include <sstream>
-#include <stdexcept>
+#include <utility>
 
-Graph::Graph(const std::size_t size) {
-  adjacency_list = std::vector(size, std::list<std::pair<Vertex, Weight>>{});
-}
+Vertex::Vertex(const std::size_t id) : id{id} {}
 
-auto Graph::size(void) const noexcept -> std::size_t {
-  return adjacency_list.size();
-}
-
-auto Graph::contains(const Vertex vertex) const noexcept -> bool {
-  return vertex < size();
-}
-
-auto Graph::to_string(void) const noexcept -> std::string {
-  std::string buffer{};
-
-  auto adjacency_matrix =
-      std::vector(size(), std::vector(size(), __MIN_WEIGHT__));
-
-  for (auto origin{0u}; origin < size(); ++origin) {
-    const auto row{adjacency_list[origin]};
-
-    for (auto iterator{row.begin()}; iterator != row.end(); ++iterator) {
-      const auto [destination, weight] = *iterator;
-
-      adjacency_matrix[origin][destination] = weight;
-    }
+Graph::Graph(const std::size_t vertices) {
+  for (auto vertex{0u}; vertex < vertices; ++vertex) {
+    add_vertex(vertex);
   }
-
-  for (const auto &row : adjacency_matrix) {
-    for (const auto &column : row) {
-      buffer.append(std::to_string(column) + ' ');
-    }
-
-    buffer.append("\n");
-  }
-
-  return buffer;
-}
-
-auto Graph::add_edge(const Edge &edge) -> void {
-  const auto [origin, destination, weight] = edge;
-
-  add_edge(origin, destination, weight);
-}
-
-auto Graph::add_edge(const Vertex origin, const Vertex destination,
-                     const Weight weight) -> void {
-  if (!contains(origin) || !contains(destination)) {
-    throw std::invalid_argument("Vertices must belong to the graph.");
-  }
-
-  if (weight < __MIN_WEIGHT__) {
-    throw std::invalid_argument("The weight must be above zero.");
-  }
-
-  adjacency_list[origin].push_back({destination, weight});
 }
 
 auto Graph::from(const std::string &filename) noexcept -> std::optional<Graph> {
@@ -90,7 +42,7 @@ auto Graph::from(const std::string &filename) noexcept -> std::optional<Graph> {
       const auto weight = static_cast<Weight>(atof(buffer.c_str()));
 
       if (weight != __MIN_WEIGHT__) {
-        graph.add_edge({origin, destination, weight});
+        graph.add_edge(origin, destination, weight);
       }
     }
 
@@ -98,6 +50,131 @@ auto Graph::from(const std::string &filename) noexcept -> std::optional<Graph> {
   }
 
   return graph;
+}
+
+auto Graph::size(void) const noexcept -> std::size_t { return vertices.size(); }
+
+auto Graph::to_string(void) const noexcept -> std::string {
+  std::string buffer{};
+
+  auto matrix = std::vector(size(), std::vector(size(), __MIN_WEIGHT__));
+
+  for (const auto &[vertex, edges] : adjacency_list) {
+    for (auto &[adjacent, weight] : edges) {
+      matrix[vertex][adjacent] = weight;
+    }
+  }
+
+  for (auto row{0u}; row < size(); ++row) {
+    for (auto column{0u}; column < size(); ++column) {
+      buffer.append(std::to_string(matrix[row][column]) + " ");
+    }
+
+    buffer.append("\n");
+  }
+
+  return buffer;
+}
+
+auto Graph::dijkstra(const std::size_t origin,
+                     const std::size_t destination) noexcept -> Path {
+  std::unordered_map<int, Weight> weights;
+
+  std::unordered_map<int, int> predecessors;
+
+  std::unordered_map<int, int> edge_hops;
+
+  // {weight, {hops, vertex}}
+  using PathInfo = std::pair<Weight, std::pair<int, int>>;
+
+  std::priority_queue<PathInfo, std::vector<PathInfo>, std::greater<>> queue;
+
+  for (const auto &[id, name] : vertices) {
+    weights[id] = __MAX_WEIGHT__;
+
+    predecessors[id] = -1;
+
+    edge_hops[id] = std::numeric_limits<int>::max();
+  }
+
+  weights[origin] = __MIN_WEIGHT__;
+
+  edge_hops[origin] = __MIN_HOPS__;
+
+  queue.emplace(weights[origin], std::make_pair(edge_hops[origin], origin));
+
+  while (!queue.empty()) {
+    const auto current_weight = queue.top().first;
+
+    const auto hops = queue.top().second.first;
+
+    const auto vertex = queue.top().second.second;
+
+    queue.pop();
+
+    if (vertex == static_cast<int>(destination)) {
+      break;
+    }
+
+    if (current_weight > weights[vertex]) {
+      continue;
+    }
+
+    if (current_weight == weights[vertex] && hops > edge_hops[vertex]) {
+      continue;
+    }
+
+    for (const auto &[adjacent, weight] : adjacency_list[vertex]) {
+      const auto new_weight = current_weight + weight;
+
+      if (new_weight > weights[adjacent]) {
+        continue;
+      }
+
+      const auto new_hops = hops + 1;
+
+      const auto less_hops = (new_hops < edge_hops[adjacent]);
+
+      if (new_weight == weights[adjacent] && !less_hops) {
+        continue;
+      }
+
+      weights[adjacent] = new_weight;
+
+      edge_hops[adjacent] = new_hops;
+
+      predecessors[adjacent] = vertex;
+
+      queue.emplace(new_weight, std::make_pair(new_hops, adjacent));
+    }
+  }
+
+  Path path;
+
+  auto current = static_cast<int>(destination);
+
+  while (current != -1) {
+    path.push_back(static_cast<std::size_t>(current));
+
+    current = predecessors[current];
+  }
+
+  std::reverse(path.begin(), path.end());
+
+  if (path.front() != origin) {
+    path.clear();
+  }
+
+  return path;
+}
+
+auto Graph::add_vertex(const std::size_t id) -> void {
+  vertices[id] = Vertex(id);
+}
+
+auto Graph::add_edge(const std::size_t origin, const std::size_t destination,
+                     const Weight weight) -> void {
+  adjacency_list[origin].emplace_back(destination, weight);
 }
 
 auto operator<<(std::ostream &stream, const Graph &graph) -> std::ostream & {
