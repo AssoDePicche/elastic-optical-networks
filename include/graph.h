@@ -40,6 +40,9 @@ public:
 
   [[nodiscard]] auto to_string(void) const noexcept -> std::string;
 
+  [[nodiscard]] auto breadth_first_search(const Vertex, const Vertex) noexcept
+      -> Path;
+
   [[nodiscard]] auto dijkstra(const Vertex, const Vertex) noexcept -> Path;
 
   [[nodiscard]] auto random_path(void) noexcept -> Path;

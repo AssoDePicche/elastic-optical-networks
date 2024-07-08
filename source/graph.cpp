@@ -61,7 +61,7 @@ auto Graph::to_string(void) const noexcept -> std::string {
   auto matrix = std::vector(size(), std::vector(size(), __MIN_WEIGHT__));
 
   for (const auto &[vertex, edges] : adjacency_list) {
-    for (auto &[adjacent, weight, spectrum] : edges) {
+    for (auto &[adjacent, weight] : edges) {
       matrix[vertex][adjacent] = weight;
     }
   }
@@ -75,6 +75,69 @@ auto Graph::to_string(void) const noexcept -> std::string {
   }
 
   return buffer;
+}
+
+auto Graph::breadth_first_search(const Vertex origin,
+                                 const Vertex destination) noexcept -> Path {
+  if (origin == destination) {
+    return {};
+  }
+
+  std::unordered_map<Vertex, bool> visited;
+
+  std::unordered_map<int, int> predecessors;
+
+  std::queue<Vertex> queue;
+
+  for (const auto &[id, vertex] : vertices) {
+    visited[vertex] = false;
+
+    predecessors[vertex] = -1;
+  }
+
+  visited[origin] = true;
+
+  queue.push(origin);
+
+  while (!queue.empty()) {
+    const auto vertex = queue.front();
+
+    queue.pop();
+
+    if (vertex == destination) {
+      break;
+    }
+
+    for (const auto &[adjacent, edges] : adjacency_list[vertex]) {
+      if (visited[adjacent]) {
+        continue;
+      }
+
+      visited[adjacent] = true;
+
+      predecessors[adjacent] = vertex;
+
+      queue.push(adjacent);
+    }
+  }
+
+  Path path;
+
+  auto vertex = static_cast<int>(destination);
+
+  while (vertex != -1) {
+    path.push_back(vertex);
+
+    vertex = predecessors[vertex];
+  }
+
+  std::reverse(path.begin(), path.end());
+
+  if (path.front() != origin) {
+    path.clear();
+  }
+
+  return path;
 }
 
 auto Graph::dijkstra(const Vertex origin, const Vertex destination) noexcept
@@ -129,7 +192,7 @@ auto Graph::dijkstra(const Vertex origin, const Vertex destination) noexcept
       continue;
     }
 
-    for (const auto &[adjacent, weight, spectrum] : adjacency_list[vertex]) {
+    for (const auto &[adjacent, weight] : adjacency_list[vertex]) {
       const auto new_weight = current_weight + weight;
 
       if (new_weight > weights[adjacent]) {
