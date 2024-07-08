@@ -43,6 +43,9 @@ public:
   [[nodiscard]] auto breadth_first_search(const Vertex, const Vertex) noexcept
       -> Path;
 
+  [[nodiscard]] auto depth_first_search(const Vertex, const Vertex) noexcept
+      -> Path;
+
   [[nodiscard]] auto dijkstra(const Vertex, const Vertex) noexcept -> Path;
 
   [[nodiscard]] auto random_path(void) noexcept -> Path;

@@ -5,6 +5,7 @@
 #include <memory>
 #include <queue>
 #include <sstream>
+#include <stack>
 #include <utility>
 
 #include "distribution.h"
@@ -118,6 +119,71 @@ auto Graph::breadth_first_search(const Vertex origin,
       predecessors[adjacent] = vertex;
 
       queue.push(adjacent);
+    }
+  }
+
+  Path path;
+
+  auto vertex = static_cast<int>(destination);
+
+  while (vertex != -1) {
+    path.push_back(vertex);
+
+    vertex = predecessors[vertex];
+  }
+
+  std::reverse(path.begin(), path.end());
+
+  if (path.front() != origin) {
+    path.clear();
+  }
+
+  return path;
+}
+
+auto Graph::depth_first_search(const Vertex origin,
+                               const Vertex destination) noexcept -> Path {
+  if (origin == destination) {
+    return {};
+  }
+
+  std::unordered_map<Vertex, bool> visited;
+
+  std::unordered_map<int, int> predecessors;
+
+  std::stack<Vertex> stack;
+
+  for (const auto &[id, vertex] : vertices) {
+    visited[vertex] = false;
+
+    predecessors[vertex] = -1;
+  }
+
+  stack.push(origin);
+
+  while (!stack.empty()) {
+    const auto vertex = stack.top();
+
+    stack.pop();
+
+    if (visited[vertex]) {
+      continue;
+    }
+
+    visited[vertex] = true;
+
+    if (vertex == destination) {
+      break;
+    }
+
+    for (const auto &[adjacent, edges] : adjacency_list[vertex]) {
+      if (visited[adjacent]) {
+        continue;
+      }
+
+      predecessors[adjacent] = vertex;
+
+      stack.push(adjacent);
     }
   }
 
