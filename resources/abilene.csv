@@ -1,0 +1,15 @@
+Origem,Destino,Distância (km)
+STTLng,SNVAng,1
+STTLng,DVNRng,1
+SNVAng,DVNRng,1
+SNVAng,LOSAng,1
+LOSAng,HSTNng,1
+KSCYng,HSTNng,1
+KSCYng,IPLSng,1
+HSTNng,ATLAng,1
+IPPLSng,ATLAng,1
+ATLAng,ATLAM5,1
+ATLAng,WASHng,1
+WASHng,NYCMng,1
+IPLSng,CHINng,1
+CHINng,NYCMng,1

@@ -1,0 +1,20 @@
+Origem,Destino,Distância (km)
+Palo Alto,Seattle,1133
+Palo Alto,Salt Lake City,995
+Seattle,Champaign,2833
+San Diego,Seattle,1715
+San Diego,Houston,2095
+Salt Lake City,Boulder,569
+Salt Lake City,Chicago,2026
+Boulder,Houston,1452
+Boulder,Lincoln,750
+Lincoln,Champaign,721
+Champaign,Pittsburgh,695
+Houston,Atlanta,1129
+Houston,College,1973
+Chicago,Ann Arbor,325
+Ann Arbor,Ithaca,594
+Ann Arbor,Princeton,789
+Pittsburgh,Ithaca,367
+Pittsburgh,Princeton,451
+Pittsburgh,Cambridge,775

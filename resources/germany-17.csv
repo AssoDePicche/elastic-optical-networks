@@ -1,0 +1,26 @@
+Origem,Destino,Distância (km)
+Norden,Bremen,121.05
+Norden,Dortmund,232.09
+Bremen,Hamburg,94.97
+Bremen,Hannover,100.12
+Hamburg,Hannover,132.67
+Hamburg,Berlin,255.65
+Hannover,Berlin,249.83
+Hannover,Dortmund,182.29
+Hannover,Frankfurt,259.92
+Hannover,Leipzig,214.38
+Dortmund,Essen,32.06
+Dortmund,Koeln,73.06
+Essen,Duesseldorf,31.59
+Duesseldorf,Koeln,34.09
+Koeln,Frankfurt,150.20
+Leipzig,Frankfurt,293.47
+Leipzig,Nuernberg,228.86
+Frankfurt,Mannheim,72.68
+Frankfurt,Nuernberg,188.90
+Nuernberg,Stuttgart,157.18
+Nuernberg,Muenchen,150.86
+Mannheim,Karlsruhe,53.07
+Karlsruhe,Stuttgart,62.46
+Stuttgart,Ulm,73.30
+Ulm,Muenchen,120.62

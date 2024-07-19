@@ -1,0 +1,27 @@
+Origem,Destino,Distância (km)
+Copenhagen,London,1000
+Copenhagen,Berlin,400
+Copenhagen,Amsterdam,750
+Copenhagen,Prague,760
+London,Amsterdam,390
+London,Brussels,340
+London,Paris,410
+Amsterdam,Brussels,200
+Amsterdam,Luxemburg,310
+Amsterdam,Berlin,600
+Berlin,Paris,900
+Berlin,Prague,320
+Berlin,Vienna,710
+Brussels,Paris,270
+Brussels,Luxemburg,673
+Brussels,Milan,850
+Luxemburg,Paris,370
+Luxemburg,Zürich,440
+Luxemburg,Prague,730
+Prague,Zürich,600
+Prague,Vienna,350
+Paris,Zürich,590
+Paris,Milan,810
+Zürich,Milan,450
+Zürich,Vienna,710
+Vienna,Milan,720

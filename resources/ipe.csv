@@ -1,0 +1,36 @@
+Origem,Destino,Distância (km)
+Boa Vista,Fortaleza,2572.55
+Boa Vista,Manaus,702.52
+Manaus,Brasília,1938.41
+Macapá,Belém,333.66
+Belém,São Luís,479.27
+Belém,Teresina,747.15
+Belém,Brasília,1596.15
+São Luís,Fortaleza,654.51
+Teresina,Recife,935.68
+Fortaleza,Brasília,1687.34
+Fortaleza,Belo Horizonte,1894.08
+Fortaleza,Natal,433.65
+Natal,João Pessoa,150.72
+João Pessoa,Campina Grande,110.89
+Campina Grande,Recife,143.27
+Recife,Maceió,202.32
+Maceió,Aracajú,201.37
+Aracajú,Salvador,277.45
+Salvador,Belo Horizonte,965.83
+Salvador,Vitória,836.90
+Vitória,Rio de Janeiro,417.15
+Belo Horizonte,São Paulo,489.56
+Belo Horizonte,Brasília,619.97
+Brasília,Rio de Janeiro,930.08
+Brasília,Goiânia,176.52
+Goiânia,Palmas,731.14
+Goiânia,Cuiabá,741.01
+Cuiabá,Porto Velho,1138.65
+Cuiabá,Campo Grande,563.25
+Campo Grande,Curitiba,776.96
+Curitiba,Porto Alegre,547.09
+Porto Velho,Rio Branco,488.51
+São Paulo,Rio de Janeiro,357.60
+São Paulo,Florianópolis,489.49
+Florianópolis,Porto Alegre,376.23

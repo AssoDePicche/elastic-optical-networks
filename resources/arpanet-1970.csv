@@ -1,0 +1,11 @@
+Origem,Destino,Distância (km)
+MIT,BBN,1
+MIT,Utah,1
+Utah,SDC,1
+SDC,RAND,1
+BBN,RAND,1
+BBN,Harvard,1
+RAND,UCLA,1
+UCLA,UCSB,1
+UCLA,SRI,1
+UCSB,SRI,1
