@@ -41,11 +41,12 @@ You must pass the following arguments for the simulation:
 - `--channels`: the number of resources available per link
 - `--erlangs`: the desired traffic intensity in Erlangs
 - `--lambda`: the call arrival rate per unit of time
+- `--topology`: the file with the number of nodes and the adjacency matrix of the network
 
 For example:
 
 ```bash
-./build/source/App --calls 1000 --channels 30 --erlangs 25 --lambda 1
+./build/source/App --calls 1000 --channels 30 --erlangs 25 --lambda 1 --topology topology.txt
 ```
 
 Output:
