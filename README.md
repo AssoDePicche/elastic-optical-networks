@@ -49,6 +49,14 @@ For example:
 ./build/source/App --calls 1000 --channels 30 --erlangs 25 --lambda 1 --topology topology.txt
 ```
 
+With the topology.txt file as follows:
+
+```txt
+2
+0 1
+1 0
+```
+
 Output:
 
 ```txt
@@ -72,11 +80,16 @@ There are many ways to contribute to this project:
 - You can contact me to suggest articles that might be useful in future resources.
 - You can (please) cite this project and related articles published during my research in your work.
 - You can contribute to the code through refactoring or implementation by following the steps below:
-	1. Fork the repository.
-	2. Create a new branch: `git checkout -b feature-name`.
-	3. Make your changes.
-	4. Push your branch: `git push origin feature-name`.
-	5. Create a pull request.
+
+1. Fork the repository.
+
+2. Create a new branch: `git checkout -b feature-name`.
+
+3. Make your changes.
+
+4. Push your branch: `git push origin feature-name`.
+
+5. Create a pull request.
 
 ## Contact
 
