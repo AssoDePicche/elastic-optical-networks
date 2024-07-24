@@ -27,4 +27,6 @@
 
 #define INFO(STR) (void)(STR)
 
+#define WARNING(STR) (void)(STR)
+
 #endif
