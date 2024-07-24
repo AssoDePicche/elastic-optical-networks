@@ -34,10 +34,35 @@ cmake -S . -B build && cmake --build build
 
 ## Usage
 
-To run the project, execute the binary created in the [Installation section](#installation). At the end of the simulation, the network blocking probability calculated by the [Erlang B formula](https://en.wikipedia.org/wiki/Erlang_(unit)) and the time spent on the simulation will be available.
+To run the project, run the binary created in the [Installation section](#installation) with the arguments specified below. At the end of the simulation, in addition to the parameter information, the network grade of service (GoS) calculated using the [Erlang B formula](https://en.wikipedia.org/wiki/Erlang_(unit)), the proportion of request types (3-slot or 7-slot requests) and the blocking probability (BP) per request type will be available.
+
+You must pass the following arguments for the simulation:
+- `--calls`: the number of calls
+- `--channels`: the number of resources available per link
+- `--erlangs`: the desired traffic intensity in Erlangs
+- `--lambda`: the call arrival rate per unit of time
+
+For example:
 
 ```bash
-./build/source/App
+./build/source/App --calls 1000 --channels 30 --erlangs 25 --lambda 1
+```
+
+Output:
+
+```txt
+Traffic Intensity (E): 25.000000
+Service rate (μ): 0.025000
+Arrival rate (λ): 1.000000
+Channels: 30
+Calls: 1000
+Grade of Service (%): 0.771000
+Type 3
+Ratio (%): 0.534000
+BP (%): 0.311000
+Type 7
+Ratio (%): 0.466000
+BP (%): 0.460000
 ```
 
 ## Contributing
