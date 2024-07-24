@@ -303,16 +303,16 @@ auto Graph::dijkstra(const Vertex origin, const Vertex destination) noexcept
 }
 
 auto Graph::random_path(void) noexcept -> Path {
-  auto distribution = std::make_unique<Uniform>(0, size() - 1);
+  Uniform distribution(0, size());
 
-  auto origin = static_cast<std::size_t>(distribution->next());
+  auto origin{static_cast<std::size_t>(distribution.next())};
 
-  auto destination = static_cast<std::size_t>(distribution->next());
+  auto destination{static_cast<std::size_t>(distribution.next())};
 
-  Path path;
+  Path path{};
 
   while (path.empty()) {
-    destination = static_cast<std::size_t>(distribution->next());
+    destination = static_cast<std::size_t>(distribution.next());
 
     path = dijkstra(origin, destination);
   }
