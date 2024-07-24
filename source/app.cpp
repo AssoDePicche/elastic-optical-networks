@@ -23,7 +23,7 @@ struct Connection {
 
 auto main(const int argc, const char **argv) -> int {
   std::vector<std::string> args{"--calls", "--channels", "--erlangs",
-                                "--lambda"};
+                                "--lambda", "--topology"};
   if (argc < 2) {
     std::cerr << "You must pass all the arguments:" << std::endl;
 
@@ -58,13 +58,19 @@ auto main(const int argc, const char **argv) -> int {
 
   const auto arrival_rate{str_to_double(parser.parse("--lambda"))};
 
-  const auto service_rate{traffic_intensity / calls};
+  const auto service_rate{traffic_intensity / arrival_rate};
 
-  Graph graph{2};
+  const auto filename{parser.parse("--topology")};
 
-  graph.add_edge(0, 1, 1);
+  const auto container{Graph::from(filename)};
 
-  graph.add_edge(1, 0, 1);
+  if (!container.has_value()) {
+    std::cerr << "Unable to read the " << filename << " file." << std::endl;
+
+    return 1;
+  }
+
+  auto graph{container.value()};
 
   Spectrum spectrum{channels};
 
