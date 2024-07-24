@@ -6,6 +6,7 @@
 #include "graph.h"
 #include "group.h"
 #include "logger.h"
+#include "parser.h"
 #include "spectrum.h"
 
 struct Connection {
@@ -20,11 +21,43 @@ struct Connection {
       : path{path}, slots{slots} {}
 };
 
-auto main(void) -> int {
-  const auto channels{21u};
-  const auto calls{1e3};
-  const auto traffic_intensity{40.0};
-  const auto arrival_rate{10};
+auto main(const int argc, const char **argv) -> int {
+  std::vector<std::string> args{"--calls", "--channels", "--erlangs",
+                                "--lambda"};
+  if (argc < 2) {
+    std::cerr << "You must pass all the arguments:" << std::endl;
+
+    for (const auto &arg : args) {
+      std::cerr << arg << std::endl;
+    }
+
+    return 1;
+  }
+
+  const Parser parser{argc, argv};
+
+  for (const auto &arg : args) {
+    if (!parser.contains(arg)) {
+      std::cerr << "You must pass the " << arg << " argument" << std::endl;
+
+      return 1;
+    }
+  }
+
+  auto str_to_size_t = [](const std::string &str) {
+    return static_cast<std::size_t>(std::atoi(str.c_str()));
+  };
+
+  auto str_to_double = [](const std::string &str) { return std::stod(str); };
+
+  const auto channels{str_to_size_t(parser.parse("--channels"))};
+
+  const auto calls{str_to_size_t(parser.parse("--calls"))};
+
+  const auto traffic_intensity{str_to_double(parser.parse("--erlangs"))};
+
+  const auto arrival_rate{str_to_double(parser.parse("--lambda"))};
+
   const auto service_rate{traffic_intensity / calls};
 
   Graph graph{2};
