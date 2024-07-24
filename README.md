@@ -53,17 +53,17 @@ Output:
 
 ```txt
 Traffic Intensity (E): 25.000000
-Service rate (μ): 0.025000
+Service rate (μ): 25.000000
 Arrival rate (λ): 1.000000
 Channels: 30
 Calls: 1000
-Grade of Service (%): 0.771000
+Grade of Service (%): 0.008000
 Type 3
-Ratio (%): 0.534000
-BP (%): 0.311000
+Ratio (%): 0.502000
+BP (%): 0.001000
 Type 7
-Ratio (%): 0.466000
-BP (%): 0.460000
+Ratio (%): 0.498000
+BP (%): 0.007000
 ```
 
 ## Contributing
