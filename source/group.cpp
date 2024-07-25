@@ -56,11 +56,11 @@ auto Group::to_string(void) const -> std::string {
 
     const auto ratio{static_cast<double>(counting) / size()};
 
-    line.append("Ratio (%): " + std::to_string(ratio) + "\n");
+    line.append("Ratio: " + std::to_string(ratio) + "\n");
 
     const auto bp{static_cast<double>(blocking) / size()};
 
-    line.append("BP (%): " + std::to_string(bp) + "\n");
+    line.append("BP(ε): " + std::to_string(bp) + "\n");
 
     buffer.append(line);
   }
