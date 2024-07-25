@@ -34,7 +34,7 @@ cmake -S . -B build && cmake --build build
 
 ## Usage
 
-To run the project, run the binary created in the [Installation section](#installation) with the arguments specified below. At the end of the simulation, in addition to the parameter information, the network grade of service (GoS) calculated using the [Erlang B formula](https://en.wikipedia.org/wiki/Erlang_(unit)), the proportion of request types (3-slot or 7-slot requests) and the blocking probability (BP) per request type will be available.
+Run the binary created in the [Installation section](#installation) with the arguments specified below. At the end of the simulation, in addition to the parameter information, the network grade of service (GoS) calculated using the [Erlang B formula](https://en.wikipedia.org/wiki/Erlang_(unit)), the proportion of request types (3-slot or 7-slot requests), the blocking probability (BP) per request type will be available and some other information.
 
 You must pass the following arguments for the simulation:
 - `--calls`: the number of calls
@@ -60,18 +60,25 @@ With the topology.txt file as follows:
 Output:
 
 ```txt
+Execution time: 35s
+Simulation time: 100266.000000
+Channels (C): 30
+Calls (n): 100000
 Traffic Intensity (E): 25.000000
-Service rate (μ): 25.000000
 Arrival rate (λ): 1.000000
-Channels: 30
-Calls: 1000
-Grade of Service (%): 0.008000
+Service rate (μ): 25.000000
+Duration of service (1/μ): 0.040000
+Utilization (ρ): 0.040000
+Idle rate (1-ρ): 0.960000
+Grade of Service (ε): 0.005140
+Busy Channels (1-ε): 24.871500
+Occupancy ((1-ε)/C): 0.829050
 Type 3
-Ratio (%): 0.502000
-BP (%): 0.001000
+Ratio: 0.498140
+BP(ε): 0.001150
 Type 7
-Ratio (%): 0.498000
-BP (%): 0.007000
+Ratio: 0.501860
+BP(ε): 0.003990
 ```
 
 ## Contributing
