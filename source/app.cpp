@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include <map>
 #include <string>
 
 #include "event_queue.h"
@@ -21,6 +22,66 @@ struct Connection {
   Connection(const Path &path, const std::size_t slots)
       : path{path}, slots{slots} {}
 };
+
+auto make_key(std::size_t x, std::size_t y) -> std::size_t {
+  return ((x + y) * (x + y + 1) / 2) + y;
+}
+
+auto path_keys(const Path &path) -> std::vector<std::size_t> {
+  assert(!path.empty());
+
+  std::vector<std::size_t> keys;
+
+  for (auto index{1u}; index < path.size(); ++index) {
+    keys.push_back(make_key(path[index - 1], path[index]));
+  }
+
+  return keys;
+}
+
+auto make_hashmap(const Graph &graph, const std::size_t size)
+    -> std::map<std::size_t, Spectrum> {
+  std::map<std::size_t, Spectrum> hashmap;
+
+  for (auto source{0u}; source < graph.size(); ++source) {
+    for (auto destination{0u}; destination < graph.size(); ++destination) {
+      if (graph.at(source, destination) != __MIN_WEIGHT__) {
+        const auto key{make_key(source, destination)};
+
+        hashmap[key] = Spectrum(size);
+      }
+    }
+  }
+
+  return hashmap;
+}
+
+auto make_connection(Connection &connection,
+                     std::map<std::size_t, Spectrum> &hashmap) -> bool {
+  const auto keys{path_keys(connection.path)};
+
+  const auto search{first_fit(hashmap[keys[0]], connection.slots)};
+
+  if (!search.has_value()) {
+    return false;
+  }
+
+  connection.start = search.value();
+
+  connection.end = connection.start + connection.slots - 1;
+
+  for (const auto &key : keys) {
+    if (!hashmap[key].available_at(connection.start, connection.end)) {
+      return false;
+    }
+  }
+
+  for (const auto &key : keys) {
+    hashmap[key].allocate(connection.start, connection.end);
+  }
+
+  return true;
+}
 
 auto main(const int argc, const char **argv) -> int {
   std::vector<std::string> args{"--calls", "--channels", "--erlangs",
@@ -83,7 +144,7 @@ auto main(const int argc, const char **argv) -> int {
 
   auto graph{container.value()};
 
-  Spectrum spectrum{channels};
+  auto hashmap{make_hashmap(graph, channels)};
 
   EventQueue<Connection> queue{arrival_rate, service_rate};
 
@@ -117,15 +178,19 @@ auto main(const int argc, const char **argv) -> int {
     }
 
     if (signal == Signal::DEPARTURE) {
-      spectrum.deallocate(connection.start, connection.end);
-
       INFO("Request for " + std::to_string(connection.slots) +
            " slots departing");
 
-      INFO(spectrum.to_string());
+      const auto keys{path_keys(connection.path)};
 
-      INFO("A (u): " + std::to_string(spectrum.available()) +
-           " F (%): " + std::to_string(spectrum.fragmentation()));
+      for (const auto &key : keys) {
+        hashmap[key].deallocate(connection.start, connection.end);
+
+        INFO(hashmap[key].to_string());
+
+        INFO("A (u): " + std::to_string(hashmap[key].available()) +
+             " F (%): " + std::to_string(hashmap[key].fragmentation()));
+      }
 
       continue;
     }
@@ -134,30 +199,24 @@ auto main(const int argc, const char **argv) -> int {
 
     assert(connection.slots != 0);
 
-    const auto search{first_fit(spectrum, connection.slots)};
-
-    if (!search.has_value()) {
+    if (!make_connection(connection, hashmap)) {
       queue.push(connection, now).of_type(Signal::BLOCKING);
 
       INFO("Blocking request for " + std::to_string(connection.slots) +
            " slots");
     } else {
-      const auto start{search.value()};
-
-      connection.start = start;
-
-      connection.end = start + connection.slots - 1;
-
-      spectrum.allocate(connection.start, connection.end);
-
       queue.push(connection, now).of_type(Signal::DEPARTURE);
 
       INFO("Accept request for " + std::to_string(connection.slots) + " slots");
 
-      INFO(spectrum.to_string());
+      const auto keys{path_keys(connection.path)};
 
-      INFO("A (u): " + std::to_string(spectrum.available()) +
-           " F (%): " + std::to_string(spectrum.fragmentation()));
+      for (const auto &key : keys) {
+        INFO(hashmap[key].to_string());
+
+        INFO("A (u): " + std::to_string(hashmap[key].available()) +
+             " F (%): " + std::to_string(hashmap[key].fragmentation()));
+      }
     }
 
     Connection next{graph.random_path(), group.next()};
