@@ -1,17 +1,20 @@
 #pragma once
 
-#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
 
 class Spectrum final {
 public:
+  Spectrum(void) = default;
+
   Spectrum(const std::size_t);
 
   auto allocate(const std::size_t, const std::size_t) -> void;
 
   auto deallocate(const std::size_t, const std::size_t) -> void;
+
+  auto resize(const std::size_t) -> void;
 
   [[nodiscard]] auto size(void) const noexcept -> std::size_t;
 
@@ -42,6 +45,3 @@ public:
 private:
   std::vector<bool> slots;
 };
-
-using AllocationStrategy = std::function<std::optional<std::size_t>(
-    const Spectrum &, const std::size_t)>;

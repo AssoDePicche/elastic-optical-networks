@@ -24,6 +24,10 @@ auto Spectrum::deallocate(const std::size_t start, const std::size_t end)
   std::fill(slots.begin() + start, slots.begin() + end + 1, false);
 }
 
+auto Spectrum::resize(const std::size_t size) -> void {
+  slots = std::vector(size, false);
+}
+
 auto Spectrum::size(void) const noexcept -> std::size_t { return slots.size(); }
 
 auto Spectrum::available(void) const noexcept -> std::size_t {
