@@ -31,7 +31,7 @@ auto Graph::from(const std::string &filename) noexcept -> std::optional<Graph> {
 
   Graph graph{size};
 
-  auto origin{0u};
+  auto source{0u};
 
   while (std::getline(file, line)) {
     std::stringstream stream{line};
@@ -44,11 +44,11 @@ auto Graph::from(const std::string &filename) noexcept -> std::optional<Graph> {
       const auto weight = static_cast<Weight>(atof(buffer.c_str()));
 
       if (weight != __MIN_WEIGHT__) {
-        graph.add_edge(origin, destination, weight);
+        graph.add_edge(source, destination, weight);
       }
     }
 
-    ++origin;
+    ++source;
   }
 
   return graph;
@@ -78,9 +78,9 @@ auto Graph::to_string(void) const noexcept -> std::string {
   return buffer;
 }
 
-auto Graph::breadth_first_search(const Vertex origin,
+auto Graph::breadth_first_search(const Vertex source,
                                  const Vertex destination) noexcept -> Path {
-  if (origin == destination) {
+  if (source == destination) {
     return {};
   }
 
@@ -96,9 +96,9 @@ auto Graph::breadth_first_search(const Vertex origin,
     predecessors[vertex] = -1;
   }
 
-  visited[origin] = true;
+  visited[source] = true;
 
-  queue.push(origin);
+  queue.push(source);
 
   while (!queue.empty()) {
     const auto vertex = queue.front();
@@ -134,16 +134,16 @@ auto Graph::breadth_first_search(const Vertex origin,
 
   std::reverse(path.begin(), path.end());
 
-  if (path.front() != origin) {
+  if (path.front() != source) {
     path.clear();
   }
 
   return path;
 }
 
-auto Graph::depth_first_search(const Vertex origin,
+auto Graph::depth_first_search(const Vertex source,
                                const Vertex destination) noexcept -> Path {
-  if (origin == destination) {
+  if (source == destination) {
     return {};
   }
 
@@ -159,7 +159,7 @@ auto Graph::depth_first_search(const Vertex origin,
     predecessors[vertex] = -1;
   }
 
-  stack.push(origin);
+  stack.push(source);
 
   while (!stack.empty()) {
     const auto vertex = stack.top();
@@ -199,16 +199,16 @@ auto Graph::depth_first_search(const Vertex origin,
 
   std::reverse(path.begin(), path.end());
 
-  if (path.front() != origin) {
+  if (path.front() != source) {
     path.clear();
   }
 
   return path;
 }
 
-auto Graph::dijkstra(const Vertex origin, const Vertex destination) noexcept
+auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
     -> Path {
-  if (origin == destination) {
+  if (source == destination) {
     return {};
   }
 
@@ -231,11 +231,11 @@ auto Graph::dijkstra(const Vertex origin, const Vertex destination) noexcept
     edge_hops[id] = __MAX_HOPS__;
   }
 
-  weights[origin] = __MIN_WEIGHT__;
+  weights[source] = __MIN_WEIGHT__;
 
-  edge_hops[origin] = __MIN_HOPS__;
+  edge_hops[source] = __MIN_HOPS__;
 
-  queue.emplace(weights[origin], std::make_pair(edge_hops[origin], origin));
+  queue.emplace(weights[source], std::make_pair(edge_hops[source], source));
 
   while (!queue.empty()) {
     const auto current_weight = queue.top().first;
@@ -295,7 +295,7 @@ auto Graph::dijkstra(const Vertex origin, const Vertex destination) noexcept
 
   std::reverse(path.begin(), path.end());
 
-  if (path.front() != origin) {
+  if (path.front() != source) {
     path.clear();
   }
 
@@ -305,7 +305,7 @@ auto Graph::dijkstra(const Vertex origin, const Vertex destination) noexcept
 auto Graph::random_path(void) noexcept -> Path {
   Uniform distribution(0, size());
 
-  auto origin{static_cast<std::size_t>(distribution.next())};
+  auto source{static_cast<std::size_t>(distribution.next())};
 
   auto destination{static_cast<std::size_t>(distribution.next())};
 
@@ -314,19 +314,29 @@ auto Graph::random_path(void) noexcept -> Path {
   while (path.empty()) {
     destination = static_cast<std::size_t>(distribution.next());
 
-    path = dijkstra(origin, destination);
+    path = dijkstra(source, destination);
   }
 
   return path;
+}
+
+auto Graph::at(const Vertex source, const Vertex destination) const -> Weight {
+  for (const auto &[vertex, weight] : adjacency_list.at(source)) {
+    if (vertex == destination) {
+      return weight;
+    }
+  }
+
+  return __MIN_WEIGHT__;
 }
 
 auto Graph::add_vertex(const Vertex vertex) -> void {
   vertices[vertex] = vertex;
 }
 
-auto Graph::add_edge(const Vertex origin, const Vertex destination,
+auto Graph::add_edge(const Vertex source, const Vertex destination,
                      const Weight weight) -> void {
-  adjacency_list[origin].emplace_back(destination, weight);
+  adjacency_list[source].emplace_back(destination, weight);
 }
 
 auto operator<<(std::ostream &stream, const Graph &graph) -> std::ostream & {

@@ -50,6 +50,8 @@ public:
 
   [[nodiscard]] auto random_path(void) noexcept -> Path;
 
+  [[nodiscard]] auto at(const Vertex, const Vertex) const -> Weight;
+
   auto add_vertex(const Vertex) -> void;
 
   auto add_edge(const Vertex, const Vertex, const Weight) -> void;
