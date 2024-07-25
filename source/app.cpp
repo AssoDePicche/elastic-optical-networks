@@ -8,6 +8,7 @@
 #include "logger.h"
 #include "parser.h"
 #include "spectrum.h"
+#include "timer.h"
 
 struct Connection {
   Path path{};
@@ -52,13 +53,23 @@ auto main(const int argc, const char **argv) -> int {
 
   const auto channels{str_to_size_t(parser.parse("--channels"))};
 
+  assert(channels > 0u);
+
   const auto calls{str_to_size_t(parser.parse("--calls"))};
+
+  assert(calls > 0u);
 
   const auto traffic_intensity{str_to_double(parser.parse("--erlangs"))};
 
+  assert(traffic_intensity > 0.0);
+
   const auto arrival_rate{str_to_double(parser.parse("--lambda"))};
 
+  assert(arrival_rate > 0.0);
+
   const auto service_rate{traffic_intensity / arrival_rate};
+
+  assert(service_rate > 0.0);
 
   const auto filename{parser.parse("--topology")};
 
@@ -78,6 +89,12 @@ auto main(const int argc, const char **argv) -> int {
 
   Group group{{50.0, 50.0}, {3, 7}};
 
+  Timer timer;
+
+  timer.start();
+
+  Time simulation_time;
+
   const Connection first{graph.random_path(), group.next()};
 
   queue.push(first, 0.0).of_type(Signal::ARRIVAL);
@@ -88,6 +105,8 @@ auto main(const int argc, const char **argv) -> int {
     assert(top.has_value());
 
     auto [now, signal, connection] = top.value();
+
+    simulation_time = now;
 
     INFO("Now: " + std::to_string(now));
 
@@ -146,22 +165,49 @@ auto main(const int argc, const char **argv) -> int {
     queue.push(next, now).of_type(Signal::ARRIVAL);
   }
 
+  timer.stop();
+
   std::string str{};
+
+  const auto real_time{timer.elapsed<std::chrono::seconds>()};
+
+  const auto utilization{arrival_rate / service_rate};
+
+  const auto service_duration{1.0 / service_rate};
+
+  const auto GoS{static_cast<double>(group.blocked()) / calls};
+
+  const auto busy_channels{(1.0 - GoS) * traffic_intensity};
+
+  const auto occupancy{busy_channels / channels};
+
+  str.append("Execution time: " + std::to_string(real_time) + "s\n");
+
+  str.append("Simulation time: " + std::to_string(simulation_time) + "\n");
+
+  str.append("Channels (C): " + std::to_string(channels) + "\n");
+
+  str.append("Calls (n): " + std::to_string(calls) + "\n");
 
   str.append("Traffic Intensity (E): " + std::to_string(traffic_intensity) +
              "\n");
 
-  str.append("Service rate (μ): " + std::to_string(service_rate) + "\n");
-
   str.append("Arrival rate (λ): " + std::to_string(arrival_rate) + "\n");
 
-  str.append("Channels: " + std::to_string(channels) + "\n");
+  str.append("Service rate (μ): " + std::to_string(service_rate) + "\n");
 
-  str.append("Calls: " + std::to_string(calls) + "\n");
+  str.append("Duration of service (1/μ): " + std::to_string(service_duration) +
+             "\n");
 
-  const auto GoS{static_cast<double>(group.blocked()) / calls};
+  str.append("Utilization (ρ): " + std::to_string(utilization) + "\n");
 
-  str.append("Grade of Service (%): " + std::to_string(GoS) + "\n");
+  str.append("Idle rate (1-ρ): " + std::to_string(1.0 - utilization) + "\n");
+
+  str.append("Grade of Service (ε): " + std::to_string(GoS) + "\n");
+
+  str.append("Busy Channels (1-ε): " + std::to_string(busy_channels) + "\n");
+
+  str.append("Occupancy ((1-ε)/C): " + std::to_string(occupancy) + "\n");
 
   str.append(group.to_string());
 
