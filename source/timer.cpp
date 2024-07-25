@@ -1,13 +1,5 @@
 #include "timer.h"
 
-template <typename T> auto Timer::elapsed(void) -> long {
-  if (running) {
-    end = now();
-  }
-
-  return std::chrono::duration_cast<T>(end - beginning).count();
-}
-
 auto Timer::start(void) -> void {
   beginning = now();
 

@@ -4,7 +4,13 @@
 
 class Timer final {
 public:
-  template <typename T> [[nodiscard]] auto elapsed(void) -> long;
+  template <typename T> [[nodiscard]] auto elapsed(void) -> long {
+    if (running) {
+      end = now();
+    }
+
+    return std::chrono::duration_cast<T>(end - beginning).count();
+  }
 
   auto start(void) -> void;
 
