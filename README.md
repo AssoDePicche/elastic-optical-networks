@@ -18,16 +18,16 @@ The studies consisted mainly of machine learning algorithms applied to routing, 
 The algorithms available for route and spectrum allocation are:
 
 **Spectrum Allocation**
-- Best fit
-- First fit
-- Last fit
+- [Best fit](https://en.wikipedia.org/wiki/Best-fit_bin_packing#:~:text=The%20best%2Dfit%20algorithm%20uses,before%20placing%20the%20new%20item.)
+- [First fit](https://en.wikipedia.org/wiki/First-fit_bin_packing)
+- [Last fit](https://en.wikipedia.org/wiki/First-fit-decreasing_bin_packing)
 - Random fit
-- Worst fit
+- [Worst fit](https://www.geeksforgeeks.org/worst-fit-allocation-in-operating-systems/)
 
 **Routing**
-- Breadth-first Search
-- Depth-first Search
-- Dijkstra's algorithm
+- [Breadth-first Search](https://en.wikipedia.org/wiki/Breadth-first_search)
+- [Depth-first Search](https://en.wikipedia.org/wiki/Depth-first_search)
+- [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm)
 
 ## Installation
 
