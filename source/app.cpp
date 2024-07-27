@@ -57,10 +57,11 @@ auto make_hashmap(const Graph &graph, const std::size_t size)
 }
 
 auto make_connection(Connection &connection,
-                     std::map<std::size_t, Spectrum> &hashmap) -> bool {
+                     std::map<std::size_t, Spectrum> &hashmap,
+                     const SpectrumAllocator &spectrum_allocator) -> bool {
   const auto keys{path_keys(connection.path)};
 
-  const auto search{first_fit(hashmap[keys[0]], connection.slots)};
+  const auto search{spectrum_allocator(hashmap[keys[0]], connection.slots)};
 
   if (!search.has_value()) {
     return false;
@@ -84,8 +85,9 @@ auto make_connection(Connection &connection,
 }
 
 auto main(const int argc, const char **argv) -> int {
-  std::vector<std::string> args{"--calls", "--channels", "--erlangs",
-                                "--lambda", "--topology"};
+  std::vector<std::string> args{"--calls",    "--channels",
+                                "--erlangs",  "--lambda",
+                                "--topology", "--spectrum-allocator"};
   if (argc < 2) {
     std::cerr << "You must pass all the arguments:" << std::endl;
 
@@ -144,6 +146,21 @@ auto main(const int argc, const char **argv) -> int {
 
   auto graph{container.value()};
 
+  const auto spectrum_allocation_strategy{parser.parse("--spectrum-allocator")};
+
+  const std::map<std::string, SpectrumAllocator> spectrum_allocation_strategies{
+      {"best-fit", best_fit},
+      {"first-fit", first_fit},
+      {"last-fit", last_fit},
+      {"random-fit", random_fit},
+      {"worst-fit", worst_fit}};
+
+  assert(spectrum_allocation_strategies.find(spectrum_allocation_strategy) !=
+         spectrum_allocation_strategies.end());
+
+  const auto spectrum_allocator{
+      spectrum_allocation_strategies.at(spectrum_allocation_strategy)};
+
   auto hashmap{make_hashmap(graph, channels)};
 
   EventQueue<Connection> queue{arrival_rate, service_rate};
@@ -199,7 +216,7 @@ auto main(const int argc, const char **argv) -> int {
 
     assert(connection.slots != 0);
 
-    if (!make_connection(connection, hashmap)) {
+    if (!make_connection(connection, hashmap, spectrum_allocator)) {
       queue.push(connection, now).of_type(Signal::BLOCKING);
 
       INFO("Blocking request for " + std::to_string(connection.slots) +
