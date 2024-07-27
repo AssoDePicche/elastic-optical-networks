@@ -6,11 +6,28 @@ The studies consisted mainly of machine learning algorithms applied to routing, 
 
 ## Table of Contents
 
+- [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [Contact](#contact)
 - [License](#license)
+
+## Features
+
+The algorithms available for route and spectrum allocation are:
+
+**Spectrum Allocation**
+- Best fit
+- First fit
+- Last fit
+- Random fit
+- Worst fit
+
+**Routing**
+- Breadth-first Search
+- Depth-first Search
+- Dijkstra's algorithm
 
 ## Installation
 
