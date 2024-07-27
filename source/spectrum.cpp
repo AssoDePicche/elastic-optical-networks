@@ -283,3 +283,52 @@ auto random_fit(const Spectrum &spectrum, const std::size_t slots)
 
   return indexes[index];
 }
+
+auto worst_fit(const Spectrum &spectrum, const std::size_t slots)
+    -> std::optional<std::size_t> {
+  assert(slots <= spectrum.size());
+
+  if (slots > spectrum.largest_partition()) {
+    return std::nullopt;
+  }
+
+  auto max_block_size{0u};
+
+  auto worst_index{-1};
+
+  auto current_block_size{0u};
+
+  auto current_start_index{0u};
+
+  for (auto index{0u}; index < spectrum.size(); ++index) {
+    if (!spectrum.slots[index]) {
+      if (current_block_size == 0) {
+        current_start_index = index;
+      }
+
+      ++current_block_size;
+
+      continue;
+    }
+
+    if (current_block_size >= slots && current_block_size > max_block_size) {
+      max_block_size = current_block_size;
+
+      worst_index = current_start_index;
+    }
+
+    current_block_size = 0;
+  }
+
+  if (current_block_size >= slots && current_block_size > max_block_size) {
+    max_block_size = current_block_size;
+
+    worst_index = current_start_index;
+  }
+
+  if (worst_index == -1) {
+    return std::nullopt;
+  }
+
+  return static_cast<size_t>(worst_index);
+}
