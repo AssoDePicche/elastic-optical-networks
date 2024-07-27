@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <limits>
 #include <numeric>
 
 Spectrum::Spectrum(const std::size_t size) : slots(std::vector(size, false)) {}
@@ -136,6 +137,55 @@ auto Spectrum::to_string(void) const noexcept -> std::string {
   });
 
   return buffer;
+}
+
+auto best_fit(const Spectrum &spectrum, const std::size_t slots)
+    -> std::optional<std::size_t> {
+  assert(slots <= spectrum.size());
+
+  if (slots > spectrum.largest_partition()) {
+    return std::nullopt;
+  }
+
+  auto best_index{-1};
+
+  auto min_block_size{std::numeric_limits<std::size_t>::max()};
+
+  auto current_block_size{0u};
+
+  auto current_start_index{0u};
+
+  for (auto index{0u}; index < spectrum.size(); ++index) {
+    if (!spectrum.slots[index]) {
+      if (current_block_size == 0) {
+        current_start_index = index;
+      }
+
+      ++current_block_size;
+
+      continue;
+    }
+
+    if (current_block_size >= slots && current_block_size < min_block_size) {
+      min_block_size = current_block_size;
+
+      best_index = current_start_index;
+    }
+
+    current_block_size = 0;
+  }
+
+  if (current_block_size >= slots && current_block_size < min_block_size) {
+    min_block_size = current_block_size;
+
+    best_index = current_start_index;
+  }
+
+  if (best_index != -1) {
+    return static_cast<std::size_t>(best_index);
+  }
+
+  return std::nullopt;
 }
 
 auto first_fit(const Spectrum &spectrum, const std::size_t slots)
