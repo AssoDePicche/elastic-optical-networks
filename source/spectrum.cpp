@@ -140,6 +140,12 @@ auto Spectrum::to_string(void) const noexcept -> std::string {
   return buffer;
 }
 
+auto Spectrum::at(const std::size_t index) const -> bool {
+  assert(index < size());
+
+  return slots[index];
+}
+
 auto best_fit(const Spectrum &spectrum, const std::size_t slots)
     -> std::optional<std::size_t> {
   assert(slots <= spectrum.size());
@@ -157,7 +163,7 @@ auto best_fit(const Spectrum &spectrum, const std::size_t slots)
   auto current_start_index{0u};
 
   for (auto index{0u}; index < spectrum.size(); ++index) {
-    if (!spectrum.slots[index]) {
+    if (!spectrum.at(index)) {
       if (current_block_size == 0) {
         current_start_index = index;
       }
@@ -203,7 +209,7 @@ auto first_fit(const Spectrum &spectrum, const std::size_t slots)
     auto fit = true;
 
     for (auto end{0u}; end < slots && (start + end) < size; ++end) {
-      if (spectrum.slots[start + end]) {
+      if (spectrum.at(start + end)) {
         fit = false;
 
         break;
@@ -235,7 +241,7 @@ auto last_fit(const Spectrum &spectrum, const std::size_t slots)
   auto count{0u};
 
   for (auto index{spectrum.size() - 1}; 0 <= static_cast<int>(index); --index) {
-    count = (!spectrum.slots[index]) ? count + 1 : 0;
+    count = (!spectrum.at(index)) ? count + 1 : 0;
 
     if (count == slots) {
       return index;
@@ -259,7 +265,7 @@ auto random_fit(const Spectrum &spectrum, const std::size_t slots)
     auto fit{true};
 
     for (auto end{0u}; end < slots; ++end) {
-      if (spectrum.slots[start + end]) {
+      if (spectrum.at(start + end)) {
         fit = false;
 
         break;
@@ -301,7 +307,7 @@ auto worst_fit(const Spectrum &spectrum, const std::size_t slots)
   auto current_start_index{0u};
 
   for (auto index{0u}; index < spectrum.size(); ++index) {
-    if (!spectrum.slots[index]) {
+    if (!spectrum.at(index)) {
       if (current_block_size == 0) {
         current_start_index = index;
       }

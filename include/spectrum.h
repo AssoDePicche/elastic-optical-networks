@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -39,21 +40,26 @@ public:
 
   [[nodiscard]] auto to_string(void) const noexcept -> std::string;
 
-  [[nodiscard]] friend auto best_fit(const Spectrum &, const std::size_t)
-      -> std::optional<std::size_t>;
-
-  [[nodiscard]] friend auto first_fit(const Spectrum &, const std::size_t)
-      -> std::optional<std::size_t>;
-
-  [[nodiscard]] friend auto last_fit(const Spectrum &, const std::size_t)
-      -> std::optional<std::size_t>;
-
-  [[nodiscard]] friend auto random_fit(const Spectrum &, const std::size_t)
-      -> std::optional<std::size_t>;
-
-  [[nodiscard]] friend auto worst_fit(const Spectrum &, const std::size_t)
-      -> std::optional<std::size_t>;
+  [[nodiscard]] auto at(const std::size_t) const -> bool;
 
 private:
   std::vector<bool> slots;
 };
+
+[[nodiscard]] auto best_fit(const Spectrum &, const std::size_t)
+    -> std::optional<std::size_t>;
+
+[[nodiscard]] auto first_fit(const Spectrum &, const std::size_t)
+    -> std::optional<std::size_t>;
+
+[[nodiscard]] auto last_fit(const Spectrum &, const std::size_t)
+    -> std::optional<std::size_t>;
+
+[[nodiscard]] auto random_fit(const Spectrum &, const std::size_t)
+    -> std::optional<std::size_t>;
+
+[[nodiscard]] auto worst_fit(const Spectrum &, const std::size_t)
+    -> std::optional<std::size_t>;
+
+using SpectrumAllocator = std::function<std::optional<std::size_t>(
+    const Spectrum &, const std::size_t)>;
