@@ -42,6 +42,9 @@ public:
   [[nodiscard]] friend auto first_fit(const Spectrum &, const std::size_t)
       -> std::optional<std::size_t>;
 
+  [[nodiscard]] friend auto last_fit(const Spectrum &, const std::size_t)
+      -> std::optional<std::size_t>;
+
 private:
   std::vector<bool> slots;
 };

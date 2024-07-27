@@ -172,3 +172,24 @@ auto first_fit(const Spectrum &spectrum, const std::size_t slots)
 
   return std::nullopt;
 }
+
+auto last_fit(const Spectrum &spectrum, const std::size_t slots)
+    -> std::optional<std::size_t> {
+  assert(slots <= spectrum.size());
+
+  if (slots > spectrum.largest_partition()) {
+    return std::nullopt;
+  }
+
+  auto count{0u};
+
+  for (auto index{spectrum.size() - 1}; 0 <= static_cast<int>(index); --index) {
+    count = (!spectrum.slots[index]) ? count + 1 : 0;
+
+    if (count == slots) {
+      return index;
+    }
+  }
+
+  return std::nullopt;
+}
