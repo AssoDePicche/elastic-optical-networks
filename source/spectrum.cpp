@@ -1,5 +1,6 @@
 #include "spectrum.h"
 
+#include "distribution.h"
 #include <algorithm>
 #include <cassert>
 #include <limits>
@@ -242,4 +243,43 @@ auto last_fit(const Spectrum &spectrum, const std::size_t slots)
   }
 
   return std::nullopt;
+}
+
+auto random_fit(const Spectrum &spectrum, const std::size_t slots)
+    -> std::optional<std::size_t> {
+  assert(slots <= spectrum.size());
+
+  if (slots > spectrum.largest_partition()) {
+    return std::nullopt;
+  }
+
+  std::vector<std::size_t> indexes{};
+
+  for (auto start{0u}; start < spectrum.size(); ++start) {
+    auto fit{true};
+
+    for (auto end{0u}; end < slots; ++end) {
+      if (spectrum.slots[start + end]) {
+        fit = false;
+
+        break;
+      }
+    }
+
+    if (!fit || start + slots - 1 >= spectrum.size()) {
+      continue;
+    }
+
+    indexes.push_back(start);
+  }
+
+  if (indexes.empty()) {
+    return std::nullopt;
+  }
+
+  Uniform distribution(0, indexes.size());
+
+  const auto index{static_cast<std::size_t>(distribution.next())};
+
+  return indexes[index];
 }
