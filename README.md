@@ -59,11 +59,12 @@ You must pass the following arguments for the simulation:
 - `--erlangs`: the desired traffic intensity in Erlangs
 - `--lambda`: the call arrival rate per unit of time
 - `--topology`: the file with the number of nodes and the adjacency matrix of the network
+- `--spectrum-allocator`: the spectrum allocation algorithm
 
 For example:
 
 ```bash
-./build/source/App --calls 1000 --channels 30 --erlangs 25 --lambda 1 --topology topology.txt
+./build/source/App --calls 1000 --channels 30 --erlangs 25 --lambda 1 --topology topology.txt --spectrum-allocator first-fit
 ```
 
 With the topology.txt file as follows:
