@@ -54,17 +54,17 @@ cmake -S . -B build && cmake --build build
 Run the binary created in the [Installation section](#installation) with the arguments specified below. At the end of the simulation, in addition to the parameter information, the network grade of service (GoS) calculated using the [Erlang B formula](https://en.wikipedia.org/wiki/Erlang_(unit)), the proportion of request types (3-slot or 7-slot requests), the blocking probability (BP) per request type will be available and some other information.
 
 You must pass the following arguments for the simulation:
+- `--arrival-rate`: the call arrival rate per unit of time
 - `--calls`: the number of calls
 - `--channels`: the number of resources available per link
-- `--erlangs`: the desired traffic intensity in Erlangs
-- `--lambda`: the call arrival rate per unit of time
+- `--service-rate`: the service rate per unit of time
+- `--spectrum-allocator`: the [spectrum allocation algorithm](#features)
 - `--topology`: the file with the number of nodes and the adjacency matrix of the network
-- `--spectrum-allocator`: the spectrum allocation algorithm
 
 For example:
 
 ```bash
-./build/source/App --calls 1000 --channels 30 --erlangs 25 --lambda 1 --topology topology.txt --spectrum-allocator first-fit
+./build/source/App --calls 1000 --channels 30 --service-rate 0.133 --arrival-rate 1 --topology topology.txt --spectrum-allocator first-fit
 ```
 
 With the topology.txt file as follows:
@@ -78,25 +78,22 @@ With the topology.txt file as follows:
 Output:
 
 ```txt
-Execution time: 35s
-Simulation time: 100266.000000
-Channels (C): 30
-Calls (n): 100000
-Traffic Intensity (E): 25.000000
+Execution time: 209s
+Simulation time: 15611278.924476
+Channels (C): 10
+Calls (n): 1000000
 Arrival rate (λ): 1.000000
-Service rate (μ): 25.000000
-Duration of service (1/μ): 0.040000
-Utilization (ρ): 0.040000
-Idle rate (1-ρ): 0.960000
-Grade of Service (ε): 0.005140
-Busy Channels (1-ε): 24.871500
-Occupancy ((1-ε)/C): 0.829050
+Service rate (μ): 0.133000
+Traffic Intensity (ρ): 7.518797
+Grade of Service (ε): 0.312025
+Busy Channels (1-ε): 5.172744
+Occupancy ((1-ε)/C): 0.517274
 Type 3
-Ratio: 0.498140
-BP(ε): 0.001150
+Ratio: 0.500351
+BP(ε): 0.077240
 Type 7
-Ratio: 0.501860
-BP(ε): 0.003990
+Ratio: 0.499649
+BP(ε): 0.234785
 ```
 
 ## Contributing
