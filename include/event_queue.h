@@ -10,7 +10,7 @@
 
 using Time = double;
 
-enum class Signal { ARRIVAL, BLOCKING, DEPARTURE };
+enum class Signal { ARRIVAL, DEPARTURE };
 
 template <typename T> struct Event {
   Time time;
@@ -57,10 +57,7 @@ public:
 
     switch (signal) {
     case Signal::ARRIVAL:
-      now += arrival.next();
-      break;
-    case Signal::BLOCKING:
-      now += 0.0;
+      now += (1.0 / arrival.next());
       break;
     case Signal::DEPARTURE:
       now += service.next();
@@ -91,7 +88,7 @@ public:
 private:
   std::priority_queue<Event<T>, std::vector<Event<T>>, std::greater<Event<T>>>
       queue;
-  Poisson arrival;
+  Exponential arrival;
   Exponential service;
   Time time;
   T to_push;
