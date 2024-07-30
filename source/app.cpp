@@ -1,6 +1,7 @@
 #include <cassert>
 #include <iostream>
 #include <map>
+#include <set>
 #include <string>
 
 #include "event_queue.h"
@@ -85,10 +86,11 @@ auto make_connection(Connection &connection,
 }
 
 auto main(const int argc, const char **argv) -> int {
-  std::vector<std::string> args{"--calls",    "--channels",
-                                "--erlangs",  "--lambda",
-                                "--topology", "--spectrum-allocator"};
-  if (argc < 2) {
+  std::set<std::string> args{"--calls",        "--channels",
+                             "--service-rate", "--arrival-rate",
+                             "--topology",     "--spectrum-allocator"};
+
+  if (static_cast<std::size_t>(argc) < args.size()) {
     std::cerr << "You must pass all the arguments:" << std::endl;
 
     for (const auto &arg : args) {
@@ -122,17 +124,15 @@ auto main(const int argc, const char **argv) -> int {
 
   assert(calls > 0u);
 
-  const auto traffic_intensity{str_to_double(parser.parse("--erlangs"))};
-
-  assert(traffic_intensity > 0.0);
-
-  const auto arrival_rate{str_to_double(parser.parse("--lambda"))};
+  const auto arrival_rate{str_to_double(parser.parse("--arrival-rate"))};
 
   assert(arrival_rate > 0.0);
 
-  const auto service_rate{traffic_intensity / arrival_rate};
+  const auto service_rate{str_to_double(parser.parse("--service-rate"))};
 
   assert(service_rate > 0.0);
+
+  const auto traffic_intensity{arrival_rate / service_rate};
 
   const auto filename{parser.parse("--topology")};
 
@@ -188,12 +188,6 @@ auto main(const int argc, const char **argv) -> int {
 
     INFO("Now: " + std::to_string(now));
 
-    if (signal == Signal::BLOCKING) {
-      group.count_blocking(connection.slots);
-
-      continue;
-    }
-
     if (signal == Signal::DEPARTURE) {
       INFO("Request for " + std::to_string(connection.slots) +
            " slots departing");
@@ -217,7 +211,7 @@ auto main(const int argc, const char **argv) -> int {
     assert(connection.slots != 0);
 
     if (!make_connection(connection, hashmap, spectrum_allocator)) {
-      queue.push(connection, now).of_type(Signal::BLOCKING);
+      group.count_blocking(connection.slots);
 
       INFO("Blocking request for " + std::to_string(connection.slots) +
            " slots");
@@ -247,10 +241,6 @@ auto main(const int argc, const char **argv) -> int {
 
   const auto real_time{timer.elapsed<std::chrono::seconds>()};
 
-  const auto utilization{arrival_rate / service_rate};
-
-  const auto service_duration{1.0 / service_rate};
-
   const auto GoS{static_cast<double>(group.blocked()) / calls};
 
   const auto busy_channels{(1.0 - GoS) * traffic_intensity};
@@ -265,19 +255,12 @@ auto main(const int argc, const char **argv) -> int {
 
   str.append("Calls (n): " + std::to_string(calls) + "\n");
 
-  str.append("Traffic Intensity (E): " + std::to_string(traffic_intensity) +
-             "\n");
-
   str.append("Arrival rate (λ): " + std::to_string(arrival_rate) + "\n");
 
   str.append("Service rate (μ): " + std::to_string(service_rate) + "\n");
 
-  str.append("Duration of service (1/μ): " + std::to_string(service_duration) +
+  str.append("Traffic Intensity (ρ): " + std::to_string(traffic_intensity) +
              "\n");
-
-  str.append("Utilization (ρ): " + std::to_string(utilization) + "\n");
-
-  str.append("Idle rate (1-ρ): " + std::to_string(1.0 - utilization) + "\n");
 
   str.append("Grade of Service (ε): " + std::to_string(GoS) + "\n");
 
