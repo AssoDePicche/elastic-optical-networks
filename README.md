@@ -64,7 +64,7 @@ You must pass the following arguments for the simulation:
 For example:
 
 ```bash
-./build/source/App --calls 1000 --channels 30 --service-rate 0.133 --arrival-rate 1 --topology topology.txt --spectrum-allocator first-fit
+./build/source/App --calls 1000000 --channels 10 --service-rate 0.133 --arrival-rate 1 --topology topology.txt --spectrum-allocator first-fit
 ```
 
 With the topology.txt file as follows:
