@@ -57,6 +57,7 @@ You must pass the following arguments for the simulation:
 - `--arrival-rate`: the call arrival rate per unit of time
 - `--calls`: the number of calls
 - `--channels`: the number of resources available per link
+- `--seed`: the seed number for random processes
 - `--service-rate`: the service rate per unit of time
 - `--spectrum-allocator`: the [spectrum allocation algorithm](#features)
 - `--topology`: the file with the number of nodes and the adjacency matrix of the network
@@ -64,7 +65,7 @@ You must pass the following arguments for the simulation:
 For example:
 
 ```bash
-./build/source/App --calls 1000000 --channels 10 --service-rate 0.133 --arrival-rate 1 --topology topology.txt --spectrum-allocator first-fit
+./build/source/App --calls 1000000 --seed 227953 --channels 10 --service-rate 0.133 --arrival-rate 1 --topology topology.txt --spectrum-allocator first-fit
 ```
 
 With the topology.txt file as follows:
@@ -78,6 +79,7 @@ With the topology.txt file as follows:
 Output:
 
 ```txt
+Seed: 227953
 Execution time: 209s
 Simulation time: 15611278.924476
 Channels (C): 10
