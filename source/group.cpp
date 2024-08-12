@@ -2,8 +2,7 @@
 
 #include <cassert>
 
-Group::Group(const unsigned seed,
-             const std::initializer_list<double> &predicted,
+Group::Group(const Seed seed, const std::initializer_list<double> &predicted,
              const std::initializer_list<std::size_t> &resources)
     : roulette{seed, predicted} {
   assert(predicted.size() == resources.size());

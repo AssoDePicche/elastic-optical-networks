@@ -87,9 +87,9 @@ auto make_connection(Connection &connection,
 }
 
 auto main(const int argc, const char **argv) -> int {
-  std::set<std::string> args{"--calls",        "--channels",
-                             "--service-rate", "--arrival-rate",
-                             "--topology",     "--spectrum-allocator"};
+  std::set<std::string> args{
+      "--calls",    "--channels",           "--service-rate", "--arrival-rate",
+      "--topology", "--spectrum-allocator", "--seed"};
 
   if (static_cast<std::size_t>(argc) < args.size()) {
     std::cerr << "You must pass all the arguments:" << std::endl;
@@ -119,11 +119,7 @@ auto main(const int argc, const char **argv) -> int {
 
   const auto channels{str_to_size_t(parser.parse("--channels"))};
 
-  assert(channels > 0u);
-
   const auto calls{str_to_size_t(parser.parse("--calls"))};
-
-  assert(calls > 0u);
 
   const auto arrival_rate{str_to_double(parser.parse("--arrival-rate"))};
 
@@ -164,9 +160,7 @@ auto main(const int argc, const char **argv) -> int {
 
   auto hashmap{make_hashmap(graph, channels)};
 
-  std::random_device random_device;
-
-  const auto seed{random_device()};
+  const auto seed{std::stoul(parser.parse("--seed"))};
 
   auto arrival_distribution{std::make_shared<Exponential>(seed, arrival_rate)};
 

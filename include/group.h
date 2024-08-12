@@ -7,7 +7,7 @@
 
 class Group final {
 public:
-  Group(const unsigned seed, const std::initializer_list<double> &,
+  Group(const Seed seed, const std::initializer_list<double> &,
         const std::initializer_list<std::size_t> &);
 
   auto count_blocking(const std::size_t) -> void;

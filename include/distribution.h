@@ -3,16 +3,18 @@
 #include <initializer_list>
 #include <random>
 
+using Seed = long long unsigned;
+
 class Distribution {
 public:
-  Distribution(const unsigned);
+  Distribution(const Seed);
 
   virtual auto next(void) -> double = 0;
 
-  [[nodiscard]] auto get_seed(void) const -> unsigned;
+  [[nodiscard]] auto get_seed(void) const -> Seed;
 
 private:
-  unsigned seed;
+  Seed seed;
 
 protected:
   std::mt19937 generator;
@@ -20,7 +22,7 @@ protected:
 
 class Exponential final : public Distribution {
 public:
-  Exponential(const unsigned, const double);
+  Exponential(const Seed, const double);
 
   auto next(void) -> double override;
 
@@ -30,7 +32,7 @@ private:
 
 class Poisson final : public Distribution {
 public:
-  Poisson(const unsigned, const double);
+  Poisson(const Seed, const double);
 
   auto next(void) -> double override;
 
@@ -40,7 +42,7 @@ private:
 
 class Normal final : public Distribution {
 public:
-  Normal(const unsigned, const double, const double);
+  Normal(const Seed, const double, const double);
 
   auto next(void) -> double override;
 
@@ -50,7 +52,7 @@ private:
 
 class Discrete final : public Distribution {
 public:
-  Discrete(const unsigned, const std::initializer_list<double> &);
+  Discrete(const Seed, const std::initializer_list<double> &);
 
   auto next(void) -> double override;
 
@@ -60,7 +62,7 @@ private:
 
 class Uniform final : public Distribution {
 public:
-  Uniform(const unsigned, const double, const double);
+  Uniform(const Seed, const double, const double);
 
   auto next(void) -> double override;
 
