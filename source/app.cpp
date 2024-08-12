@@ -163,7 +163,11 @@ auto main(const int argc, const char **argv) -> int {
 
   auto hashmap{make_hashmap(graph, channels)};
 
-  EventQueue<Connection> queue{arrival_rate, service_rate};
+  auto arrival_distribution{std::make_shared<Exponential>(arrival_rate)};
+
+  auto service_distribution{std::make_shared<Exponential>(service_rate)};
+
+  EventQueue<Connection> queue{arrival_distribution, service_distribution};
 
   Group group{{50.0, 50.0}, {3, 7}};
 

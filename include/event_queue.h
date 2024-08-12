@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <memory>
 #include <optional>
 #include <queue>
 #include <vector>
@@ -35,8 +36,9 @@ template <typename T>
 
 template <typename T> class EventQueue {
 public:
-  EventQueue(const double arrival_rate, const double service_rate)
-      : arrival{arrival_rate}, service{service_rate} {}
+  EventQueue(std::shared_ptr<Distribution> arrival,
+             std::shared_ptr<Distribution> service)
+      : arrival{arrival}, service{service} {}
 
   [[nodiscard]] auto push(const T &value, const Time now) -> EventQueue<T> & {
     assert(!pushing);
@@ -57,10 +59,10 @@ public:
 
     switch (signal) {
     case Signal::ARRIVAL:
-      now += (1.0 / arrival.next());
+      now += arrival->next();
       break;
     case Signal::DEPARTURE:
-      now += service.next();
+      now += service->next();
       break;
     }
 
@@ -88,8 +90,8 @@ public:
 private:
   std::priority_queue<Event<T>, std::vector<Event<T>>, std::greater<Event<T>>>
       queue;
-  Exponential arrival;
-  Exponential service;
+  std::shared_ptr<Distribution> arrival;
+  std::shared_ptr<Distribution> service;
   Time time;
   T to_push;
   bool pushing{false};
