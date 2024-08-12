@@ -5,16 +5,22 @@
 
 class Distribution {
 public:
+  Distribution(const unsigned);
+
   virtual auto next(void) -> double = 0;
 
+  [[nodiscard]] auto get_seed(void) const -> unsigned;
+
+private:
+  unsigned seed;
+
 protected:
-  std::random_device seed;
-  std::mt19937 generator{seed()};
+  std::mt19937 generator;
 };
 
 class Exponential final : public Distribution {
 public:
-  Exponential(const double);
+  Exponential(const unsigned, const double);
 
   auto next(void) -> double override;
 
@@ -24,7 +30,7 @@ private:
 
 class Poisson final : public Distribution {
 public:
-  Poisson(const double);
+  Poisson(const unsigned, const double);
 
   auto next(void) -> double override;
 
@@ -34,7 +40,7 @@ private:
 
 class Normal final : public Distribution {
 public:
-  Normal(const double, const double);
+  Normal(const unsigned, const double, const double);
 
   auto next(void) -> double override;
 
@@ -44,7 +50,7 @@ private:
 
 class Discrete final : public Distribution {
 public:
-  Discrete(const std::initializer_list<double> &);
+  Discrete(const unsigned, const std::initializer_list<double> &);
 
   auto next(void) -> double override;
 
@@ -54,7 +60,7 @@ private:
 
 class Uniform final : public Distribution {
 public:
-  Uniform(const double, const double);
+  Uniform(const unsigned, const double, const double);
 
   auto next(void) -> double override;
 

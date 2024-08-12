@@ -2,9 +2,10 @@
 
 #include <cassert>
 
-Group::Group(const std::initializer_list<double> &predicted,
+Group::Group(const unsigned seed,
+             const std::initializer_list<double> &predicted,
              const std::initializer_list<std::size_t> &resources)
-    : roulette{predicted} {
+    : roulette{seed, predicted} {
   assert(predicted.size() == resources.size());
 
   for (auto index{0u}; index < predicted.size(); ++index) {

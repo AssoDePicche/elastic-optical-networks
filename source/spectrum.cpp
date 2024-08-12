@@ -1,10 +1,12 @@
 #include "spectrum.h"
 
-#include "distribution.h"
 #include <algorithm>
 #include <cassert>
 #include <limits>
 #include <numeric>
+#include <random>
+
+#include "distribution.h"
 
 Spectrum::Spectrum(const std::size_t size) : slots(std::vector(size, false)) {}
 
@@ -283,7 +285,9 @@ auto random_fit(const Spectrum &spectrum, const std::size_t slots)
     return std::nullopt;
   }
 
-  Uniform distribution(0, indexes.size());
+  std::random_device random_device;
+
+  Uniform distribution{random_device(), 0, static_cast<double>(indexes.size())};
 
   const auto index{static_cast<std::size_t>(distribution.next())};
 

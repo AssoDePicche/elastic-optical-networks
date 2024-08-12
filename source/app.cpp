@@ -1,6 +1,7 @@
 #include <cassert>
 #include <iostream>
 #include <map>
+#include <random>
 #include <set>
 #include <string>
 
@@ -163,13 +164,17 @@ auto main(const int argc, const char **argv) -> int {
 
   auto hashmap{make_hashmap(graph, channels)};
 
-  auto arrival_distribution{std::make_shared<Exponential>(arrival_rate)};
+  std::random_device random_device;
 
-  auto service_distribution{std::make_shared<Exponential>(service_rate)};
+  const auto seed{random_device()};
+
+  auto arrival_distribution{std::make_shared<Exponential>(seed, arrival_rate)};
+
+  auto service_distribution{std::make_shared<Exponential>(seed, service_rate)};
 
   EventQueue<Connection> queue{arrival_distribution, service_distribution};
 
-  Group group{{50.0, 50.0}, {3, 7}};
+  Group group{seed, {50.0, 50.0}, {3, 7}};
 
   Timer timer;
 
@@ -250,6 +255,8 @@ auto main(const int argc, const char **argv) -> int {
   const auto busy_channels{(1.0 - GoS) * traffic_intensity};
 
   const auto occupancy{busy_channels / channels};
+
+  str.append("Seed: " + std::to_string(seed) + "\n");
 
   str.append("Execution time: " + std::to_string(real_time) + "s\n");
 

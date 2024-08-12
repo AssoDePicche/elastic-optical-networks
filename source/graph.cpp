@@ -4,6 +4,7 @@
 #include <fstream>
 #include <memory>
 #include <queue>
+#include <random>
 #include <sstream>
 #include <stack>
 #include <utility>
@@ -303,7 +304,9 @@ auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
 }
 
 auto Graph::random_path(void) noexcept -> Path {
-  Uniform distribution(0, size());
+  std::random_device random_device;
+
+  Uniform distribution{random_device(), 0, static_cast<double>(size())};
 
   auto source{static_cast<std::size_t>(distribution.next())};
 
