@@ -36,9 +36,13 @@ template <typename T>
 
 template <typename T> class EventQueue {
 public:
-  EventQueue(std::shared_ptr<Distribution> arrival,
-             std::shared_ptr<Distribution> service)
-      : arrival{arrival}, service{service} {}
+  EventQueue(const double arrival_rate, const double service_rate,
+             const Seed seed)
+      : arrival_rate{arrival_rate}, service_rate{service_rate} {
+    arrival = std::make_shared<Exponential>(seed, arrival_rate);
+
+    service = std::make_shared<Exponential>(seed, service_rate);
+  }
 
   [[nodiscard]] auto push(const T &value, const Time now) -> EventQueue<T> & {
     assert(!pushing);
@@ -59,10 +63,10 @@ public:
 
     switch (signal) {
     case Signal::ARRIVAL:
-      now += arrival->next();
+      now += (arrival_rate / arrival->next());
       break;
     case Signal::DEPARTURE:
-      now += service->next();
+      now += (service->next() / service_rate);
       break;
     }
 
@@ -90,6 +94,8 @@ public:
 private:
   std::priority_queue<Event<T>, std::vector<Event<T>>, std::greater<Event<T>>>
       queue;
+  double arrival_rate;
+  double service_rate;
   std::shared_ptr<Distribution> arrival;
   std::shared_ptr<Distribution> service;
   Time time;

@@ -102,30 +102,22 @@ auto main(const int argc, const char **argv) -> int {
 
   auto hashmap{make_hashmap(settings.graph, settings.channels)};
 
-  auto arrival_distribution{
-      std::make_shared<Exponential>(settings.seed, settings.arrival_rate)};
+  EventQueue<Connection> queue{settings.arrival_rate, settings.service_rate,
+                               settings.seed};
 
-  auto service_distribution{
-      std::make_shared<Exponential>(settings.seed, settings.service_rate)};
-
-  EventQueue<Connection> queue{arrival_distribution, service_distribution};
-
-  Group group{settings.seed, {50.0, 50.0}, {3, 7}};
+  Group group{settings.seed, {100.0}, {1}};
 
   Timer timer;
 
   timer.start();
 
-  Time simulation_time;
+  Time simulation_time{};
 
-  const Connection first{settings.graph.random_path(), group.next()};
-
-  queue.push(first, 0.0).of_type(Signal::ARRIVAL);
+  queue.push(Connection{settings.graph.random_path(), group.next()}, 0.0)
+      .of_type(Signal::ARRIVAL);
 
   while (group.size() < settings.calls) {
     const auto top{queue.pop()};
-
-    assert(top.has_value());
 
     auto [now, signal, connection] = top.value();
 
@@ -173,15 +165,14 @@ auto main(const int argc, const char **argv) -> int {
       }
     }
 
-    Connection next{settings.graph.random_path(), group.next()};
-
-    queue.push(next, now).of_type(Signal::ARRIVAL);
+    queue.push(Connection{settings.graph.random_path(), group.next()}, now)
+        .of_type(Signal::ARRIVAL);
   }
 
   timer.stop();
 
   std::cout << "Execution time: " +
-                   std::to_string(timer.elapsed<std::chrono::seconds>) + "s"
+                   std::to_string(timer.elapsed<std::chrono::seconds>()) + "s"
             << std::endl;
 
   std::cout << "Simulation time: " + std::to_string(simulation_time)

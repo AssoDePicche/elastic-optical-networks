@@ -87,10 +87,9 @@ auto Report::from(const Group &group, const Settings &settings) -> Report {
 
   report.grade_of_service = static_cast<double>(group.blocked()) / report.calls;
 
-  report.busy_channels =
-      (1.0 - report.grade_of_service) * report.traffic_intensity;
+  report.busy_channels = (1.0 - report.grade_of_service);
 
-  report.occupancy = report.busy_channels / report.channels;
+  report.occupancy = (report.busy_channels / report.channels);
 
   return report;
 }
