@@ -9,6 +9,8 @@
 #include "settings.h"
 #include "timer.h"
 
+[[nodiscard]] auto simulation(Settings &) -> std::string;
+
 auto main(const int argc, const char **argv) -> int {
   std::vector<std::string> args;
 
@@ -24,6 +26,10 @@ auto main(const int argc, const char **argv) -> int {
 
   auto settings{typed_settings.value()};
 
+  std::cout << simulation(settings) << std::endl;
+}
+
+auto simulation(Settings &settings) -> std::string {
   auto hashmap{make_hashmap(settings.graph, settings.channels)};
 
   EventQueue<Connection> queue{settings.arrival_rate, settings.service_rate,
@@ -95,12 +101,14 @@ auto main(const int argc, const char **argv) -> int {
 
   timer.stop();
 
-  std::cout << "Execution time: " +
-                   std::to_string(timer.elapsed<std::chrono::seconds>()) + "s"
-            << std::endl;
+  std::string str{""};
 
-  std::cout << "Simulation time: " + std::to_string(simulation_time)
-            << std::endl;
+  str.append("Execution time: " +
+             std::to_string(timer.elapsed<std::chrono::seconds>()) + "s\n");
 
-  std::cout << Report::from(group, settings).to_string() << std::endl;
-};
+  str.append("Simulation time: " + std::to_string(simulation_time) + "\n");
+
+  str.append(Report::from(group, settings).to_string() + "\n");
+
+  return str;
+}

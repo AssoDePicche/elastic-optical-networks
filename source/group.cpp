@@ -83,7 +83,7 @@ auto Report::from(const Group &group, const Settings &settings) -> Report {
 
   report.service_rate = settings.service_rate;
 
-  report.traffic_intensity = settings.traffic_intensity;
+  report.traffic_intensity = (settings.arrival_rate / settings.service_rate);
 
   report.grade_of_service = static_cast<double>(group.blocked()) / report.calls;
 

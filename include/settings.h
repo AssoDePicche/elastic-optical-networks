@@ -14,7 +14,6 @@ struct Settings {
   Seed seed;
   double arrival_rate;
   double service_rate;
-  double traffic_intensity;
   std::size_t calls;
   std::size_t channels;
 

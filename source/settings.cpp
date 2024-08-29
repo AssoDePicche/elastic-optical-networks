@@ -58,8 +58,6 @@ auto Settings::from(const std::vector<std::string> &argv)
     return std::nullopt;
   }
 
-  settings.traffic_intensity = (settings.arrival_rate / settings.service_rate);
-
   const auto filename{parser.parse("--topology")};
 
   const auto container{Graph::from(filename)};
