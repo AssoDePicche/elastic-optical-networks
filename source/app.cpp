@@ -41,7 +41,7 @@ auto simulation(Settings &settings) -> std::string {
 
   timer.start();
 
-  Time simulation_time{};
+  double simulation_time{};
 
   queue.push(Connection{settings.graph.random_path(), group.next()}, 0.0)
       .of_type(Signal::ARRIVAL);

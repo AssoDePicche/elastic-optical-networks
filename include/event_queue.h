@@ -9,30 +9,22 @@
 
 #include "distribution.h"
 
-using Time = double;
-
 enum class Signal { ARRIVAL, DEPARTURE };
 
 template <typename T> struct Event {
-  Time time;
+  double time;
   Signal signal;
   T value;
 
   Event(void) = default;
 
-  Event(const Time time, const Signal &signal, const T &value)
+  Event(const double time, const Signal &signal, const T &value)
       : time{time}, signal{signal}, value{value} {}
+
+  [[nodiscard]] auto operator<(const Event<T> &other) const noexcept -> bool {
+    return time > other.time;
+  }
 };
-
-template <typename T>
-[[nodiscard]] auto operator<(const Event<T> &a, const Event<T> &b) -> bool {
-  return a.time < b.time;
-}
-
-template <typename T>
-[[nodiscard]] auto operator>(const Event<T> &a, const Event<T> &b) -> bool {
-  return a.time > b.time;
-}
 
 template <typename T> class EventQueue {
 public:
@@ -44,7 +36,7 @@ public:
     service = std::make_shared<Exponential>(seed, service_rate);
   }
 
-  [[nodiscard]] auto push(const T &value, const Time now) -> EventQueue<T> & {
+  [[nodiscard]] auto push(const T &value, const double now) -> EventQueue<T> & {
     assert(!pushing);
 
     pushing = true;
@@ -80,7 +72,7 @@ public:
       return std::nullopt;
     }
 
-    const auto event = queue.top();
+    const auto event{queue.top()};
 
     queue.pop();
 
@@ -92,13 +84,12 @@ public:
   [[nodiscard]] auto size(void) const -> std::size_t { return queue.size(); }
 
 private:
-  std::priority_queue<Event<T>, std::vector<Event<T>>, std::greater<Event<T>>>
-      queue;
+  std::priority_queue<Event<T>> queue;
   double arrival_rate;
   double service_rate;
   std::shared_ptr<Distribution> arrival;
   std::shared_ptr<Distribution> service;
-  Time time;
+  double time;
   T to_push;
   bool pushing{false};
 };
