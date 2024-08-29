@@ -2,11 +2,7 @@
 
 #include <algorithm>
 
-Parser::Parser(const int argc, const char **argv) {
-  for (auto index{1}; index < argc; ++index) {
-    buffer.push_back(std::string(argv[index]));
-  }
-}
+Parser::Parser(const std::vector<std::string> &argv) : buffer{argv} {}
 
 auto Parser::contains(const std::string &arg) const -> bool {
   return std::find(buffer.begin(), buffer.end(), arg) != buffer.end();

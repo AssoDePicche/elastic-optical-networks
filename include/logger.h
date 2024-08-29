@@ -14,6 +14,11 @@
               << ": " << STR << std::endl;                                     \
   } while (0);
 
+#define ERROR(STR)                                                             \
+  do {                                                                         \
+    LOG("ERROR", STR)                                                          \
+  } while (0);
+
 #define INFO(STR)                                                              \
   do {                                                                         \
     LOG("INFO", STR);                                                          \
@@ -24,6 +29,8 @@
     LOG("WARN", STR);                                                          \
   } while (0);
 #else
+
+#define ERROR(STR) (void)(STR)
 
 #define INFO(STR) (void)(STR)
 

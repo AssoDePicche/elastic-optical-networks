@@ -67,3 +67,62 @@ auto Group::to_string(void) const -> std::string {
 
   return buffer;
 }
+
+auto Report::from(const Group &group, const Settings &settings) -> Report {
+  Report report;
+
+  report.group_str = group.to_string();
+
+  report.seed = settings.seed;
+
+  report.channels = settings.channels;
+
+  report.calls = settings.calls;
+
+  report.arrival_rate = settings.arrival_rate;
+
+  report.service_rate = settings.service_rate;
+
+  report.traffic_intensity = settings.traffic_intensity;
+
+  report.grade_of_service = static_cast<double>(group.blocked()) / report.calls;
+
+  report.busy_channels =
+      (1.0 - report.grade_of_service) * report.traffic_intensity;
+
+  report.occupancy = report.busy_channels / report.channels;
+
+  return report;
+}
+
+#include <iostream>
+
+auto Report::to_string(void) const -> std::string {
+  std::string str{};
+
+  str.append("Seed: " + std::to_string(seed) + "\n");
+
+  str.append("Channels (C): " + std::to_string(channels) + "\n");
+
+  str.append("Calls (n): " + std::to_string(calls) + "\n");
+
+  str.append("Arrival rate (λ): " + std::to_string(arrival_rate) + "\n");
+
+  str.append("Service rate (μ): " + std::to_string(service_rate) + "\n");
+
+  std::cout << service_rate << std::endl;
+
+  str.append("Traffic Intensity (ρ): " + std::to_string(traffic_intensity) +
+             "\n");
+
+  str.append("Grade of Service (ε): " + std::to_string(grade_of_service) +
+             "\n");
+
+  str.append("Busy Channels (1-ε): " + std::to_string(busy_channels) + "\n");
+
+  str.append("Occupancy ((1-ε)/C): " + std::to_string(occupancy) + "\n");
+
+  str.append(group_str);
+
+  return str;
+}

@@ -5,7 +5,7 @@
 
 class Parser final {
 public:
-  Parser(const int, const char **);
+  Parser(const std::vector<std::string> &);
 
   [[nodiscard]] auto contains(const std::string &) const -> bool;
 

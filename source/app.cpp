@@ -1,8 +1,6 @@
 #include <cassert>
 #include <iostream>
 #include <map>
-#include <random>
-#include <set>
 #include <string>
 
 #include "event_queue.h"
@@ -10,6 +8,7 @@
 #include "group.h"
 #include "logger.h"
 #include "parser.h"
+#include "settings.h"
 #include "spectrum.h"
 #include "timer.h"
 
@@ -87,88 +86,31 @@ auto make_connection(Connection &connection,
 }
 
 auto main(const int argc, const char **argv) -> int {
-  std::set<std::string> args{
-      "--calls",    "--channels",           "--service-rate", "--arrival-rate",
-      "--topology", "--spectrum-allocator", "--seed"};
+  std::vector<std::string> args;
 
-  if (static_cast<std::size_t>(argc) < args.size()) {
-    std::cerr << "You must pass all the arguments:" << std::endl;
+  for (auto arg{1u}; arg < static_cast<std::size_t>(argc); ++arg) {
+    args.push_back(std::string(argv[arg]));
+  }
 
-    for (const auto &arg : args) {
-      std::cerr << arg << std::endl;
-    }
+  const auto typed_settings{Settings::from(args)};
 
+  if (!typed_settings.has_value()) {
     return 1;
   }
 
-  const Parser parser{argc, argv};
+  auto settings{typed_settings.value()};
 
-  for (const auto &arg : args) {
-    if (!parser.contains(arg)) {
-      std::cerr << "You must pass the " << arg << " argument" << std::endl;
+  auto hashmap{make_hashmap(settings.graph, settings.channels)};
 
-      return 1;
-    }
-  }
+  auto arrival_distribution{
+      std::make_shared<Exponential>(settings.seed, settings.arrival_rate)};
 
-  auto str_to_size_t = [](const std::string &str) {
-    return static_cast<std::size_t>(std::atoi(str.c_str()));
-  };
-
-  auto str_to_double = [](const std::string &str) { return std::stod(str); };
-
-  const auto channels{str_to_size_t(parser.parse("--channels"))};
-
-  const auto calls{str_to_size_t(parser.parse("--calls"))};
-
-  const auto arrival_rate{str_to_double(parser.parse("--arrival-rate"))};
-
-  assert(arrival_rate > 0.0);
-
-  const auto service_rate{str_to_double(parser.parse("--service-rate"))};
-
-  assert(service_rate > 0.0);
-
-  const auto traffic_intensity{arrival_rate / service_rate};
-
-  const auto filename{parser.parse("--topology")};
-
-  const auto container{Graph::from(filename)};
-
-  if (!container.has_value()) {
-    std::cerr << "Unable to read the " << filename << " file." << std::endl;
-
-    return 1;
-  }
-
-  auto graph{container.value()};
-
-  const auto spectrum_allocation_strategy{parser.parse("--spectrum-allocator")};
-
-  const std::map<std::string, SpectrumAllocator> spectrum_allocation_strategies{
-      {"best-fit", best_fit},
-      {"first-fit", first_fit},
-      {"last-fit", last_fit},
-      {"random-fit", random_fit},
-      {"worst-fit", worst_fit}};
-
-  assert(spectrum_allocation_strategies.find(spectrum_allocation_strategy) !=
-         spectrum_allocation_strategies.end());
-
-  const auto spectrum_allocator{
-      spectrum_allocation_strategies.at(spectrum_allocation_strategy)};
-
-  auto hashmap{make_hashmap(graph, channels)};
-
-  const auto seed{std::stoul(parser.parse("--seed"))};
-
-  auto arrival_distribution{std::make_shared<Exponential>(seed, arrival_rate)};
-
-  auto service_distribution{std::make_shared<Exponential>(seed, service_rate)};
+  auto service_distribution{
+      std::make_shared<Exponential>(settings.seed, settings.service_rate)};
 
   EventQueue<Connection> queue{arrival_distribution, service_distribution};
 
-  Group group{seed, {50.0, 50.0}, {3, 7}};
+  Group group{settings.seed, {50.0, 50.0}, {3, 7}};
 
   Timer timer;
 
@@ -176,11 +118,11 @@ auto main(const int argc, const char **argv) -> int {
 
   Time simulation_time;
 
-  const Connection first{graph.random_path(), group.next()};
+  const Connection first{settings.graph.random_path(), group.next()};
 
   queue.push(first, 0.0).of_type(Signal::ARRIVAL);
 
-  while (group.size() < calls) {
+  while (group.size() < settings.calls) {
     const auto top{queue.pop()};
 
     assert(top.has_value());
@@ -209,11 +151,9 @@ auto main(const int argc, const char **argv) -> int {
       continue;
     }
 
-    assert(signal == Signal::ARRIVAL);
-
     assert(connection.slots != 0);
 
-    if (!make_connection(connection, hashmap, spectrum_allocator)) {
+    if (!make_connection(connection, hashmap, settings.spectrum_allocator)) {
       group.count_blocking(connection.slots);
 
       INFO("Blocking request for " + std::to_string(connection.slots) +
@@ -233,47 +173,20 @@ auto main(const int argc, const char **argv) -> int {
       }
     }
 
-    Connection next{graph.random_path(), group.next()};
+    Connection next{settings.graph.random_path(), group.next()};
 
     queue.push(next, now).of_type(Signal::ARRIVAL);
   }
 
   timer.stop();
 
-  std::string str{};
-
   const auto real_time{timer.elapsed<std::chrono::seconds>()};
 
-  const auto GoS{static_cast<double>(group.blocked()) / calls};
+  std::cout << "Execution time: " + std::to_string(real_time) + "s"
+            << std::endl;
 
-  const auto busy_channels{(1.0 - GoS) * traffic_intensity};
+  std::cout << "Simulation time: " + std::to_string(simulation_time)
+            << std::endl;
 
-  const auto occupancy{busy_channels / channels};
-
-  str.append("Seed: " + std::to_string(seed) + "\n");
-
-  str.append("Execution time: " + std::to_string(real_time) + "s\n");
-
-  str.append("Simulation time: " + std::to_string(simulation_time) + "\n");
-
-  str.append("Channels (C): " + std::to_string(channels) + "\n");
-
-  str.append("Calls (n): " + std::to_string(calls) + "\n");
-
-  str.append("Arrival rate (λ): " + std::to_string(arrival_rate) + "\n");
-
-  str.append("Service rate (μ): " + std::to_string(service_rate) + "\n");
-
-  str.append("Traffic Intensity (ρ): " + std::to_string(traffic_intensity) +
-             "\n");
-
-  str.append("Grade of Service (ε): " + std::to_string(GoS) + "\n");
-
-  str.append("Busy Channels (1-ε): " + std::to_string(busy_channels) + "\n");
-
-  str.append("Occupancy ((1-ε)/C): " + std::to_string(occupancy) + "\n");
-
-  str.append(group.to_string());
-
-  std::cout << str << std::endl;
+  std::cout << Report::from(group, settings).to_string() << std::endl;
 };
