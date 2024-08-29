@@ -95,8 +95,6 @@ auto Report::from(const Group &group, const Settings &settings) -> Report {
   return report;
 }
 
-#include <iostream>
-
 auto Report::to_string(void) const -> std::string {
   std::string str{};
 
@@ -109,8 +107,6 @@ auto Report::to_string(void) const -> std::string {
   str.append("Arrival rate (λ): " + std::to_string(arrival_rate) + "\n");
 
   str.append("Service rate (μ): " + std::to_string(service_rate) + "\n");
-
-  std::cout << service_rate << std::endl;
 
   str.append("Traffic Intensity (ρ): " + std::to_string(traffic_intensity) +
              "\n");

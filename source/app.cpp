@@ -180,9 +180,8 @@ auto main(const int argc, const char **argv) -> int {
 
   timer.stop();
 
-  const auto real_time{timer.elapsed<std::chrono::seconds>()};
-
-  std::cout << "Execution time: " + std::to_string(real_time) + "s"
+  std::cout << "Execution time: " +
+                   std::to_string(timer.elapsed<std::chrono::seconds>) + "s"
             << std::endl;
 
   std::cout << "Simulation time: " + std::to_string(simulation_time)
