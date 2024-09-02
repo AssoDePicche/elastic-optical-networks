@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <map>
+#include <string>
 #include <vector>
 
 #include "graph.h"
@@ -17,6 +18,10 @@ struct Connection {
 
   Connection(const Path &, const std::size_t);
 };
+
+[[nodiscard]] auto from_gigabits_transmission(const double) -> std::size_t;
+
+[[nodiscard]] auto from_terabits_transmission(const double) -> std::size_t;
 
 [[nodiscard]] auto make_key(std::size_t, std::size_t) -> std::size_t;
 
