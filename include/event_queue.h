@@ -5,6 +5,7 @@
 #include <memory>
 #include <optional>
 #include <queue>
+#include <random>
 #include <vector>
 
 #include "distribution.h"
@@ -30,11 +31,7 @@ template <typename T> class EventQueue {
 public:
   EventQueue(const double arrival_rate, const double service_rate,
              const Seed seed)
-      : arrival_rate{arrival_rate}, service_rate{service_rate} {
-    arrival = std::make_shared<Exponential>(seed, arrival_rate);
-
-    service = std::make_shared<Exponential>(seed, service_rate);
-  }
+      : arrival{seed, arrival_rate}, service{seed, service_rate} {}
 
   [[nodiscard]] auto push(const T &value, const double now) -> EventQueue<T> & {
     assert(!pushing);
@@ -55,16 +52,24 @@ public:
 
     switch (signal) {
     case Signal::ARRIVAL:
-      now += (arrival_rate / arrival->next());
+      now += arrival.next();
       break;
     case Signal::DEPARTURE:
-      now += (service->next() / service_rate);
+      now += service.next();
       break;
     }
 
     queue.push(Event<T>(now, signal, to_push));
 
     pushing = false;
+  }
+
+  [[nodiscard]] auto top(void) const -> std::optional<Event<T>> {
+    if (empty()) {
+      return std::nullopt;
+    }
+
+    return queue.top();
   }
 
   [[nodiscard]] auto pop(void) -> std::optional<Event<T>> {
@@ -85,10 +90,8 @@ public:
 
 private:
   std::priority_queue<Event<T>> queue;
-  double arrival_rate;
-  double service_rate;
-  std::shared_ptr<Distribution> arrival;
-  std::shared_ptr<Distribution> service;
+  Exponential arrival;
+  Exponential service;
   double time;
   T to_push;
   bool pushing{false};
