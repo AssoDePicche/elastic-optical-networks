@@ -14,7 +14,7 @@ struct Settings {
   Seed seed;
   double arrival_rate;
   double service_rate;
-  std::size_t calls;
+  double time_units;
   std::size_t channels;
 
   [[nodiscard]] static auto from(const std::vector<std::string> &)

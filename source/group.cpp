@@ -77,7 +77,7 @@ auto Report::from(const Group &group, const Settings &settings) -> Report {
 
   report.channels = settings.channels;
 
-  report.calls = settings.calls;
+  report.calls = group.size();
 
   report.arrival_rate = settings.arrival_rate;
 

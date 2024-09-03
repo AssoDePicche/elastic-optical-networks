@@ -30,6 +30,8 @@ auto main(const int argc, const char **argv) -> int {
 }
 
 auto simulation(Settings &settings) -> std::string {
+  auto active_calls{0u};
+
   auto hashmap{make_hashmap(settings.graph, settings.channels)};
 
   EventQueue<Connection> queue{settings.arrival_rate, settings.service_rate,
@@ -41,21 +43,23 @@ auto simulation(Settings &settings) -> std::string {
 
   timer.start();
 
-  double simulation_time{};
+  auto time{0.0};
 
-  queue.push(Connection{settings.graph.random_path(), group.next()}, 0.0)
+  queue.push(Connection{settings.graph.random_path(), group.next()}, time)
       .of_type(Signal::ARRIVAL);
 
-  while (group.size() < settings.calls) {
+  while (queue.top().value().time <= settings.time_units) {
     const auto top{queue.pop()};
 
     auto [now, signal, connection] = top.value();
 
-    simulation_time = now;
+    time = now;
 
     INFO("Now: " + std::to_string(now));
 
     if (signal == Signal::DEPARTURE) {
+      --active_calls;
+
       INFO("Request for " + std::to_string(connection.slots) +
            " slots departing");
 
@@ -73,14 +77,10 @@ auto simulation(Settings &settings) -> std::string {
       continue;
     }
 
-    assert(connection.slots != 0);
+    if (active_calls < settings.channels &&
+        make_connection(connection, hashmap, settings.spectrum_allocator)) {
+      ++active_calls;
 
-    if (!make_connection(connection, hashmap, settings.spectrum_allocator)) {
-      group.count_blocking(connection.slots);
-
-      INFO("Blocking request for " + std::to_string(connection.slots) +
-           " slots");
-    } else {
       queue.push(connection, now).of_type(Signal::DEPARTURE);
 
       INFO("Accept request for " + std::to_string(connection.slots) + " slots");
@@ -93,6 +93,12 @@ auto simulation(Settings &settings) -> std::string {
         INFO("A (u): " + std::to_string(hashmap[key].available()) +
              " F (%): " + std::to_string(hashmap[key].fragmentation()));
       }
+
+    } else {
+      INFO("Blocking request for " + std::to_string(connection.slots) +
+           " slots");
+
+      group.count_blocking(connection.slots);
     }
 
     queue.push(Connection{settings.graph.random_path(), group.next()}, now)
@@ -106,7 +112,7 @@ auto simulation(Settings &settings) -> std::string {
   str.append("Execution time: " +
              std::to_string(timer.elapsed<std::chrono::seconds>()) + "s\n");
 
-  str.append("Simulation time: " + std::to_string(simulation_time) + "\n");
+  str.append("Simulation time: " + std::to_string(time) + "\n");
 
   str.append(Report::from(group, settings).to_string() + "\n");
 

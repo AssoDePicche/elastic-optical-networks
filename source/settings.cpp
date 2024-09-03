@@ -9,8 +9,8 @@
 auto Settings::from(const std::vector<std::string> &argv)
     -> std::optional<Settings> {
   const std::set<std::string> args{
-      "--calls",    "--channels",           "--service-rate", "--arrival-rate",
-      "--topology", "--spectrum-allocator", "--seed"};
+      "--channels",           "--service-rate", "--arrival-rate", "--topology",
+      "--spectrum-allocator", "--seed",         "--time-units"};
 
   if (argv.size() < args.size()) {
     std::cerr << "You must pass all the arguments:" << std::endl;
@@ -44,7 +44,7 @@ auto Settings::from(const std::vector<std::string> &argv)
 
   settings.channels = str_to_size_t(parser.parse("--channels"));
 
-  settings.calls = str_to_size_t(parser.parse("--calls"));
+  settings.time_units = str_to_double(parser.parse("--time-units"));
 
   settings.arrival_rate = str_to_double(parser.parse("--arrival-rate"));
 
