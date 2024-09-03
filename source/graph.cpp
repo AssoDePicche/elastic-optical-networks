@@ -323,6 +323,24 @@ auto Graph::random_path(void) noexcept -> Path {
   return path;
 }
 
+auto Graph::paths(void) noexcept -> std::vector<Path> {
+  std::vector<Path> paths{};
+
+  for (auto source{0u}; source < size(); ++source) {
+    for (const auto &[destination, weight] : adjacency_list.at(source)) {
+      const auto path{dijkstra(source, destination)};
+
+      if (path.empty()) {
+        continue;
+      }
+
+      paths.push_back(path);
+    }
+  }
+
+  return paths;
+}
+
 auto Graph::at(const Vertex source, const Vertex destination) const -> Weight {
   for (const auto &[vertex, weight] : adjacency_list.at(source)) {
     if (vertex == destination) {
