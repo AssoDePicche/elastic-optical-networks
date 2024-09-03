@@ -55,17 +55,17 @@ Run the binary created in the [Installation section](#installation) with the arg
 
 You must pass the following arguments for the simulation:
 - `--arrival-rate`: the call arrival rate per unit of time
-- `--calls`: the number of calls
 - `--channels`: the number of resources available per link
 - `--seed`: the seed number for random processes
 - `--service-rate`: the service rate per unit of time
 - `--spectrum-allocator`: the [spectrum allocation algorithm](#features)
+- `--time-units`: the maximum time that should be simulated
 - `--topology`: the file with the number of nodes and the adjacency matrix of the network
 
 For example:
 
 ```bash
-./build/source/App --calls 1000000 --seed 227953 --channels 10 --service-rate 0.133 --arrival-rate 1 --topology topology.txt --spectrum-allocator first-fit
+./build/source/App --time-units 100000 --seed 227953 --channels 10 --service-rate 0.133 --arrival-rate 1 --topology topology.txt --spectrum-allocator first-fit
 ```
 
 With the topology.txt file as follows:
@@ -79,23 +79,20 @@ With the topology.txt file as follows:
 Output:
 
 ```txt
-Seed: 227953
-Execution time: 209s
-Simulation time: 15611278.924476
+Execution time: 44s
+Simulation time: 99999.888274
+Seed: 0
 Channels (C): 10
-Calls (n): 1000000
+Calls (n): 100202
 Arrival rate (λ): 1.000000
 Service rate (μ): 0.133000
 Traffic Intensity (ρ): 7.518797
-Grade of Service (ε): 0.312025
-Busy Channels (1-ε): 5.172744
-Occupancy ((1-ε)/C): 0.517274
-Type 3
-Ratio: 0.500351
-BP(ε): 0.077240
-Type 7
-Ratio: 0.499649
-BP(ε): 0.234785
+Grade of Service (ε): 0.100966
+Busy Channels (1-ε): 0.899034
+Occupancy ((1-ε)/C): 0.089903
+Type 1
+Ratio: 1.000000
+BP(ε): 0.100966
 ```
 
 ## Contributing
