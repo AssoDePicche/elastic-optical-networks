@@ -55,6 +55,20 @@ auto simulation(Settings &settings) -> std::string {
     return (fragmentation / paths.size());
   };
 
+  const auto state = [&](const Connection &c, const bool blocked) {
+    auto a{0u};
+
+    const auto k{path_keys(c.path)};
+
+    for (const auto &key : k) {
+      a += hashmap[key].smallest_partition();
+    }
+
+    std::cout << (c.slots == 1 ? 0 : 1) << ',' << blocked << ',' << c.slots
+              << ',' << (static_cast<double>(a) / k.size()) << ','
+              << network_fragmentation() << '\n';
+  };
+
   auto total_fragmentation{0.0};
 
   Timer timer;
@@ -107,6 +121,8 @@ auto simulation(Settings &settings) -> std::string {
 
       INFO("Accept request for " + std::to_string(connection.slots) + " slots");
 
+      state(connection, true);
+
       const auto keys{path_keys(connection.path)};
 
       for (const auto &key : keys) {
@@ -117,6 +133,8 @@ auto simulation(Settings &settings) -> std::string {
       }
 
     } else {
+      state(connection, false);
+
       INFO("Blocking request for " + std::to_string(connection.slots) +
            " slots");
 
