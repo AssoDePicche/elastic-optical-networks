@@ -32,12 +32,30 @@ auto main(const int argc, const char **argv) -> int {
 auto simulation(Settings &settings) -> std::string {
   auto active_calls{0u};
 
+  auto iterations{0u};
+
   auto hashmap{make_hashmap(settings.graph, settings.channels)};
 
   EventQueue<Connection> queue{settings.arrival_rate, settings.service_rate,
                                settings.seed};
 
   Group group{settings.seed, {100.0}, {1}};
+
+  const auto network_fragmentation = [&](void) {
+    const auto paths{settings.graph.paths()};
+
+    auto fragmentation{0.0};
+
+    for (const auto &path : paths) {
+      for (const auto &key : path_keys(path)) {
+        fragmentation += hashmap[key].fragmentation();
+      }
+    }
+
+    return (fragmentation / paths.size());
+  };
+
+  auto total_fragmentation{0.0};
 
   Timer timer;
 
@@ -49,6 +67,10 @@ auto simulation(Settings &settings) -> std::string {
       .of_type(Signal::ARRIVAL);
 
   while (queue.top().value().time <= settings.time_units) {
+    ++iterations;
+
+    total_fragmentation += network_fragmentation();
+
     const auto top{queue.pop()};
 
     auto [now, signal, connection] = top.value();
@@ -115,6 +137,9 @@ auto simulation(Settings &settings) -> std::string {
   str.append("Simulation time: " + std::to_string(time) + "\n");
 
   str.append(Report::from(group, settings).to_string() + "\n");
+
+  str.append("Mean fragmentation: " +
+             std::to_string(total_fragmentation / iterations) + "\n");
 
   return str;
 }
