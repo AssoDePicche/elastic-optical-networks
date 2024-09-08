@@ -11,6 +11,12 @@
 
 #include "distribution.h"
 
+Route::Route(const Path &path, const Cost cost) : path{path}, cost{cost} {}
+
+auto Route::operator>(const Route &route) const -> bool {
+  return cost > route.cost;
+}
+
 Graph::Graph(const std::size_t vertices) {
   for (auto vertex{0u}; vertex < vertices; ++vertex) {
     add_vertex(vertex);
@@ -239,7 +245,7 @@ auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
   queue.emplace(costs[source], std::make_pair(edge_hops[source], source));
 
   while (!queue.empty()) {
-    const auto current_COST = queue.top().first;
+    const auto current_cost = queue.top().first;
 
     const auto hops = queue.top().second.first;
 
@@ -251,18 +257,18 @@ auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
       break;
     }
 
-    if (current_COST > costs[vertex]) {
+    if (current_cost > costs[vertex]) {
       continue;
     }
 
-    if (current_COST == costs[vertex] && hops > edge_hops[vertex]) {
+    if (current_cost == costs[vertex] && hops > edge_hops[vertex]) {
       continue;
     }
 
     for (const auto &[adjacent, cost] : adjacency_list[vertex]) {
-      const auto new_COST = current_COST + cost;
+      const auto new_cost = current_cost + cost;
 
-      if (new_COST > costs[adjacent]) {
+      if (new_cost > costs[adjacent]) {
         continue;
       }
 
@@ -270,17 +276,17 @@ auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
 
       const auto less_hops = (new_hops < edge_hops[adjacent]);
 
-      if (new_COST == costs[adjacent] && !less_hops) {
+      if (new_cost == costs[adjacent] && !less_hops) {
         continue;
       }
 
-      costs[adjacent] = new_COST;
+      costs[adjacent] = new_cost;
 
       edge_hops[adjacent] = new_hops;
 
       predecessors[adjacent] = vertex;
 
-      queue.emplace(new_COST, std::make_pair(new_hops, adjacent));
+      queue.emplace(new_cost, std::make_pair(new_hops, adjacent));
     }
   }
 
