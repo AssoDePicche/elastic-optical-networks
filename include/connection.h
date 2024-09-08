@@ -9,7 +9,7 @@
 #include "spectrum.h"
 
 struct Connection {
-  Path path{};
+  Path path;
   std::size_t slots{};
   std::size_t start{};
   std::size_t end{};

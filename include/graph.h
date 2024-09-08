@@ -10,17 +10,26 @@
 
 using Vertex = std::size_t;
 
-using Path = std::vector<Vertex>;
-
-constexpr auto __MAX_HOPS__ = std::numeric_limits<int>::max();
-
-constexpr auto __MIN_HOPS__ = static_cast<int>(0);
-
 using Cost = double;
 
 constexpr auto __MAX_COST__ = std::numeric_limits<Cost>::max();
 
 constexpr auto __MIN_COST__ = static_cast<Cost>(0);
+
+struct Path {
+  std::vector<Vertex> vertices{};
+  Cost cost{};
+
+  Path(void) = default;
+
+  Path(const std::vector<Vertex> &, const Cost);
+
+  [[nodiscard]] auto operator>(const Path &) const -> bool;
+};
+
+constexpr auto __MAX_HOPS__ = std::numeric_limits<int>::max();
+
+constexpr auto __MIN_HOPS__ = static_cast<int>(0);
 
 struct Edge final {
   Vertex destination;

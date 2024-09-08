@@ -11,10 +11,11 @@
 
 #include "distribution.h"
 
-Route::Route(const Path &path, const Cost cost) : path{path}, cost{cost} {}
+Path::Path(const std::vector<Vertex> &vertices, const Cost cost)
+    : vertices{vertices}, cost{cost} {}
 
-auto Route::operator>(const Route &route) const -> bool {
-  return cost > route.cost;
+auto Path::operator>(const Path &path) const -> bool {
+  return cost > path.cost;
 }
 
 Graph::Graph(const std::size_t vertices) {
@@ -88,7 +89,7 @@ auto Graph::to_string(void) const noexcept -> std::string {
 auto Graph::breadth_first_search(const Vertex source,
                                  const Vertex destination) noexcept -> Path {
   if (source == destination) {
-    return {};
+    return Path({}, __MAX_COST__);
   }
 
   std::unordered_map<Vertex, bool> visited;
@@ -129,29 +130,29 @@ auto Graph::breadth_first_search(const Vertex source,
     }
   }
 
-  Path path;
+  std::vector<Vertex> vertices{};
 
   auto vertex = static_cast<int>(destination);
 
   while (vertex != -1) {
-    path.push_back(vertex);
+    vertices.push_back(vertex);
 
     vertex = predecessors[vertex];
   }
 
-  std::reverse(path.begin(), path.end());
+  std::reverse(vertices.begin(), vertices.end());
 
-  if (path.front() != source) {
-    path.clear();
+  if (vertices.front() != source) {
+    vertices.clear();
   }
 
-  return path;
+  return Path(vertices, __MAX_COST__);
 }
 
 auto Graph::depth_first_search(const Vertex source,
                                const Vertex destination) noexcept -> Path {
   if (source == destination) {
-    return {};
+    return Path({}, __MAX_COST__);
   }
 
   std::unordered_map<Vertex, bool> visited;
@@ -194,29 +195,29 @@ auto Graph::depth_first_search(const Vertex source,
     }
   }
 
-  Path path;
+  std::vector<Vertex> vertices{};
 
   auto vertex = static_cast<int>(destination);
 
   while (vertex != -1) {
-    path.push_back(vertex);
+    vertices.push_back(vertex);
 
     vertex = predecessors[vertex];
   }
 
-  std::reverse(path.begin(), path.end());
+  std::reverse(vertices.begin(), vertices.end());
 
-  if (path.front() != source) {
-    path.clear();
+  if (vertices.front() != source) {
+    vertices.clear();
   }
 
-  return path;
+  return Path(vertices, __MAX_COST__);
 }
 
 auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
     -> Path {
   if (source == destination) {
-    return {};
+    return Path({}, __MAX_COST__);
   }
 
   std::unordered_map<int, Cost> costs;
@@ -266,15 +267,15 @@ auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
     }
 
     for (const auto &[adjacent, cost] : adjacency_list[vertex]) {
-      const auto new_cost = current_cost + cost;
+      const auto new_cost{current_cost + cost};
 
       if (new_cost > costs[adjacent]) {
         continue;
       }
 
-      const auto new_hops = hops + 1;
+      const auto new_hops{hops + 1};
 
-      const auto less_hops = (new_hops < edge_hops[adjacent]);
+      const auto less_hops{new_hops < edge_hops[adjacent]};
 
       if (new_cost == costs[adjacent] && !less_hops) {
         continue;
@@ -290,23 +291,25 @@ auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
     }
   }
 
-  Path path;
+  std::vector<Vertex> vertices{};
 
   auto current = static_cast<int>(destination);
 
   while (current != -1) {
-    path.push_back(static_cast<std::size_t>(current));
+    vertices.push_back(static_cast<std::size_t>(current));
 
     current = predecessors[current];
   }
 
-  std::reverse(path.begin(), path.end());
+  std::reverse(vertices.begin(), vertices.end());
 
-  if (path.front() != source) {
-    path.clear();
+  if (vertices.front() != source) {
+    vertices.clear();
   }
 
-  return path;
+  const Cost cost = __MAX_COST__;
+
+  return Path(vertices, cost);
 }
 
 auto Graph::random_path(void) noexcept -> Path {
@@ -318,15 +321,15 @@ auto Graph::random_path(void) noexcept -> Path {
 
   auto destination{static_cast<std::size_t>(distribution.next())};
 
-  Path path{};
-
-  while (path.empty()) {
+  while (true) {
     destination = static_cast<std::size_t>(distribution.next());
 
-    path = dijkstra(source, destination);
-  }
+    const auto path{dijkstra(source, destination)};
 
-  return path;
+    if (!path.vertices.empty()) {
+      return path;
+    }
+  }
 }
 
 auto Graph::paths(void) noexcept -> std::vector<Path> {
@@ -336,7 +339,7 @@ auto Graph::paths(void) noexcept -> std::vector<Path> {
     for (const auto &[destination, cost] : adjacency_list.at(source)) {
       const auto path{dijkstra(source, destination)};
 
-      if (path.empty()) {
+      if (path.vertices.empty()) {
         continue;
       }
 
