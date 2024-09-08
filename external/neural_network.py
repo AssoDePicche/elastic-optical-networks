@@ -12,7 +12,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 3:
         print('You must pass the .csv filename.')
 
         exit(1)
@@ -20,10 +20,6 @@ if __name__ == '__main__':
     features = numpy.genfromtxt(sys.argv[1], delimiter=',')
 
     expected = numpy.genfromtxt(sys.argv[2], delimiter=',')
-
-    epochs = int(sys.argv[3])
-
-    batch_size = int(sys.argv[4])
 
     scaler = StandardScaler()
 
@@ -33,27 +29,24 @@ if __name__ == '__main__':
 
     x_val = scaler.fit_transform(x_val)
 
-    model = Sequential()
-
-    model.add(Dense(64, input_dim=4, activation='relu'))
-
-    model.add(Dropout(0.3))
-
-    model.add(Dense(32, activation='relu'))
-
-    model.add(Dense(16, activation='relu'))
-
-    model.add(Dense(8, activation='relu'))
-
-    model.add(Dense(1, activation='sigmoid'))
+    model = Sequential([
+        Dense(64, input_dim=4, activation='relu'),
+        Dropout(0.4),
+        Dense(32, activation='relu'),
+        Dense(16, activation='relu'),
+        Dense(8, activation='relu'),
+        Dense(1, activation='sigmoid')
+    ])
 
     optimizer = SGD(learning_rate=0.01, momentum=0.9)
 
-    model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy', 'auc'])
 
-    early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+    callbacks = [
+        EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+    ]
 
-    history = model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=epochs, batch_size=batch_size, callbacks=[early_stopping])
+    history = model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=50, batch_size=2, callbacks=callbacks)
 
     probabilities = model.predict(x_val).flatten()
 
