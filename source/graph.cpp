@@ -42,10 +42,10 @@ auto Graph::from(const std::string &filename) noexcept -> std::optional<Graph> {
     for (auto destination{0u}; destination < size; ++destination) {
       std::getline(stream, buffer, ' ');
 
-      const auto weight = static_cast<Weight>(atof(buffer.c_str()));
+      const auto cost = static_cast<Cost>(atof(buffer.c_str()));
 
-      if (weight != __MIN_WEIGHT__) {
-        graph.add_edge(source, destination, weight);
+      if (cost != __MIN_COST__) {
+        graph.add_edge(source, destination, cost);
       }
     }
 
@@ -60,11 +60,11 @@ auto Graph::size(void) const noexcept -> std::size_t { return vertices.size(); }
 auto Graph::to_string(void) const noexcept -> std::string {
   std::string buffer{};
 
-  auto matrix = std::vector(size(), std::vector(size(), __MIN_WEIGHT__));
+  auto matrix = std::vector(size(), std::vector(size(), __MIN_COST__));
 
   for (const auto &[vertex, edges] : adjacency_list) {
-    for (auto &[adjacent, weight] : edges) {
-      matrix[vertex][adjacent] = weight;
+    for (auto &[adjacent, cost] : edges) {
+      matrix[vertex][adjacent] = cost;
     }
   }
 
@@ -213,33 +213,33 @@ auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
     return {};
   }
 
-  std::unordered_map<int, Weight> weights;
+  std::unordered_map<int, Cost> costs;
 
   std::unordered_map<int, int> predecessors;
 
   std::unordered_map<int, int> edge_hops;
 
-  // {weight, {hops, vertex}}
-  using PathInfo = std::pair<Weight, std::pair<int, int>>;
+  // {cost, {hops, vertex}}
+  using PathInfo = std::pair<Cost, std::pair<int, int>>;
 
   std::priority_queue<PathInfo, std::vector<PathInfo>, std::greater<>> queue;
 
   for (const auto &[id, name] : vertices) {
-    weights[id] = __MAX_WEIGHT__;
+    costs[id] = __MAX_COST__;
 
     predecessors[id] = -1;
 
     edge_hops[id] = __MAX_HOPS__;
   }
 
-  weights[source] = __MIN_WEIGHT__;
+  costs[source] = __MIN_COST__;
 
   edge_hops[source] = __MIN_HOPS__;
 
-  queue.emplace(weights[source], std::make_pair(edge_hops[source], source));
+  queue.emplace(costs[source], std::make_pair(edge_hops[source], source));
 
   while (!queue.empty()) {
-    const auto current_weight = queue.top().first;
+    const auto current_COST = queue.top().first;
 
     const auto hops = queue.top().second.first;
 
@@ -251,18 +251,18 @@ auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
       break;
     }
 
-    if (current_weight > weights[vertex]) {
+    if (current_COST > costs[vertex]) {
       continue;
     }
 
-    if (current_weight == weights[vertex] && hops > edge_hops[vertex]) {
+    if (current_COST == costs[vertex] && hops > edge_hops[vertex]) {
       continue;
     }
 
-    for (const auto &[adjacent, weight] : adjacency_list[vertex]) {
-      const auto new_weight = current_weight + weight;
+    for (const auto &[adjacent, cost] : adjacency_list[vertex]) {
+      const auto new_COST = current_COST + cost;
 
-      if (new_weight > weights[adjacent]) {
+      if (new_COST > costs[adjacent]) {
         continue;
       }
 
@@ -270,17 +270,17 @@ auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
 
       const auto less_hops = (new_hops < edge_hops[adjacent]);
 
-      if (new_weight == weights[adjacent] && !less_hops) {
+      if (new_COST == costs[adjacent] && !less_hops) {
         continue;
       }
 
-      weights[adjacent] = new_weight;
+      costs[adjacent] = new_COST;
 
       edge_hops[adjacent] = new_hops;
 
       predecessors[adjacent] = vertex;
 
-      queue.emplace(new_weight, std::make_pair(new_hops, adjacent));
+      queue.emplace(new_COST, std::make_pair(new_hops, adjacent));
     }
   }
 
@@ -327,7 +327,7 @@ auto Graph::paths(void) noexcept -> std::vector<Path> {
   std::vector<Path> paths{};
 
   for (auto source{0u}; source < size(); ++source) {
-    for (const auto &[destination, weight] : adjacency_list.at(source)) {
+    for (const auto &[destination, cost] : adjacency_list.at(source)) {
       const auto path{dijkstra(source, destination)};
 
       if (path.empty()) {
@@ -341,14 +341,19 @@ auto Graph::paths(void) noexcept -> std::vector<Path> {
   return paths;
 }
 
-auto Graph::at(const Vertex source, const Vertex destination) const -> Weight {
-  for (const auto &[vertex, weight] : adjacency_list.at(source)) {
+auto Graph::at(const Vertex source, const Vertex destination) const -> Cost {
+  for (const auto &[vertex, cost] : adjacency_list.at(source)) {
     if (vertex == destination) {
-      return weight;
+      return cost;
     }
   }
 
-  return __MIN_WEIGHT__;
+  return __MIN_COST__;
+}
+
+auto Graph::adjacent(const Vertex source, const Vertex destination) const
+    -> bool {
+  return at(source, destination) != __MIN_COST__;
 }
 
 auto Graph::add_vertex(const Vertex vertex) -> void {
@@ -356,8 +361,8 @@ auto Graph::add_vertex(const Vertex vertex) -> void {
 }
 
 auto Graph::add_edge(const Vertex source, const Vertex destination,
-                     const Weight weight) -> void {
-  adjacency_list[source].emplace_back(destination, weight);
+                     const Cost cost) -> void {
+  adjacency_list[source].emplace_back(destination, cost);
 }
 
 auto operator<<(std::ostream &stream, const Graph &graph) -> std::ostream & {

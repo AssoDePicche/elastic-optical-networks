@@ -91,11 +91,13 @@ auto make_hashmap(const Graph &graph, const std::size_t size)
 
   for (auto source{0u}; source < graph.size(); ++source) {
     for (auto destination{0u}; destination < graph.size(); ++destination) {
-      if (graph.at(source, destination) != __MIN_WEIGHT__) {
-        const auto key{make_key(source, destination)};
-
-        hashmap[key] = Spectrum(size);
+      if (!graph.adjacent(source, destination)) {
+        continue;
       }
+
+      const auto key{make_key(source, destination)};
+
+      hashmap[key] = Spectrum(size);
     }
   }
 

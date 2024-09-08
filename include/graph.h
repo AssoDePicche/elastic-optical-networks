@@ -16,15 +16,15 @@ constexpr auto __MAX_HOPS__ = std::numeric_limits<int>::max();
 
 constexpr auto __MIN_HOPS__ = static_cast<int>(0);
 
-using Weight = double;
+using Cost = double;
 
-constexpr auto __MAX_WEIGHT__ = std::numeric_limits<Weight>::max();
+constexpr auto __MAX_COST__ = std::numeric_limits<Cost>::max();
 
-constexpr auto __MIN_WEIGHT__ = static_cast<Weight>(0);
+constexpr auto __MIN_COST__ = static_cast<Cost>(0);
 
 struct Edge final {
   Vertex destination;
-  Weight weight;
+  Cost cost;
 };
 
 class Graph final {
@@ -52,11 +52,13 @@ public:
 
   [[nodiscard]] auto paths(void) noexcept -> std::vector<Path>;
 
-  [[nodiscard]] auto at(const Vertex, const Vertex) const -> Weight;
+  [[nodiscard]] auto at(const Vertex, const Vertex) const -> Cost;
+
+  [[nodiscard]] auto adjacent(const Vertex, const Vertex) const -> bool;
 
   auto add_vertex(const Vertex) -> void;
 
-  auto add_edge(const Vertex, const Vertex, const Weight) -> void;
+  auto add_edge(const Vertex, const Vertex, const Cost) -> void;
 
 private:
   std::unordered_map<std::size_t, Vertex> vertices;
