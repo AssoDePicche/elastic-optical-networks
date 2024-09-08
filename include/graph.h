@@ -57,6 +57,10 @@ public:
 
   [[nodiscard]] auto dijkstra(const Vertex, const Vertex) noexcept -> Path;
 
+  [[nodiscard]] auto k_shortest_path(const Vertex, const Vertex,
+                                     const unsigned) noexcept
+      -> std::vector<Path>;
+
   [[nodiscard]] auto random_path(void) noexcept -> Path;
 
   [[nodiscard]] auto paths(void) noexcept -> std::vector<Path>;

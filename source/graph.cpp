@@ -312,6 +312,55 @@ auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
   return Path(vertices, cost);
 }
 
+auto Graph::k_shortest_path(const Vertex source, const Vertex destination,
+                            const unsigned k) noexcept -> std::vector<Path> {
+  if (source == destination) {
+    return {};
+  }
+
+  std::vector<Path> k_paths{};
+
+  struct Binding {
+    Vertex vertex;
+    Path path;
+
+    Binding(const Vertex vertex, const Path &path)
+        : vertex{vertex}, path{path} {}
+
+    auto operator>(const Binding &binding) const -> bool {
+      return path.cost > binding.path.cost;
+    }
+  };
+
+  std::priority_queue<Binding, std::vector<Binding>, std::greater<Binding>>
+      queue;
+
+  queue.push(Binding(source, Path({source}, __MIN_COST__)));
+
+  while (!queue.empty() && k_paths.size() != k) {
+    auto [vertex, path] = queue.top();
+
+    queue.pop();
+
+    if (vertex == destination) {
+      k_paths.push_back(path);
+
+      continue;
+    }
+
+    for (const auto &edge : adjacency_list[vertex]) {
+      auto new_path{path};
+
+      new_path.vertices.push_back(edge.destination);
+
+      queue.push(Binding(edge.destination,
+                         Path(new_path.vertices, path.cost + edge.cost)));
+    }
+  }
+
+  return k_paths;
+}
+
 auto Graph::random_path(void) noexcept -> Path {
   std::random_device random_device;
 
