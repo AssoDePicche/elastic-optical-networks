@@ -12,7 +12,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+    if len(sys.argv) != 4:
         print('You must pass the .csv filename.')
 
         exit(1)
@@ -20,6 +20,10 @@ if __name__ == '__main__':
     features = numpy.genfromtxt(sys.argv[1], delimiter=',')
 
     expected = numpy.genfromtxt(sys.argv[2], delimiter=',')
+
+    epochs = int(sys.argv[3])
+
+    batch_size = int(sys.argv[4])
 
     scaler = StandardScaler()
 
@@ -49,7 +53,7 @@ if __name__ == '__main__':
 
     early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
 
-    history = model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=10, batch_size=2, callbacks=[early_stopping])
+    history = model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=epochs, batch_size=batch_size, callbacks=[early_stopping])
 
     probabilities = model.predict(x_val).flatten()
 
