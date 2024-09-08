@@ -74,12 +74,12 @@ auto make_key(std::size_t x, std::size_t y) -> std::size_t {
 }
 
 auto path_keys(const Path &path) -> std::vector<std::size_t> {
-  assert(!path.empty());
+  assert(!path.vertices.empty());
 
   std::vector<std::size_t> keys;
 
-  for (auto index{1u}; index < path.size(); ++index) {
-    keys.push_back(make_key(path[index - 1], path[index]));
+  for (auto index{1u}; index < path.vertices.size(); ++index) {
+    keys.push_back(make_key(path.vertices[index - 1], path.vertices[index]));
   }
 
   return keys;
