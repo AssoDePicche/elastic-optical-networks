@@ -1,4 +1,5 @@
 #include <cassert>
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -39,7 +40,7 @@ auto simulation(Settings &settings) -> std::string {
   EventQueue<Connection> queue{settings.arrival_rate, settings.service_rate,
                                settings.seed};
 
-  Group group{settings.seed, {100.0}, {1}};
+  Group group{settings.seed, {50.0, 50.0}, {3, 5}};
 
   const auto network_fragmentation = [&](void) {
     const auto paths{settings.graph.paths()};
@@ -55,6 +56,10 @@ auto simulation(Settings &settings) -> std::string {
     return (fragmentation / paths.size());
   };
 
+  std::vector<std::string> features{};
+
+  std::vector<bool> labels{};
+
   const auto state = [&](const Connection &c, const bool blocked) {
     auto a{0u};
 
@@ -64,9 +69,20 @@ auto simulation(Settings &settings) -> std::string {
       a += hashmap[key].smallest_partition();
     }
 
-    std::cout << (c.slots == 1 ? 0 : 1) << ',' << blocked << ',' << c.slots
-              << ',' << (static_cast<double>(a) / k.size()) << ','
-              << network_fragmentation() << '\n';
+    std::string str{""};
+
+    str.append(std::to_string(c.slots == 3 ? 0 : 1) + ",");
+
+    str.append(std::to_string(c.slots) + ",");
+
+    str.append(std::to_string(static_cast<double>(a) / k.size()) + ",");
+
+    // TODO: get fragmentation from connection path
+    str.append(std::to_string(network_fragmentation()));
+
+    features.push_back(str);
+
+    labels.push_back(blocked);
   };
 
   auto total_fragmentation{0.0};
@@ -158,6 +174,22 @@ auto simulation(Settings &settings) -> std::string {
 
   str.append("Mean fragmentation: " +
              std::to_string(total_fragmentation / iterations) + "\n");
+
+  std::ofstream trainingSet{"training-set.csv"};
+
+  for (const auto &row : features) {
+    trainingSet << row << '\n';
+  }
+
+  trainingSet.close();
+
+  std::ofstream labelSet{"label-set.csv"};
+
+  for (const auto &row : labels) {
+    labelSet << row << '\n';
+  }
+
+  labelSet.close();
 
   return str;
 }
