@@ -24,6 +24,10 @@ struct Path {
 
   Path(const std::vector<Vertex> &, const Cost);
 
+  [[nodiscard]] auto source(void) const -> Vertex;
+
+  [[nodiscard]] auto destination(void) const -> Vertex;
+
   [[nodiscard]] auto operator>(const Path &) const -> bool;
 };
 
@@ -62,6 +66,9 @@ public:
       -> std::vector<Path>;
 
   [[nodiscard]] auto random_path(void) noexcept -> Path;
+
+  [[nodiscard]] auto random_source_destination(void) noexcept
+      -> std::pair<Vertex, Vertex>;
 
   [[nodiscard]] auto paths(void) noexcept -> std::vector<Path>;
 

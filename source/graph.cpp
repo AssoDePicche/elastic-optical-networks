@@ -14,6 +14,10 @@
 Path::Path(const std::vector<Vertex> &vertices, const Cost cost)
     : vertices{vertices}, cost{cost} {}
 
+auto Path::source(void) const -> Vertex { return vertices.front(); }
+
+auto Path::destination(void) const -> Vertex { return vertices.back(); }
+
 auto Path::operator>(const Path &path) const -> bool {
   return cost > path.cost;
 }
@@ -379,6 +383,13 @@ auto Graph::random_path(void) noexcept -> Path {
       return path;
     }
   }
+}
+
+auto Graph::random_source_destination(void) noexcept
+    -> std::pair<Vertex, Vertex> {
+  const auto path{random_path()};
+
+  return std::make_pair(path.source(), path.destination());
 }
 
 auto Graph::paths(void) noexcept -> std::vector<Path> {
