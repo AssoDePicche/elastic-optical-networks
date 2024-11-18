@@ -56,35 +56,6 @@ auto simulation(Settings &settings) -> std::string {
     return (fragmentation / paths.size());
   };
 
-  std::vector<std::string> features{};
-
-  std::vector<bool> labels{};
-
-  const auto state = [&](const Connection &c, const bool blocked) {
-    auto a{0u};
-
-    const auto k{path_keys(c.path)};
-
-    for (const auto &key : k) {
-      a += hashmap[key].smallest_partition();
-    }
-
-    std::string str{""};
-
-    str.append(std::to_string(c.slots == 3 ? 0 : 1) + ",");
-
-    str.append(std::to_string(c.slots) + ",");
-
-    str.append(std::to_string(static_cast<double>(a) / k.size()) + ",");
-
-    // TODO: get fragmentation from connection path
-    str.append(std::to_string(network_fragmentation()));
-
-    features.push_back(str);
-
-    labels.push_back(blocked);
-  };
-
   auto total_fragmentation{0.0};
 
   Timer timer;
@@ -137,8 +108,6 @@ auto simulation(Settings &settings) -> std::string {
 
       INFO("Accept request for " + std::to_string(connection.slots) + " slots");
 
-      state(connection, true);
-
       const auto keys{path_keys(connection.path)};
 
       for (const auto &key : keys) {
@@ -149,8 +118,6 @@ auto simulation(Settings &settings) -> std::string {
       }
 
     } else {
-      state(connection, false);
-
       INFO("Blocking request for " + std::to_string(connection.slots) +
            " slots");
 
@@ -174,22 +141,6 @@ auto simulation(Settings &settings) -> std::string {
 
   str.append("Mean fragmentation: " +
              std::to_string(total_fragmentation / iterations) + "\n");
-
-  std::ofstream trainingSet{"training-set.csv"};
-
-  for (const auto &row : features) {
-    trainingSet << row << '\n';
-  }
-
-  trainingSet.close();
-
-  std::ofstream labelSet{"label-set.csv"};
-
-  for (const auto &row : labels) {
-    labelSet << row << '\n';
-  }
-
-  labelSet.close();
 
   return str;
 }
