@@ -11,6 +11,20 @@
 #include "settings.h"
 #include "timer.h"
 
+struct Snapshot {
+  float time;
+  int slots;
+  bool accepted;
+  float fragmentation;
+  float entropy;
+
+  Snapshot(float t, int slots, bool acc, float frag, float entr) : time{t}, slots{slots}, accepted{acc}, fragmentation{frag}, entropy{entr} {}
+
+  [[nodiscard]] auto str() const -> std::string {
+    return std::to_string(time) + ", " + std::to_string(slots) + ", " + (accepted ? "Accepted" : "Blocked")+ ", " + std::to_string(fragmentation) + ", " + std::to_string(entropy);
+  }
+};
+
 [[nodiscard]] auto mean(const std::vector<float>& X) -> float {
   auto sum = 0.0;
 
@@ -63,9 +77,7 @@ auto simulation(Settings &settings) -> std::string {
 
   Group group{settings.seed, {50.0, 50.0}, {3, 5}};
 
-  std::vector<float> fragmentation_states{};
-
-  std::vector<float> entropy_states{};
+  std::vector<Snapshot> snapshots{};
 
   const auto entropy = [&](void) {
     const auto paths{settings.graph.paths()};
@@ -119,10 +131,6 @@ auto simulation(Settings &settings) -> std::string {
       .of_type(Signal::ARRIVAL);
 
   while (queue.top().value().time <= settings.time_units) {
-    fragmentation_states.push_back(network_fragmentation());
-
-    entropy_states.push_back(entropy());
-
     const auto top{queue.pop()};
 
     auto [now, signal, connection] = top.value();
@@ -151,8 +159,11 @@ auto simulation(Settings &settings) -> std::string {
       continue;
     }
 
-    if (active_calls < settings.channels &&
-        make_connection(connection, hashmap, settings.spectrum_allocator)) {
+    const auto allocator = (connection.slots == 3) ? first_fit : last_fit;
+
+    auto accepted = false;
+
+    if (active_calls < settings.channels && make_connection(connection, hashmap, allocator)) {
       ++active_calls;
 
       queue.push(connection, now).of_type(Signal::DEPARTURE);
@@ -168,6 +179,8 @@ auto simulation(Settings &settings) -> std::string {
              " F (%): " + std::to_string(hashmap[key].fragmentation()));
       }
 
+      accepted = true;
+
     } else {
       INFO("Blocking request for " + std::to_string(connection.slots) +
            " slots");
@@ -175,11 +188,25 @@ auto simulation(Settings &settings) -> std::string {
       group.count_blocking(connection.slots);
     }
 
+    snapshots.push_back(Snapshot(now, connection.slots, accepted, network_fragmentation(), entropy()));
+
     queue.push(Connection{settings.graph.random_path(), group.next()}, now)
         .of_type(Signal::ARRIVAL);
   }
 
   timer.stop();
+
+  std::vector<float> fragmentation_states{};
+  
+  std::vector<float> entropy_states{};
+
+  for (const auto& snapshot : snapshots) {
+    std::cout << snapshot.str() << std::endl;
+
+    fragmentation_states.push_back(snapshot.fragmentation);
+
+    entropy_states.push_back(snapshot.entropy);
+  }
 
   std::string str{""};
 
