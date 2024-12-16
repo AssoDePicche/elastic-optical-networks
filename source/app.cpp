@@ -11,6 +11,28 @@
 #include "settings.h"
 #include "timer.h"
 
+[[nodiscard]] auto mean(const std::vector<float>& X) -> float {
+  auto sum = 0.0;
+
+  for (const auto& x : X) {
+    sum += x;
+  }
+
+  return (sum / X.size());
+}
+
+[[nodiscard]] auto stddev(const std::vector<float>& X) -> float {
+  auto variance = 0.0;
+
+  const auto x_mean = mean(X);
+
+  for (const auto& x : X) {
+    variance += ((x - x_mean) * (x - x_mean));
+  }
+
+  return std::sqrt((variance / X.size()));
+}
+
 [[nodiscard]] auto simulation(Settings &) -> std::string;
 
 auto main(const int argc, const char **argv) -> int {
@@ -34,14 +56,16 @@ auto main(const int argc, const char **argv) -> int {
 auto simulation(Settings &settings) -> std::string {
   auto active_calls{0u};
 
-  auto iterations{0u};
-
   auto hashmap{make_hashmap(settings.graph, settings.channels)};
 
   EventQueue<Connection> queue{settings.arrival_rate, settings.service_rate,
                                settings.seed};
 
   Group group{settings.seed, {50.0, 50.0}, {3, 5}};
+
+  std::vector<float> fragmentation_states{};
+
+  std::vector<float> entropy_states{};
 
   const auto entropy = [&](void) {
     const auto paths{settings.graph.paths()};
@@ -85,10 +109,6 @@ auto simulation(Settings &settings) -> std::string {
     return (fragmentation / paths.size());
   };
 
-  auto total_entropy{0.0};
-
-  auto total_fragmentation{0.0};
-
   Timer timer;
 
   timer.start();
@@ -99,11 +119,9 @@ auto simulation(Settings &settings) -> std::string {
       .of_type(Signal::ARRIVAL);
 
   while (queue.top().value().time <= settings.time_units) {
-    ++iterations;
+    fragmentation_states.push_back(network_fragmentation());
 
-    total_fragmentation += network_fragmentation();
-
-    total_entropy += entropy();
+    entropy_states.push_back(entropy());
 
     const auto top{queue.pop()};
 
@@ -172,10 +190,13 @@ auto simulation(Settings &settings) -> std::string {
 
   str.append(Report::from(group, settings).to_string() + "\n");
 
-  str.append("Mean fragmentation: " +
-             std::to_string(total_fragmentation / iterations) + "\n");
+  str.append("Mean fragmentation: " + std::to_string(mean(fragmentation_states)) + "\n");
 
-  str.append("Mean entropy: " + std::to_string(total_entropy / iterations) + "\n");
+  str.append("STDDEV fragmentation: " + std::to_string(stddev(fragmentation_states)) + "\n");
+
+  str.append("Mean entropy: " + std::to_string(mean(entropy_states)) + "\n");
+
+  str.append("STDDEV entropy: " + std::to_string(stddev(entropy_states)) + "\n");
 
   return str;
 }
