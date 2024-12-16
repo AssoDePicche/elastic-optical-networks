@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <cmath>
 
 #include "connection.h"
 #include "event_queue.h"
@@ -42,6 +43,34 @@ auto simulation(Settings &settings) -> std::string {
 
   Group group{settings.seed, {50.0, 50.0}, {3, 5}};
 
+  const auto entropy = [&](void) {
+    const auto paths{settings.graph.paths()};
+
+    auto free_slots = 0.0;
+
+    auto occupied_slots = 0.0;
+
+    for (const auto &path : paths) {
+      for (const auto &key : path_keys(path)) {
+        auto spectrum = hashmap[key];
+
+        free_slots += spectrum.available();
+
+        occupied_slots += spectrum.size() - spectrum.available();
+      }
+    }
+
+    if (free_slots == 0.0 || occupied_slots == 0.0) {
+      return 0.0;
+    }
+
+    free_slots /= settings.channels;
+
+    occupied_slots /= settings.channels;
+
+    return -(occupied_slots * std::log2(occupied_slots) + free_slots * std::log2(free_slots));
+  };
+
   const auto network_fragmentation = [&](void) {
     const auto paths{settings.graph.paths()};
 
@@ -55,6 +84,8 @@ auto simulation(Settings &settings) -> std::string {
 
     return (fragmentation / paths.size());
   };
+
+  auto total_entropy{0.0};
 
   auto total_fragmentation{0.0};
 
@@ -71,6 +102,8 @@ auto simulation(Settings &settings) -> std::string {
     ++iterations;
 
     total_fragmentation += network_fragmentation();
+
+    total_entropy += entropy();
 
     const auto top{queue.pop()};
 
@@ -141,6 +174,8 @@ auto simulation(Settings &settings) -> std::string {
 
   str.append("Mean fragmentation: " +
              std::to_string(total_fragmentation / iterations) + "\n");
+
+  str.append("Mean entropy: " + std::to_string(total_entropy / iterations) + "\n");
 
   return str;
 }
