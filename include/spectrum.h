@@ -6,7 +6,7 @@
 #include <vector>
 
 class Spectrum final {
-public:
+ public:
   Spectrum(void) = default;
 
   Spectrum(const std::size_t);
@@ -42,24 +42,28 @@ public:
 
   [[nodiscard]] auto at(const std::size_t) const -> bool;
 
-private:
+  [[nodiscard]] auto gaps(void) const -> unsigned;
+
+  [[nodiscard]] auto largest_gap(void) const -> unsigned;
+
+ private:
   std::vector<bool> slots;
 };
 
-[[nodiscard]] auto best_fit(const Spectrum &, const std::size_t)
-    -> std::optional<std::size_t>;
+[[nodiscard]] auto best_fit(const Spectrum &,
+                            const std::size_t) -> std::optional<std::size_t>;
 
-[[nodiscard]] auto first_fit(const Spectrum &, const std::size_t)
-    -> std::optional<std::size_t>;
+[[nodiscard]] auto first_fit(const Spectrum &,
+                             const std::size_t) -> std::optional<std::size_t>;
 
-[[nodiscard]] auto last_fit(const Spectrum &, const std::size_t)
-    -> std::optional<std::size_t>;
+[[nodiscard]] auto last_fit(const Spectrum &,
+                            const std::size_t) -> std::optional<std::size_t>;
 
-[[nodiscard]] auto random_fit(const Spectrum &, const std::size_t)
-    -> std::optional<std::size_t>;
+[[nodiscard]] auto random_fit(const Spectrum &,
+                              const std::size_t) -> std::optional<std::size_t>;
 
-[[nodiscard]] auto worst_fit(const Spectrum &, const std::size_t)
-    -> std::optional<std::size_t>;
+[[nodiscard]] auto worst_fit(const Spectrum &,
+                             const std::size_t) -> std::optional<std::size_t>;
 
 using SpectrumAllocator = std::function<std::optional<std::size_t>(
     const Spectrum &, const std::size_t)>;

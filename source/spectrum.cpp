@@ -10,8 +10,8 @@
 
 Spectrum::Spectrum(const std::size_t size) : slots(std::vector(size, false)) {}
 
-auto Spectrum::allocate(const std::size_t start, const std::size_t end)
-    -> void {
+auto Spectrum::allocate(const std::size_t start,
+                        const std::size_t end) -> void {
   assert(end < size());
 
   assert(available_at(start, end));
@@ -19,8 +19,8 @@ auto Spectrum::allocate(const std::size_t start, const std::size_t end)
   std::fill(slots.begin() + start, slots.begin() + end + 1, true);
 }
 
-auto Spectrum::deallocate(const std::size_t start, const std::size_t end)
-    -> void {
+auto Spectrum::deallocate(const std::size_t start,
+                          const std::size_t end) -> void {
   assert(end < size());
 
   assert(!available_at(start, end));
@@ -148,8 +148,72 @@ auto Spectrum::at(const std::size_t index) const -> bool {
   return slots[index];
 }
 
-auto best_fit(const Spectrum &spectrum, const std::size_t slots)
-    -> std::optional<std::size_t> {
+auto Spectrum::gaps(void) const -> unsigned {
+  auto gaps = 0u;
+
+  auto in_gap = false;
+
+  for (const auto &slot : slots) {
+    if (!slot && in_gap) {
+      continue;
+    }
+
+    if (!slot && !in_gap) {
+      in_gap = true;
+    }
+
+    if (slot) {
+      in_gap = false;
+    }
+
+    if (in_gap) {
+      ++gaps;
+    }
+  }
+
+  return gaps;
+}
+
+auto Spectrum::largest_gap(void) const -> unsigned {
+  auto largest = 0u;
+
+  auto in_gap = false;
+
+  auto gap_size = 0u;
+
+  for (const auto &slot : slots) {
+    if (!slot && in_gap) {
+      ++gap_size;
+
+      continue;
+    }
+
+    if (!slot && !in_gap) {
+      largest = std::max(largest, gap_size);
+
+      gap_size = 0u;
+
+      in_gap = true;
+    }
+
+    if (slot) {
+      largest = std::max(largest, gap_size);
+
+      gap_size = 0u;
+
+      in_gap = false;
+    }
+
+    if (in_gap) {
+      ++gap_size;
+    }
+  }
+
+  return largest;
+}
+
+auto best_fit(const Spectrum &spectrum,
+              const std::size_t slots) -> std::optional<std::size_t> {
   assert(slots <= spectrum.size());
 
   if (slots > spectrum.largest_partition()) {
@@ -197,8 +261,8 @@ auto best_fit(const Spectrum &spectrum, const std::size_t slots)
   return std::nullopt;
 }
 
-auto first_fit(const Spectrum &spectrum, const std::size_t slots)
-    -> std::optional<std::size_t> {
+auto first_fit(const Spectrum &spectrum,
+               const std::size_t slots) -> std::optional<std::size_t> {
   assert(slots <= spectrum.size());
 
   if (slots > spectrum.largest_partition()) {
@@ -232,8 +296,8 @@ auto first_fit(const Spectrum &spectrum, const std::size_t slots)
   return std::nullopt;
 }
 
-auto last_fit(const Spectrum &spectrum, const std::size_t slots)
-    -> std::optional<std::size_t> {
+auto last_fit(const Spectrum &spectrum,
+              const std::size_t slots) -> std::optional<std::size_t> {
   assert(slots <= spectrum.size());
 
   if (slots > spectrum.largest_partition()) {
@@ -253,8 +317,8 @@ auto last_fit(const Spectrum &spectrum, const std::size_t slots)
   return std::nullopt;
 }
 
-auto random_fit(const Spectrum &spectrum, const std::size_t slots)
-    -> std::optional<std::size_t> {
+auto random_fit(const Spectrum &spectrum,
+                const std::size_t slots) -> std::optional<std::size_t> {
   assert(slots <= spectrum.size());
 
   if (slots > spectrum.largest_partition()) {
@@ -294,8 +358,8 @@ auto random_fit(const Spectrum &spectrum, const std::size_t slots)
   return indexes[index];
 }
 
-auto worst_fit(const Spectrum &spectrum, const std::size_t slots)
-    -> std::optional<std::size_t> {
+auto worst_fit(const Spectrum &spectrum,
+               const std::size_t slots) -> std::optional<std::size_t> {
   assert(slots <= spectrum.size());
 
   if (slots > spectrum.largest_partition()) {
