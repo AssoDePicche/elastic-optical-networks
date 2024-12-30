@@ -10,9 +10,8 @@
 
 struct Connection {
   Path path;
+  Slice slice;
   std::size_t slots{};
-  std::size_t start{};
-  std::size_t end{};
 
   Connection(void) = default;
 
