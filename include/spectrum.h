@@ -67,3 +67,11 @@ class Spectrum final {
 
 using SpectrumAllocator = std::function<std::optional<std::size_t>(
     const Spectrum &, const std::size_t)>;
+
+[[nodiscard]] auto fragmentation_coefficient(const Spectrum &) -> double;
+
+[[nodiscard]] auto relative_fragmentation(const Spectrum &) -> double;
+
+[[nodiscard]] auto utilization_ratio(const Spectrum &) -> double;
+
+using FragmentationMetric = std::function<double(const Spectrum &)>;

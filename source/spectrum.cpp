@@ -406,3 +406,15 @@ auto worst_fit(const Spectrum &spectrum,
 
   return static_cast<size_t>(worst_index);
 }
+
+auto fragmentation_coefficient(const Spectrum &spectrum) -> double {
+  return 1.0 - (spectrum.largest_gap() / spectrum.size());
+}
+
+auto relative_fragmentation(const Spectrum &spectrum) -> double {
+  return spectrum.gaps() / spectrum.size();
+}
+
+auto utilization_ratio(const Spectrum &spectrum) -> double {
+  return (spectrum.size() - spectrum.available()) / spectrum.size();
+}
