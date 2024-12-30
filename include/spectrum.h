@@ -5,42 +5,43 @@
 #include <string>
 #include <vector>
 
+using Slice = std::pair<unsigned, unsigned>;
+
 class Spectrum final {
  public:
   Spectrum(void) = default;
 
-  Spectrum(const std::size_t);
+  Spectrum(const unsigned);
 
-  auto allocate(const std::size_t, const std::size_t) -> void;
+  auto allocate(const Slice &) -> void;
 
-  auto deallocate(const std::size_t, const std::size_t) -> void;
+  auto deallocate(const Slice &) -> void;
 
-  auto resize(const std::size_t) -> void;
+  auto resize(const unsigned) -> void;
 
-  [[nodiscard]] auto size(void) const noexcept -> std::size_t;
+  [[nodiscard]] auto size(void) const noexcept -> unsigned;
 
-  [[nodiscard]] auto available(void) const noexcept -> std::size_t;
+  [[nodiscard]] auto available(void) const noexcept -> unsigned;
 
-  [[nodiscard]] auto available_at(const std::size_t,
-                                  const std::size_t) const noexcept -> bool;
+  [[nodiscard]] auto available_at(const Slice &) const noexcept -> bool;
 
   [[nodiscard]] auto available_partitions(void) const noexcept
-      -> std::vector<std::size_t>;
+      -> std::vector<unsigned>;
 
-  [[nodiscard]] auto available_partitions(const std::size_t) const noexcept
-      -> std::vector<std::size_t>;
+  [[nodiscard]] auto available_partitions(const unsigned) const noexcept
+      -> std::vector<unsigned>;
 
-  [[nodiscard]] auto largest_partition(void) const noexcept -> std::size_t;
+  [[nodiscard]] auto largest_partition(void) const noexcept -> unsigned;
 
-  [[nodiscard]] auto smallest_partition(void) const noexcept -> std::size_t;
+  [[nodiscard]] auto smallest_partition(void) const noexcept -> unsigned;
 
   [[nodiscard]] auto fragmentation(void) const noexcept -> double;
 
-  [[nodiscard]] auto fragmentation(const std::size_t) const noexcept -> double;
+  [[nodiscard]] auto fragmentation(const unsigned) const noexcept -> double;
 
   [[nodiscard]] auto to_string(void) const noexcept -> std::string;
 
-  [[nodiscard]] auto at(const std::size_t) const -> bool;
+  [[nodiscard]] auto at(const unsigned) const -> bool;
 
   [[nodiscard]] auto gaps(void) const -> unsigned;
 
@@ -51,22 +52,22 @@ class Spectrum final {
 };
 
 [[nodiscard]] auto best_fit(const Spectrum &,
-                            const std::size_t) -> std::optional<std::size_t>;
+                            const unsigned) -> std::optional<Slice>;
 
 [[nodiscard]] auto first_fit(const Spectrum &,
-                             const std::size_t) -> std::optional<std::size_t>;
+                             const unsigned) -> std::optional<Slice>;
 
 [[nodiscard]] auto last_fit(const Spectrum &,
-                            const std::size_t) -> std::optional<std::size_t>;
+                            const unsigned) -> std::optional<Slice>;
 
 [[nodiscard]] auto random_fit(const Spectrum &,
-                              const std::size_t) -> std::optional<std::size_t>;
+                              const unsigned) -> std::optional<Slice>;
 
 [[nodiscard]] auto worst_fit(const Spectrum &,
-                             const std::size_t) -> std::optional<std::size_t>;
+                             const unsigned) -> std::optional<Slice>;
 
-using SpectrumAllocator = std::function<std::optional<std::size_t>(
-    const Spectrum &, const std::size_t)>;
+using SpectrumAllocator =
+    std::function<std::optional<Slice>(const Spectrum &, const unsigned)>;
 
 [[nodiscard]] auto fragmentation_coefficient(const Spectrum &) -> double;
 

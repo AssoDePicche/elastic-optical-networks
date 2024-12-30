@@ -8,48 +8,51 @@
 
 #include "distribution.h"
 
-Spectrum::Spectrum(const std::size_t size) : slots(std::vector(size, false)) {}
+Spectrum::Spectrum(const unsigned size) : slots(std::vector(size, false)) {}
 
-auto Spectrum::allocate(const std::size_t start,
-                        const std::size_t end) -> void {
+auto Spectrum::allocate(const Slice &slice) -> void {
+  const auto &[start, end] = slice;
+
   assert(end < size());
 
-  assert(available_at(start, end));
+  assert(available_at(slice));
 
   std::fill(slots.begin() + start, slots.begin() + end + 1, true);
 }
 
-auto Spectrum::deallocate(const std::size_t start,
-                          const std::size_t end) -> void {
+auto Spectrum::deallocate(const Slice &slice) -> void {
+  const auto &[start, end] = slice;
+
   assert(end < size());
 
-  assert(!available_at(start, end));
+  assert(!available_at(slice));
 
   std::fill(slots.begin() + start, slots.begin() + end + 1, false);
 }
 
-auto Spectrum::resize(const std::size_t size) -> void {
+auto Spectrum::resize(const unsigned size) -> void {
   slots = std::vector(size, false);
 }
 
-auto Spectrum::size(void) const noexcept -> std::size_t { return slots.size(); }
+auto Spectrum::size(void) const noexcept -> unsigned { return slots.size(); }
 
-auto Spectrum::available(void) const noexcept -> std::size_t {
+auto Spectrum::available(void) const noexcept -> unsigned {
   return std::count(slots.begin(), slots.end(), false);
 }
 
-auto Spectrum::available_at(const std::size_t start,
-                            const std::size_t end) const noexcept -> bool {
+auto Spectrum::available_at(const Slice &slice) const noexcept -> bool {
+  const auto &[start, end] = slice;
+
   return std::count(slots.begin() + start, slots.begin() + end + 1, true) == 0;
 }
 
 auto Spectrum::available_partitions(void) const noexcept
-    -> std::vector<std::size_t> {
+    -> std::vector<unsigned> {
   auto length{0};
 
   auto in_free_block{false};
 
-  std::vector<std::size_t> partitions{};
+  std::vector<unsigned> partitions{};
 
   for (const auto &slot : slots) {
     if (slot && in_free_block) {
@@ -78,20 +81,20 @@ auto Spectrum::available_partitions(void) const noexcept
   return partitions;
 }
 
-auto Spectrum::available_partitions(const std::size_t size) const noexcept
-    -> std::vector<std::size_t> {
+auto Spectrum::available_partitions(const unsigned size) const noexcept
+    -> std::vector<unsigned> {
   const auto partitions = available_partitions();
 
-  std::vector<size_t> suitable;
+  std::vector<unsigned> suitable;
 
   std::copy_if(partitions.begin(), partitions.end(),
                std::back_inserter(suitable),
-               [&](const std::size_t capacity) { return size <= capacity; });
+               [&](const unsigned capacity) { return size <= capacity; });
 
   return suitable;
 }
 
-auto Spectrum::largest_partition(void) const noexcept -> std::size_t {
+auto Spectrum::largest_partition(void) const noexcept -> unsigned {
   const auto partitions = available_partitions();
 
   const auto ptr = std::max_element(partitions.begin(), partitions.end());
@@ -99,7 +102,7 @@ auto Spectrum::largest_partition(void) const noexcept -> std::size_t {
   return (ptr == partitions.end()) ? 0 : *ptr;
 }
 
-auto Spectrum::smallest_partition(void) const noexcept -> std::size_t {
+auto Spectrum::smallest_partition(void) const noexcept -> unsigned {
   const auto partitions = available_partitions();
 
   const auto ptr = std::min_element(partitions.begin(), partitions.end());
@@ -117,7 +120,7 @@ auto Spectrum::fragmentation(void) const noexcept -> double {
   return (total - largest_partition()) / total;
 }
 
-auto Spectrum::fragmentation(const std::size_t size) const noexcept -> double {
+auto Spectrum::fragmentation(const unsigned size) const noexcept -> double {
   const auto total = static_cast<double>(available());
 
   if (total == 0.0) {
@@ -142,7 +145,7 @@ auto Spectrum::to_string(void) const noexcept -> std::string {
   return buffer;
 }
 
-auto Spectrum::at(const std::size_t index) const -> bool {
+auto Spectrum::at(const unsigned index) const -> bool {
   assert(index < size());
 
   return slots[index];
@@ -213,7 +216,7 @@ auto Spectrum::largest_gap(void) const -> unsigned {
 }
 
 auto best_fit(const Spectrum &spectrum,
-              const std::size_t slots) -> std::optional<std::size_t> {
+              const unsigned slots) -> std::optional<Slice> {
   assert(slots <= spectrum.size());
 
   if (slots > spectrum.largest_partition()) {
@@ -222,7 +225,7 @@ auto best_fit(const Spectrum &spectrum,
 
   auto best_index{-1};
 
-  auto min_block_size{std::numeric_limits<std::size_t>::max()};
+  auto min_block_size{std::numeric_limits<unsigned>::max()};
 
   auto current_block_size{0u};
 
@@ -255,14 +258,15 @@ auto best_fit(const Spectrum &spectrum,
   }
 
   if (best_index != -1) {
-    return static_cast<std::size_t>(best_index);
+    return std::make_pair(static_cast<unsigned>(best_index),
+                          static_cast<unsigned>(best_index) + slots - 1);
   }
 
   return std::nullopt;
 }
 
 auto first_fit(const Spectrum &spectrum,
-               const std::size_t slots) -> std::optional<std::size_t> {
+               const unsigned slots) -> std::optional<Slice> {
   assert(slots <= spectrum.size());
 
   if (slots > spectrum.largest_partition()) {
@@ -290,14 +294,14 @@ auto first_fit(const Spectrum &spectrum,
       return std::nullopt;
     }
 
-    return start;
+    return std::make_pair(start, start + slots - 1);
   }
 
   return std::nullopt;
 }
 
 auto last_fit(const Spectrum &spectrum,
-              const std::size_t slots) -> std::optional<std::size_t> {
+              const unsigned slots) -> std::optional<Slice> {
   assert(slots <= spectrum.size());
 
   if (slots > spectrum.largest_partition()) {
@@ -310,7 +314,7 @@ auto last_fit(const Spectrum &spectrum,
     count = (!spectrum.at(index)) ? count + 1 : 0;
 
     if (count == slots) {
-      return index;
+      return std::make_pair(index, index + slots - 1);
     }
   }
 
@@ -318,14 +322,14 @@ auto last_fit(const Spectrum &spectrum,
 }
 
 auto random_fit(const Spectrum &spectrum,
-                const std::size_t slots) -> std::optional<std::size_t> {
+                const unsigned slots) -> std::optional<Slice> {
   assert(slots <= spectrum.size());
 
   if (slots > spectrum.largest_partition()) {
     return std::nullopt;
   }
 
-  std::vector<std::size_t> indexes{};
+  std::vector<unsigned> indexes{};
 
   for (auto start{0u}; start < spectrum.size(); ++start) {
     auto fit{true};
@@ -353,13 +357,13 @@ auto random_fit(const Spectrum &spectrum,
 
   Uniform distribution{random_device(), 0, static_cast<double>(indexes.size())};
 
-  const auto index{static_cast<std::size_t>(distribution.next())};
+  const auto index{static_cast<unsigned>(distribution.next())};
 
-  return indexes[index];
+  return std::make_pair(indexes[index], indexes[index] + slots - 1);
 }
 
 auto worst_fit(const Spectrum &spectrum,
-               const std::size_t slots) -> std::optional<std::size_t> {
+               const unsigned slots) -> std::optional<Slice> {
   assert(slots <= spectrum.size());
 
   if (slots > spectrum.largest_partition()) {
@@ -404,7 +408,8 @@ auto worst_fit(const Spectrum &spectrum,
     return std::nullopt;
   }
 
-  return static_cast<size_t>(worst_index);
+  return std::make_pair(static_cast<unsigned>(worst_index),
+                        static_cast<unsigned>(worst_index) + slots - 1);
 }
 
 auto fragmentation_coefficient(const Spectrum &spectrum) -> double {

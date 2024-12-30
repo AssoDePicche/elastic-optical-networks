@@ -1,8 +1,8 @@
 #include <cassert>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <cmath>
 
 #include "connection.h"
 #include "event_queue.h"
@@ -18,29 +18,36 @@ struct Snapshot {
   float fragmentation;
   float entropy;
 
-  Snapshot(float t, int slots, bool acc, float frag, float entr) : time{t}, slots{slots}, accepted{acc}, fragmentation{frag}, entropy{entr} {}
+  Snapshot(float t, int slots, bool acc, float frag, float entr)
+      : time{t},
+        slots{slots},
+        accepted{acc},
+        fragmentation{frag},
+        entropy{entr} {}
 
   [[nodiscard]] auto str() const -> std::string {
-    return std::to_string(time) + ", " + std::to_string(slots) + ", " + (accepted ? "Accepted" : "Blocked")+ ", " + std::to_string(fragmentation) + ", " + std::to_string(entropy);
+    return std::to_string(time) + ", " + std::to_string(slots) + ", " +
+           (accepted ? "Accepted" : "Blocked") + ", " +
+           std::to_string(fragmentation) + ", " + std::to_string(entropy);
   }
 };
 
-[[nodiscard]] auto mean(const std::vector<float>& X) -> float {
+[[nodiscard]] auto mean(const std::vector<float> &X) -> float {
   auto sum = 0.0;
 
-  for (const auto& x : X) {
+  for (const auto &x : X) {
     sum += x;
   }
 
   return (sum / X.size());
 }
 
-[[nodiscard]] auto stddev(const std::vector<float>& X) -> float {
+[[nodiscard]] auto stddev(const std::vector<float> &X) -> float {
   auto variance = 0.0;
 
   const auto x_mean = mean(X);
 
-  for (const auto& x : X) {
+  for (const auto &x : X) {
     variance += ((x - x_mean) * (x - x_mean));
   }
 
@@ -104,7 +111,8 @@ auto simulation(Settings &settings) -> std::string {
 
     occupied_slots /= settings.channels;
 
-    return -(occupied_slots * std::log2(occupied_slots) + free_slots * std::log2(free_slots));
+    return -(occupied_slots * std::log2(occupied_slots) +
+             free_slots * std::log2(free_slots));
   };
 
   const auto network_fragmentation = [&](void) {
@@ -148,7 +156,7 @@ auto simulation(Settings &settings) -> std::string {
       const auto keys{path_keys(connection.path)};
 
       for (const auto &key : keys) {
-        hashmap[key].deallocate(connection.start, connection.end);
+        hashmap[key].deallocate(connection.slice);
 
         INFO(hashmap[key].to_string());
 
@@ -163,7 +171,8 @@ auto simulation(Settings &settings) -> std::string {
 
     auto accepted = false;
 
-    if (active_calls < settings.channels && make_connection(connection, hashmap, allocator)) {
+    if (active_calls < settings.channels &&
+        make_connection(connection, hashmap, allocator)) {
       ++active_calls;
 
       queue.push(connection, now).of_type(Signal::DEPARTURE);
@@ -188,7 +197,8 @@ auto simulation(Settings &settings) -> std::string {
       group.count_blocking(connection.slots);
     }
 
-    snapshots.push_back(Snapshot(now, connection.slots, accepted, network_fragmentation(), entropy()));
+    snapshots.push_back(Snapshot(now, connection.slots, accepted,
+                                 network_fragmentation(), entropy()));
 
     queue.push(Connection{settings.graph.random_path(), group.next()}, now)
         .of_type(Signal::ARRIVAL);
@@ -197,10 +207,10 @@ auto simulation(Settings &settings) -> std::string {
   timer.stop();
 
   std::vector<float> fragmentation_states{};
-  
+
   std::vector<float> entropy_states{};
 
-  for (const auto& snapshot : snapshots) {
+  for (const auto &snapshot : snapshots) {
     std::cout << snapshot.str() << std::endl;
 
     fragmentation_states.push_back(snapshot.fragmentation);
@@ -217,13 +227,16 @@ auto simulation(Settings &settings) -> std::string {
 
   str.append(Report::from(group, settings).to_string() + "\n");
 
-  str.append("Mean fragmentation: " + std::to_string(mean(fragmentation_states)) + "\n");
+  str.append("Mean fragmentation: " +
+             std::to_string(mean(fragmentation_states)) + "\n");
 
-  str.append("STDDEV fragmentation: " + std::to_string(stddev(fragmentation_states)) + "\n");
+  str.append("STDDEV fragmentation: " +
+             std::to_string(stddev(fragmentation_states)) + "\n");
 
   str.append("Mean entropy: " + std::to_string(mean(entropy_states)) + "\n");
 
-  str.append("STDDEV entropy: " + std::to_string(stddev(entropy_states)) + "\n");
+  str.append("STDDEV entropy: " + std::to_string(stddev(entropy_states)) +
+             "\n");
 
   return str;
 }

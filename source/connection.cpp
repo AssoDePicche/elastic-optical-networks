@@ -85,8 +85,8 @@ auto path_keys(const Path &path) -> std::vector<std::size_t> {
   return keys;
 }
 
-auto make_hashmap(const Graph &graph, const std::size_t size)
-    -> std::map<std::size_t, Spectrum> {
+auto make_hashmap(const Graph &graph,
+                  const std::size_t size) -> std::map<std::size_t, Spectrum> {
   std::map<std::size_t, Spectrum> hashmap;
 
   for (auto source{0u}; source < graph.size(); ++source) {
@@ -115,18 +115,16 @@ auto make_connection(Connection &connection,
     return false;
   }
 
-  connection.start = search.value();
-
-  connection.end = connection.start + connection.slots - 1;
+  connection.slice = search.value();
 
   for (const auto &key : keys) {
-    if (!hashmap[key].available_at(connection.start, connection.end)) {
+    if (!hashmap[key].available_at(connection.slice)) {
       return false;
     }
   }
 
   for (const auto &key : keys) {
-    hashmap[key].allocate(connection.start, connection.end);
+    hashmap[key].allocate(connection.slice);
   }
 
   return true;
