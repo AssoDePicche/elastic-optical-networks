@@ -11,24 +11,23 @@
 struct Connection {
   Path path;
   Slice slice;
-  std::size_t slots{};
+  unsigned slots{};
 
   Connection(void) = default;
 
-  Connection(const Path &, const std::size_t);
+  Connection(const Path &, const unsigned);
 };
 
-[[nodiscard]] auto from_gigabits_transmission(const double) -> std::size_t;
+[[nodiscard]] auto from_gigabits_transmission(const double) -> unsigned;
 
-[[nodiscard]] auto from_terabits_transmission(const double) -> std::size_t;
+[[nodiscard]] auto from_terabits_transmission(const double) -> unsigned;
 
-[[nodiscard]] auto make_key(std::size_t, std::size_t) -> std::size_t;
+[[nodiscard]] auto make_key(unsigned, unsigned) -> unsigned;
 
-[[nodiscard]] auto path_keys(const Path &) -> std::vector<std::size_t>;
+[[nodiscard]] auto path_keys(const Path &) -> std::vector<unsigned>;
 
-[[nodiscard]] auto make_hashmap(const Graph &, const std::size_t)
-    -> std::map<std::size_t, Spectrum>;
+[[nodiscard]] auto make_hashmap(const Graph &,
+                                const unsigned) -> std::map<unsigned, Spectrum>;
 
-[[nodiscard]] auto make_connection(Connection &,
-                                   std::map<std::size_t, Spectrum> &,
+[[nodiscard]] auto make_connection(Connection &, std::map<unsigned, Spectrum> &,
                                    const SpectrumAllocator &) -> bool;

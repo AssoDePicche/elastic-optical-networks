@@ -2,10 +2,10 @@
 
 #include <limits>
 
-Connection::Connection(const Path &path, const std::size_t slots)
+Connection::Connection(const Path &path, const unsigned slots)
     : path{path}, slots{slots} {}
 
-auto from_gigabits_transmission(const double distance) -> std::size_t {
+auto from_gigabits_transmission(const double distance) -> unsigned {
   if (distance <= 160.0) {
     return 5u;
   }
@@ -34,10 +34,10 @@ auto from_gigabits_transmission(const double distance) -> std::size_t {
     return 13u;
   }
 
-  return std::numeric_limits<std::size_t>::max();
+  return std::numeric_limits<unsigned>::max();
 }
 
-auto from_terabits_transmission(const double distance) -> std::size_t {
+auto from_terabits_transmission(const double distance) -> unsigned {
   if (distance <= 400.0) {
     return 14u;
   }
@@ -66,17 +66,17 @@ auto from_terabits_transmission(const double distance) -> std::size_t {
     return 28u;
   }
 
-  return std::numeric_limits<std::size_t>::max();
+  return std::numeric_limits<unsigned>::max();
 }
 
-auto make_key(std::size_t x, std::size_t y) -> std::size_t {
+auto make_key(unsigned x, unsigned y) -> unsigned {
   return ((x + y) * (x + y + 1) / 2) + y;
 }
 
-auto path_keys(const Path &path) -> std::vector<std::size_t> {
+auto path_keys(const Path &path) -> std::vector<unsigned> {
   assert(!path.vertices.empty());
 
-  std::vector<std::size_t> keys;
+  std::vector<unsigned> keys;
 
   for (auto index{1u}; index < path.vertices.size(); ++index) {
     keys.push_back(make_key(path.vertices[index - 1], path.vertices[index]));
@@ -86,8 +86,8 @@ auto path_keys(const Path &path) -> std::vector<std::size_t> {
 }
 
 auto make_hashmap(const Graph &graph,
-                  const std::size_t size) -> std::map<std::size_t, Spectrum> {
-  std::map<std::size_t, Spectrum> hashmap;
+                  const unsigned size) -> std::map<unsigned, Spectrum> {
+  std::map<unsigned, Spectrum> hashmap;
 
   for (auto source{0u}; source < graph.size(); ++source) {
     for (auto destination{0u}; destination < graph.size(); ++destination) {
@@ -105,7 +105,7 @@ auto make_hashmap(const Graph &graph,
 }
 
 auto make_connection(Connection &connection,
-                     std::map<std::size_t, Spectrum> &hashmap,
+                     std::map<unsigned, Spectrum> &hashmap,
                      const SpectrumAllocator &spectrum_allocator) -> bool {
   const auto keys{path_keys(connection.path)};
 
