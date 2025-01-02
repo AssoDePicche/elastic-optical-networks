@@ -9,6 +9,7 @@
 #include "group.h"
 #include "logger.h"
 #include "settings.h"
+#include "statistics.h"
 #include "timer.h"
 
 struct Snapshot {
@@ -31,28 +32,6 @@ struct Snapshot {
            std::to_string(fragmentation) + ", " + std::to_string(entropy);
   }
 };
-
-[[nodiscard]] auto mean(const std::vector<float> &X) -> float {
-  auto sum = 0.0;
-
-  for (const auto &x : X) {
-    sum += x;
-  }
-
-  return (sum / X.size());
-}
-
-[[nodiscard]] auto stddev(const std::vector<float> &X) -> float {
-  auto variance = 0.0;
-
-  const auto x_mean = mean(X);
-
-  for (const auto &x : X) {
-    variance += ((x - x_mean) * (x - x_mean));
-  }
-
-  return std::sqrt((variance / X.size()));
-}
 
 [[nodiscard]] auto simulation(Settings &) -> std::string;
 
@@ -206,9 +185,9 @@ auto simulation(Settings &settings) -> std::string {
 
   timer.stop();
 
-  std::vector<float> fragmentation_states{};
+  std::vector<double> fragmentation_states{};
 
-  std::vector<float> entropy_states{};
+  std::vector<double> entropy_states{};
 
   for (const auto &snapshot : snapshots) {
     std::cout << snapshot.str() << std::endl;
@@ -228,14 +207,14 @@ auto simulation(Settings &settings) -> std::string {
   str.append(Report::from(group, settings).to_string() + "\n");
 
   str.append("Mean fragmentation: " +
-             std::to_string(mean(fragmentation_states)) + "\n");
+             std::to_string(MEAN(fragmentation_states)) + "\n");
 
   str.append("STDDEV fragmentation: " +
-             std::to_string(stddev(fragmentation_states)) + "\n");
+             std::to_string(STDDEV(fragmentation_states)) + "\n");
 
-  str.append("Mean entropy: " + std::to_string(mean(entropy_states)) + "\n");
+  str.append("Mean entropy: " + std::to_string(MEAN(entropy_states)) + "\n");
 
-  str.append("STDDEV entropy: " + std::to_string(stddev(entropy_states)) +
+  str.append("STDDEV entropy: " + std::to_string(STDDEV(entropy_states)) +
              "\n");
 
   return str;
