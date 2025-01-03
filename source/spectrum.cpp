@@ -420,6 +420,33 @@ auto relative_fragmentation(const Spectrum &spectrum) -> double {
   return spectrum.gaps() / spectrum.size();
 }
 
+auto availability_ratio(const Spectrum &spectrum) -> double {
+  return static_cast<double>(spectrum.available()) /
+         static_cast<double>(spectrum.size());
+}
+
 auto utilization_ratio(const Spectrum &spectrum) -> double {
-  return (spectrum.size() - spectrum.available()) / spectrum.size();
+  return 1.0 - availability_ratio(spectrum);
+}
+
+auto shannon_entropy(const Spectrum &spectrum) -> double {
+  const auto sar = availability_ratio(spectrum);
+
+  const auto sur = utilization_ratio(spectrum);
+
+  const auto coefficient_of = [](double x) { return x * std::log2(x); };
+
+  if (sar == 0.0 || sur == 0.0) {
+    return 0.0;
+  }
+
+  if (sar == 0.0 && sur != 0.0) {
+    return coefficient_of(sur);
+  }
+
+  if (sar != 0.0 && sur == 0.0) {
+    return coefficient_of(sar);
+  }
+
+  return -(coefficient_of(sur) + coefficient_of(sar));
 }

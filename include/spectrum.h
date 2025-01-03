@@ -73,6 +73,10 @@ using SpectrumAllocator =
 
 [[nodiscard]] auto relative_fragmentation(const Spectrum &) -> double;
 
+[[nodiscard]] auto availability_ratio(const Spectrum &) -> double;
+
 [[nodiscard]] auto utilization_ratio(const Spectrum &) -> double;
 
 using FragmentationMetric = std::function<double(const Spectrum &)>;
+
+[[nodiscard]] auto shannon_entropy(const Spectrum &) -> double;
