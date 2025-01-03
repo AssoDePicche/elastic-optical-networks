@@ -22,7 +22,7 @@ auto Path::operator>(const Path &path) const -> bool {
   return cost > path.cost;
 }
 
-Graph::Graph(const std::size_t vertices) {
+Graph::Graph(const unsigned vertices) {
   for (auto vertex{0u}; vertex < vertices; ++vertex) {
     add_vertex(vertex);
   }
@@ -39,7 +39,7 @@ auto Graph::from(const std::string &filename) noexcept -> std::optional<Graph> {
 
   std::getline(file, line);
 
-  const auto size{static_cast<std::size_t>(atoi(line.c_str()))};
+  const auto size{static_cast<unsigned>(atoi(line.c_str()))};
 
   Graph graph{size};
 
@@ -66,7 +66,7 @@ auto Graph::from(const std::string &filename) noexcept -> std::optional<Graph> {
   return graph;
 }
 
-auto Graph::size(void) const noexcept -> std::size_t { return vertices.size(); }
+auto Graph::size(void) const noexcept -> unsigned { return vertices.size(); }
 
 auto Graph::to_string(void) const noexcept -> std::string {
   std::string buffer{};
@@ -218,8 +218,8 @@ auto Graph::depth_first_search(const Vertex source,
   return Path(vertices, __MAX_COST__);
 }
 
-auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
-    -> Path {
+auto Graph::dijkstra(const Vertex source,
+                     const Vertex destination) noexcept -> Path {
   if (source == destination) {
     return Path({}, __MAX_COST__);
   }
@@ -300,7 +300,7 @@ auto Graph::dijkstra(const Vertex source, const Vertex destination) noexcept
   auto current = static_cast<int>(destination);
 
   while (current != -1) {
-    vertices.push_back(static_cast<std::size_t>(current));
+    vertices.push_back(static_cast<unsigned>(current));
 
     current = predecessors[current];
   }
@@ -370,12 +370,12 @@ auto Graph::random_path(void) noexcept -> Path {
 
   Uniform distribution{random_device(), 0, static_cast<double>(size())};
 
-  auto source{static_cast<std::size_t>(distribution.next())};
+  auto source{static_cast<unsigned>(distribution.next())};
 
-  auto destination{static_cast<std::size_t>(distribution.next())};
+  auto destination{static_cast<unsigned>(distribution.next())};
 
   while (true) {
-    destination = static_cast<std::size_t>(distribution.next());
+    destination = static_cast<unsigned>(distribution.next());
 
     const auto path{dijkstra(source, destination)};
 
@@ -420,8 +420,8 @@ auto Graph::at(const Vertex source, const Vertex destination) const -> Cost {
   return __MIN_COST__;
 }
 
-auto Graph::adjacent(const Vertex source, const Vertex destination) const
-    -> bool {
+auto Graph::adjacent(const Vertex source,
+                     const Vertex destination) const -> bool {
   return at(source, destination) != __MIN_COST__;
 }
 

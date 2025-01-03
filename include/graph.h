@@ -8,13 +8,13 @@
 #include <unordered_map>
 #include <vector>
 
-using Vertex = std::size_t;
+using Vertex = unsigned;
 
 using Cost = double;
 
 constexpr auto __MAX_COST__ = std::numeric_limits<Cost>::max();
 
-constexpr auto __MIN_COST__ = static_cast<Cost>(0);
+constexpr auto __MIN_COST__ = static_cast<Cost>(0.0);
 
 struct Path {
   std::vector<Vertex> vertices{};
@@ -41,29 +41,28 @@ struct Edge final {
 };
 
 class Graph final {
-public:
+ public:
   Graph(void) = default;
 
-  Graph(const std::size_t);
+  Graph(const unsigned);
 
   [[nodiscard]] static auto from(const std::string &) noexcept
       -> std::optional<Graph>;
 
-  [[nodiscard]] auto size(void) const noexcept -> std::size_t;
+  [[nodiscard]] auto size(void) const noexcept -> unsigned;
 
   [[nodiscard]] auto to_string(void) const noexcept -> std::string;
 
-  [[nodiscard]] auto breadth_first_search(const Vertex, const Vertex) noexcept
-      -> Path;
+  [[nodiscard]] auto breadth_first_search(const Vertex,
+                                          const Vertex) noexcept -> Path;
 
-  [[nodiscard]] auto depth_first_search(const Vertex, const Vertex) noexcept
-      -> Path;
+  [[nodiscard]] auto depth_first_search(const Vertex,
+                                        const Vertex) noexcept -> Path;
 
   [[nodiscard]] auto dijkstra(const Vertex, const Vertex) noexcept -> Path;
 
-  [[nodiscard]] auto k_shortest_path(const Vertex, const Vertex,
-                                     const unsigned) noexcept
-      -> std::vector<Path>;
+  [[nodiscard]] auto k_shortest_path(
+      const Vertex, const Vertex, const unsigned) noexcept -> std::vector<Path>;
 
   [[nodiscard]] auto random_path(void) noexcept -> Path;
 
@@ -80,9 +79,9 @@ public:
 
   auto add_edge(const Vertex, const Vertex, const Cost) -> void;
 
-private:
-  std::unordered_map<std::size_t, Vertex> vertices;
-  std::unordered_map<std::size_t, std::list<Edge>> adjacency_list;
+ private:
+  std::unordered_map<unsigned, Vertex> vertices;
+  std::unordered_map<unsigned, std::list<Edge>> adjacency_list;
 };
 
 [[nodiscard]] auto operator<<(std::ostream &, const Graph &) -> std::ostream &;
