@@ -12,7 +12,8 @@
 
 enum class Signal { ARRIVAL, DEPARTURE };
 
-template <typename T> struct Event {
+template <typename T>
+struct Event {
   double time;
   Signal signal;
   T value;
@@ -27,8 +28,9 @@ template <typename T> struct Event {
   }
 };
 
-template <typename T> class EventQueue {
-public:
+template <typename T>
+class EventQueue {
+ public:
   EventQueue(const double arrival_rate, const double service_rate,
              const Seed seed)
       : arrival{seed, arrival_rate}, service{seed, service_rate} {}
@@ -51,12 +53,12 @@ public:
     auto now = time;
 
     switch (signal) {
-    case Signal::ARRIVAL:
-      now += arrival.next();
-      break;
-    case Signal::DEPARTURE:
-      now += service.next();
-      break;
+      case Signal::ARRIVAL:
+        now += arrival.next();
+        break;
+      case Signal::DEPARTURE:
+        now += service.next();
+        break;
     }
 
     queue.push(Event<T>(now, signal, to_push));
@@ -88,7 +90,7 @@ public:
 
   [[nodiscard]] auto size(void) const -> std::size_t { return queue.size(); }
 
-private:
+ private:
   std::priority_queue<Event<T>> queue;
   Exponential arrival;
   Exponential service;
