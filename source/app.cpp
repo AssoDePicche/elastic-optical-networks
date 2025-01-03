@@ -69,20 +69,18 @@ auto simulation(Settings &settings) -> std::string {
   std::vector<Snapshot> snapshots{};
 
   const auto entropy = [&](void) {
-    const auto paths{settings.graph.paths()};
-
     auto free_slots = 0.0;
 
     auto occupied_slots = 0.0;
 
-    for (const auto &path : paths) {
-      for (const auto &key : path_keys(path)) {
-        auto spectrum = hashmap[key];
+    for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
+      const auto key = make_key(source, destination);
 
-        free_slots += spectrum.available();
+      const auto spectrum = hashmap[key];
 
-        occupied_slots += spectrum.size() - spectrum.available();
-      }
+      free_slots += spectrum.available();
+
+      occupied_slots += spectrum.size() - spectrum.available();
     }
 
     if (free_slots == 0.0 || occupied_slots == 0.0) {
@@ -98,17 +96,15 @@ auto simulation(Settings &settings) -> std::string {
   };
 
   const auto network_fragmentation = [&](void) {
-    const auto paths{settings.graph.paths()};
-
     auto fragmentation{0.0};
 
-    for (const auto &path : paths) {
-      for (const auto &key : path_keys(path)) {
-        fragmentation += hashmap[key].fragmentation();
-      }
+    for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
+      const auto key = make_key(source, destination);
+
+      fragmentation += hashmap[key].fragmentation();
     }
 
-    return (fragmentation / paths.size());
+    return (fragmentation / settings.graph.get_edges().size());
   };
 
   Timer timer;
