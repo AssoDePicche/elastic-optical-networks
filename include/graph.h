@@ -4,6 +4,7 @@
 #include <list>
 #include <optional>
 #include <ostream>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -35,10 +36,7 @@ constexpr auto __MAX_HOPS__ = std::numeric_limits<int>::max();
 
 constexpr auto __MIN_HOPS__ = static_cast<int>(0);
 
-struct Edge final {
-  Vertex destination;
-  Cost cost;
-};
+using Edge = std::tuple<Vertex, Vertex, Cost>;
 
 class Graph final {
  public:
@@ -75,13 +73,16 @@ class Graph final {
 
   [[nodiscard]] auto adjacent(const Vertex, const Vertex) const -> bool;
 
+  [[nodiscard]] auto get_edges(void) const noexcept -> std::vector<Edge>;
+
   auto add_vertex(const Vertex) -> void;
 
   auto add_edge(const Vertex, const Vertex, const Cost) -> void;
 
  private:
-  std::unordered_map<unsigned, Vertex> vertices;
-  std::unordered_map<unsigned, std::list<Edge>> adjacency_list;
+  std::set<Vertex> vertices;
+  std::unordered_map<unsigned, std::list<std::pair<Vertex, Cost>>>
+      adjacency_list;
 };
 
 [[nodiscard]] auto operator<<(std::ostream &, const Graph &) -> std::ostream &;

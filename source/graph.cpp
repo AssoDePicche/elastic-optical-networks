@@ -102,7 +102,7 @@ auto Graph::breadth_first_search(const Vertex source,
 
   std::queue<Vertex> queue;
 
-  for (const auto &[id, vertex] : vertices) {
+  for (const auto &vertex : vertices) {
     visited[vertex] = false;
 
     predecessors[vertex] = -1;
@@ -165,7 +165,7 @@ auto Graph::depth_first_search(const Vertex source,
 
   std::stack<Vertex> stack;
 
-  for (const auto &[id, vertex] : vertices) {
+  for (const auto &vertex : vertices) {
     visited[vertex] = false;
 
     predecessors[vertex] = -1;
@@ -235,12 +235,12 @@ auto Graph::dijkstra(const Vertex source,
 
   std::priority_queue<PathInfo, std::vector<PathInfo>, std::greater<>> queue;
 
-  for (const auto &[id, name] : vertices) {
-    costs[id] = __MAX_COST__;
+  for (const auto &vertex : vertices) {
+    costs[vertex] = __MAX_COST__;
 
-    predecessors[id] = -1;
+    predecessors[vertex] = -1;
 
-    edge_hops[id] = __MAX_HOPS__;
+    edge_hops[vertex] = __MAX_HOPS__;
   }
 
   costs[source] = __MIN_COST__;
@@ -352,13 +352,12 @@ auto Graph::k_shortest_path(const Vertex source, const Vertex destination,
       continue;
     }
 
-    for (const auto &edge : adjacency_list[vertex]) {
+    for (const auto &[adjacent, cost] : adjacency_list[vertex]) {
       auto new_path{path};
 
-      new_path.vertices.push_back(edge.destination);
+      new_path.vertices.push_back(adjacent);
 
-      queue.push(Binding(edge.destination,
-                         Path(new_path.vertices, path.cost + edge.cost)));
+      queue.push(Binding(adjacent, Path(new_path.vertices, path.cost + cost)));
     }
   }
 
@@ -389,7 +388,7 @@ auto Graph::random_source_destination(void) noexcept
     -> std::pair<Vertex, Vertex> {
   const auto path{random_path()};
 
-  return std::make_pair(path.source(), path.destination());
+  return {path.source(), path.destination()};
 }
 
 auto Graph::paths(void) noexcept -> std::vector<Path> {
@@ -425,9 +424,19 @@ auto Graph::adjacent(const Vertex source,
   return at(source, destination) != __MIN_COST__;
 }
 
-auto Graph::add_vertex(const Vertex vertex) -> void {
-  vertices[vertex] = vertex;
+auto Graph::get_edges(void) const noexcept -> std::vector<Edge> {
+  std::vector<Edge> edges;
+
+  for (const auto &[source, adjacent_edges] : adjacency_list) {
+    for (const auto &[destination, cost] : adjacent_edges) {
+      edges.push_back({source, destination, cost});
+    }
+  }
+
+  return edges;
 }
+
+auto Graph::add_vertex(const Vertex vertex) -> void { vertices.insert(vertex); }
 
 auto Graph::add_edge(const Vertex source, const Vertex destination,
                      const Cost cost) -> void {
