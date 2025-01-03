@@ -7,25 +7,27 @@
 #include "settings.h"
 
 class Group final {
-public:
+ public:
   Group(const Seed seed, const std::initializer_list<double> &,
-        const std::initializer_list<std::size_t> &);
+        const std::initializer_list<unsigned> &);
 
-  auto count_blocking(const std::size_t) -> void;
+  auto count_blocking(const unsigned) -> void;
 
-  [[nodiscard]] auto size(void) const -> std::size_t;
+  [[nodiscard]] auto size(void) const -> unsigned;
 
-  [[nodiscard]] auto blocked(void) const -> std::size_t;
+  [[nodiscard]] auto blocked(void) const -> unsigned;
 
-  [[nodiscard]] auto next(void) -> std::size_t;
+  [[nodiscard]] auto blocking(void) const -> double;
+
+  [[nodiscard]] auto next(void) -> unsigned;
 
   [[nodiscard]] auto to_string(void) const -> std::string;
 
-private:
+ private:
   Discrete roulette;
-  std::vector<std::tuple<std::size_t, std::size_t, std::size_t>> container;
-  std::size_t _size{};
-  std::size_t _blocking{};
+  std::vector<std::tuple<unsigned, unsigned, unsigned>> container;
+  unsigned _size{};
+  unsigned _blocking{};
 };
 
 struct Report {

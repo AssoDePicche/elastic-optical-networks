@@ -3,7 +3,7 @@
 #include <cassert>
 
 Group::Group(const Seed seed, const std::initializer_list<double> &predicted,
-             const std::initializer_list<std::size_t> &resources)
+             const std::initializer_list<unsigned> &resources)
     : roulette{seed, predicted} {
   assert(predicted.size() == resources.size());
 
@@ -16,7 +16,7 @@ Group::Group(const Seed seed, const std::initializer_list<double> &predicted,
   }
 }
 
-auto Group::count_blocking(const std::size_t request) -> void {
+auto Group::count_blocking(const unsigned request) -> void {
   for (auto &[resource, counting, blocking] : container) {
     if (resource != request) {
       continue;
@@ -30,12 +30,16 @@ auto Group::count_blocking(const std::size_t request) -> void {
   }
 }
 
-auto Group::size(void) const -> std::size_t { return _size; }
+auto Group::size(void) const -> unsigned { return _size; }
 
-auto Group::blocked(void) const -> std::size_t { return _blocking; }
+auto Group::blocked(void) const -> unsigned { return _blocking; }
 
-auto Group::next(void) -> std::size_t {
-  const auto index{static_cast<std::size_t>(roulette.next())};
+auto Group::blocking(void) const -> double {
+  return static_cast<double>(_blocking) / static_cast<double>(_size);
+}
+
+auto Group::next(void) -> unsigned {
+  const auto index{static_cast<unsigned>(roulette.next())};
 
   auto &[resource, counting, blocking] = container[index];
 
