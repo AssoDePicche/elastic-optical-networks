@@ -8,14 +8,14 @@
 #include "graph.h"
 #include "spectrum.h"
 
-struct Connection {
+struct Request {
   Path path;
   Slice slice;
   unsigned slots{};
 
-  Connection(void) = default;
+  Request(void) = default;
 
-  Connection(const Path &, const unsigned);
+  Request(const Path &, const unsigned);
 };
 
 [[nodiscard]] auto from_gigabits_transmission(const double) -> unsigned;
@@ -29,5 +29,5 @@ struct Connection {
 [[nodiscard]] auto make_hashmap(const Graph &,
                                 const unsigned) -> std::map<unsigned, Spectrum>;
 
-[[nodiscard]] auto make_connection(Connection &, std::map<unsigned, Spectrum> &,
-                                   const SpectrumAllocator &) -> bool;
+[[nodiscard]] auto dispatch_request(Request &, std::map<unsigned, Spectrum> &,
+                                    const SpectrumAllocator &) -> bool;

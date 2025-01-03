@@ -1,8 +1,8 @@
-#include "connection.h"
+#include "request.h"
 
 #include <limits>
 
-Connection::Connection(const Path &path, const unsigned slots)
+Request::Request(const Path &path, const unsigned slots)
     : path{path}, slots{slots} {}
 
 auto from_gigabits_transmission(const double distance) -> unsigned {
@@ -104,9 +104,9 @@ auto make_hashmap(const Graph &graph,
   return hashmap;
 }
 
-auto make_connection(Connection &connection,
-                     std::map<unsigned, Spectrum> &hashmap,
-                     const SpectrumAllocator &spectrum_allocator) -> bool {
+auto dispatch_request(Request &connection,
+                      std::map<unsigned, Spectrum> &hashmap,
+                      const SpectrumAllocator &spectrum_allocator) -> bool {
   const auto keys{path_keys(connection.path)};
 
   const auto search{spectrum_allocator(hashmap[keys[0]], connection.slots)};

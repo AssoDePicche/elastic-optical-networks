@@ -4,10 +4,10 @@
 #include <iostream>
 #include <string>
 
-#include "connection.h"
 #include "event_queue.h"
 #include "group.h"
 #include "logger.h"
+#include "request.h"
 #include "settings.h"
 #include "statistics.h"
 #include "timer.h"
@@ -18,18 +18,21 @@ struct Snapshot {
   bool accepted;
   float fragmentation;
   float entropy;
+  float blocking;
 
-  Snapshot(float t, int slots, bool acc, float frag, float entr)
+  Snapshot(float t, int slots, bool acc, float frag, float entr, float blocking)
       : time{t},
         slots{slots},
         accepted{acc},
         fragmentation{frag},
-        entropy{entr} {}
+        entropy{entr},
+        blocking{blocking} {}
 
   [[nodiscard]] auto str() const -> std::string {
     return std::to_string(time) + ", " + std::to_string(slots) + ", " +
            (accepted ? "Accepted" : "Blocked") + ", " +
-           std::to_string(fragmentation) + ", " + std::to_string(entropy);
+           std::to_string(fragmentation) + ", " + std::to_string(entropy) +
+           ", " + std::to_string(blocking);
   }
 };
 
@@ -58,8 +61,8 @@ auto simulation(Settings &settings) -> std::string {
 
   auto hashmap{make_hashmap(settings.graph, settings.channels)};
 
-  EventQueue<Connection> queue{settings.arrival_rate, settings.service_rate,
-                               settings.seed};
+  EventQueue<Request> queue{settings.arrival_rate, settings.service_rate,
+                            settings.seed};
 
   Group group{settings.seed, {50.0, 50.0}, {3, 5}};
 
@@ -114,13 +117,13 @@ auto simulation(Settings &settings) -> std::string {
 
   auto time{0.0};
 
-  queue.push(Connection{settings.graph.random_path(), group.next()}, time)
+  queue.push(Request{settings.graph.random_path(), group.next()}, time)
       .of_type(Signal::ARRIVAL);
 
   while (queue.top().value().time <= settings.time_units) {
     const auto top{queue.pop()};
 
-    auto [now, signal, connection] = top.value();
+    auto [now, signal, request] = top.value();
 
     time = now;
 
@@ -129,13 +132,12 @@ auto simulation(Settings &settings) -> std::string {
     if (signal == Signal::DEPARTURE) {
       --active_calls;
 
-      INFO("Request for " + std::to_string(connection.slots) +
-           " slots departing");
+      INFO("Request for " + std::to_string(request.slots) + " slots departing");
 
-      const auto keys{path_keys(connection.path)};
+      const auto keys{path_keys(request.path)};
 
       for (const auto &key : keys) {
-        hashmap[key].deallocate(connection.slice);
+        hashmap[key].deallocate(request.slice);
 
         INFO(hashmap[key].to_string());
 
@@ -146,19 +148,19 @@ auto simulation(Settings &settings) -> std::string {
       continue;
     }
 
-    const auto allocator = (connection.slots == 3) ? first_fit : last_fit;
+    const auto allocator = (request.slots == 3) ? first_fit : last_fit;
 
     auto accepted = false;
 
     if (active_calls < settings.channels &&
-        make_connection(connection, hashmap, allocator)) {
+        dispatch_request(request, hashmap, allocator)) {
       ++active_calls;
 
-      queue.push(connection, now).of_type(Signal::DEPARTURE);
+      queue.push(request, now).of_type(Signal::DEPARTURE);
 
-      INFO("Accept request for " + std::to_string(connection.slots) + " slots");
+      INFO("Accept request for " + std::to_string(request.slots) + " slots");
 
-      const auto keys{path_keys(connection.path)};
+      const auto keys{path_keys(request.path)};
 
       for (const auto &key : keys) {
         INFO(hashmap[key].to_string());
@@ -170,16 +172,16 @@ auto simulation(Settings &settings) -> std::string {
       accepted = true;
 
     } else {
-      INFO("Blocking request for " + std::to_string(connection.slots) +
-           " slots");
+      INFO("Blocking request for " + std::to_string(request.slots) + " slots");
 
-      group.count_blocking(connection.slots);
+      group.count_blocking(request.slots);
     }
 
-    snapshots.push_back(Snapshot(now, connection.slots, accepted,
-                                 network_fragmentation(), entropy()));
+    snapshots.push_back(Snapshot(now, request.slots, accepted,
+                                 network_fragmentation(), entropy(),
+                                 group.blocking()));
 
-    queue.push(Connection{settings.graph.random_path(), group.next()}, now)
+    queue.push(Request{settings.graph.random_path(), group.next()}, now)
         .of_type(Signal::ARRIVAL);
   }
 
