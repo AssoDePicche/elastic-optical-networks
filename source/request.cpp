@@ -89,16 +89,12 @@ auto make_hashmap(const Graph &graph,
                   const unsigned size) -> std::map<unsigned, Spectrum> {
   std::map<unsigned, Spectrum> hashmap;
 
-  for (auto source{0u}; source < graph.size(); ++source) {
-    for (auto destination{0u}; destination < graph.size(); ++destination) {
-      if (!graph.adjacent(source, destination)) {
-        continue;
-      }
+  const auto edges = graph.get_edges();
 
-      const auto key{make_key(source, destination)};
+  for (const auto &[source, destination, cost] : edges) {
+    const auto key = make_key(source, destination);
 
-      hashmap[key] = Spectrum(size);
-    }
+    hashmap[key] = Spectrum(size);
   }
 
   return hashmap;
