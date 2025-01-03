@@ -3,6 +3,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 using Slice = std::pair<unsigned, unsigned>;
@@ -16,8 +17,6 @@ class Spectrum final {
   auto allocate(const Slice &) -> void;
 
   auto deallocate(const Slice &) -> void;
-
-  auto resize(const unsigned) -> void;
 
   [[nodiscard]] auto size(void) const noexcept -> unsigned;
 
@@ -41,14 +40,14 @@ class Spectrum final {
 
   [[nodiscard]] auto to_string(void) const noexcept -> std::string;
 
-  [[nodiscard]] auto at(const unsigned) const -> bool;
+  [[nodiscard]] auto at(const unsigned) const -> std::pair<bool, unsigned>;
 
   [[nodiscard]] auto gaps(void) const -> unsigned;
 
   [[nodiscard]] auto largest_gap(void) const -> unsigned;
 
  private:
-  std::vector<bool> slots;
+  std::vector<std::pair<bool, unsigned>> resources;
 };
 
 [[nodiscard]] auto best_fit(const Spectrum &,
