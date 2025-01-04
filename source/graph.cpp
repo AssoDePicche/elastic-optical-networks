@@ -231,7 +231,7 @@ auto Graph::dijkstra(const Vertex source,
   std::unordered_map<int, int> edge_hops;
 
   // {cost, {hops, vertex}}
-  using PathInfo = std::pair<Cost, std::pair<int, int>>;
+  using PathInfo = std::tuple<Cost, int, int>;
 
   std::priority_queue<PathInfo, std::vector<PathInfo>, std::greater<>> queue;
 
@@ -247,14 +247,10 @@ auto Graph::dijkstra(const Vertex source,
 
   edge_hops[source] = __MIN_HOPS__;
 
-  queue.emplace(costs[source], std::make_pair(edge_hops[source], source));
+  queue.emplace(costs[source], edge_hops[source], source);
 
   while (!queue.empty()) {
-    const auto current_cost = queue.top().first;
-
-    const auto hops = queue.top().second.first;
-
-    const auto vertex = queue.top().second.second;
+    const auto &[current_cost, hops, vertex] = queue.top();
 
     queue.pop();
 
@@ -291,7 +287,7 @@ auto Graph::dijkstra(const Vertex source,
 
       predecessors[adjacent] = vertex;
 
-      queue.emplace(new_cost, std::make_pair(new_hops, adjacent));
+      queue.emplace(new_cost, new_hops, adjacent);
     }
   }
 
