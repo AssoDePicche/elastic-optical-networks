@@ -31,7 +31,7 @@ file(GLOB SOURCES ${PROJECT_SOURCE_DIR}/source/*.cpp)
 set(COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -DALLOWLOGS)
 
 foreach(SOURCE ${SOURCES})
-  if (NOT ${SOURCE} MATCHES app.cpp)
+  if (NOT ${SOURCE} MATCHES main.cpp)
     get_filename_component(LIBRARY ${SOURCE} NAME_WE)
 
     add_library(${LIBRARY} SHARED ${SOURCE})
@@ -42,7 +42,7 @@ foreach(SOURCE ${SOURCES})
   endif()
 endforeach(SOURCE)
 
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/source/app.cpp ${SOURCES})
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/source/main.cpp ${SOURCES})
 
 target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
