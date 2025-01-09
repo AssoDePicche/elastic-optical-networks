@@ -5,6 +5,7 @@
 #include <string>
 
 #include "event_queue.h"
+#include "graph.h"
 #include "group.h"
 #include "logger.h"
 #include "request.h"
@@ -30,7 +31,7 @@ struct Snapshot {
 
   [[nodiscard]] auto str() const -> std::string {
     return std::to_string(time) + ", " + std::to_string(slots) + ", " +
-           (accepted ? "Accepted" : "Blocked") + ", " +
+           (accepted ? "true" : "false") + ", " +
            std::to_string(fragmentation) + ", " + std::to_string(entropy) +
            ", " + std::to_string(blocking);
   }
@@ -113,7 +114,7 @@ auto simulation(Settings &settings) -> std::string {
 
   auto time{0.0};
 
-  queue.push(Request{settings.graph.random_path(), group.next()}, time)
+  queue.push(Request{random_path(settings.graph), group.next()}, time)
       .of_type(Signal::ARRIVAL);
 
   while (queue.top().value().time <= settings.time_units) {
@@ -128,9 +129,10 @@ auto simulation(Settings &settings) -> std::string {
     if (signal == Signal::DEPARTURE) {
       --active_calls;
 
-      INFO("Request for " + std::to_string(request.slots) + " slots departing");
+      INFO("Request for " + std::to_string(request.bandwidth) +
+           " slots departing");
 
-      const auto keys{path_keys(request.path)};
+      const auto keys{route_keys(request.route)};
 
       for (const auto &key : keys) {
         hashmap[key].deallocate(request.slice);
@@ -144,7 +146,7 @@ auto simulation(Settings &settings) -> std::string {
       continue;
     }
 
-    const auto allocator = (request.slots == 3) ? first_fit : last_fit;
+    const auto allocator = (request.bandwidth == 3) ? first_fit : last_fit;
 
     auto accepted = false;
 
@@ -154,9 +156,10 @@ auto simulation(Settings &settings) -> std::string {
 
       queue.push(request, now).of_type(Signal::DEPARTURE);
 
-      INFO("Accept request for " + std::to_string(request.slots) + " slots");
+      INFO("Accept request for " + std::to_string(request.bandwidth) +
+           " slots");
 
-      const auto keys{path_keys(request.path)};
+      const auto keys{route_keys(request.route)};
 
       for (const auto &key : keys) {
         INFO(hashmap[key].to_string());
@@ -168,34 +171,37 @@ auto simulation(Settings &settings) -> std::string {
       accepted = true;
 
     } else {
-      INFO("Blocking request for " + std::to_string(request.slots) + " slots");
+      INFO("Blocking request for " + std::to_string(request.bandwidth) +
+           " slots");
 
-      group.count_blocking(request.slots);
+      group.count_blocking(request.bandwidth);
     }
 
-    snapshots.push_back(Snapshot(now, request.slots, accepted,
+    snapshots.push_back(Snapshot(now, request.bandwidth, accepted,
                                  network_fragmentation(), entropy(),
                                  group.blocking()));
 
-    queue.push(Request{settings.graph.random_path(), group.next()}, now)
+    queue.push(Request{random_path(settings.graph), group.next()}, now)
         .of_type(Signal::ARRIVAL);
   }
 
   timer.stop();
 
-  std::vector<double> fragmentation_states{};
+  std::string str{""};
 
-  std::vector<double> entropy_states{};
+  str.append("time,slots,accepted,fragmentation,entropy,blocking\n");
+
+  std::vector<double> fragmentation_states;
+
+  std::vector<double> entropy_states;
 
   for (const auto &snapshot : snapshots) {
-    std::cout << snapshot.str() << std::endl;
+    str.append(snapshot.str() + "\n");
 
     fragmentation_states.push_back(snapshot.fragmentation);
 
     entropy_states.push_back(snapshot.entropy);
   }
-
-  std::string str{""};
 
   str.append("Execution time: " +
              std::to_string(timer.elapsed<std::chrono::seconds>()) + "s\n");

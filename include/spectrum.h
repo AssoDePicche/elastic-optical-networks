@@ -6,7 +6,9 @@
 #include <utility>
 #include <vector>
 
-using Slice = std::pair<unsigned, unsigned>;
+using slice_t = std::pair<unsigned, unsigned>;
+
+using slot_t = std::pair<bool, unsigned>;
 
 class Spectrum final {
  public:
@@ -14,15 +16,15 @@ class Spectrum final {
 
   Spectrum(const unsigned);
 
-  auto allocate(const Slice &) -> void;
+  auto allocate(const slice_t &) -> void;
 
-  auto deallocate(const Slice &) -> void;
+  auto deallocate(const slice_t &) -> void;
 
   [[nodiscard]] auto size(void) const noexcept -> unsigned;
 
   [[nodiscard]] auto available(void) const noexcept -> unsigned;
 
-  [[nodiscard]] auto available_at(const Slice &) const noexcept -> bool;
+  [[nodiscard]] auto available_at(const slice_t &) const noexcept -> bool;
 
   [[nodiscard]] auto available_partitions(void) const noexcept
       -> std::vector<unsigned>;
@@ -40,33 +42,33 @@ class Spectrum final {
 
   [[nodiscard]] auto to_string(void) const noexcept -> std::string;
 
-  [[nodiscard]] auto at(const unsigned) const -> std::pair<bool, unsigned>;
+  [[nodiscard]] auto at(const unsigned) const -> slot_t;
 
   [[nodiscard]] auto gaps(void) const -> unsigned;
 
   [[nodiscard]] auto largest_gap(void) const -> unsigned;
 
  private:
-  std::vector<std::pair<bool, unsigned>> resources;
+  std::vector<slot_t> resources;
 };
 
 [[nodiscard]] auto best_fit(const Spectrum &,
-                            const unsigned) -> std::optional<Slice>;
+                            const unsigned) -> std::optional<slice_t>;
 
 [[nodiscard]] auto first_fit(const Spectrum &,
-                             const unsigned) -> std::optional<Slice>;
+                             const unsigned) -> std::optional<slice_t>;
 
 [[nodiscard]] auto last_fit(const Spectrum &,
-                            const unsigned) -> std::optional<Slice>;
+                            const unsigned) -> std::optional<slice_t>;
 
 [[nodiscard]] auto random_fit(const Spectrum &,
-                              const unsigned) -> std::optional<Slice>;
+                              const unsigned) -> std::optional<slice_t>;
 
 [[nodiscard]] auto worst_fit(const Spectrum &,
-                             const unsigned) -> std::optional<Slice>;
+                             const unsigned) -> std::optional<slice_t>;
 
 using SpectrumAllocator =
-    std::function<std::optional<Slice>(const Spectrum &, const unsigned)>;
+    std::function<std::optional<slice_t>(const Spectrum &, const unsigned)>;
 
 [[nodiscard]] auto fragmentation_coefficient(const Spectrum &) -> double;
 

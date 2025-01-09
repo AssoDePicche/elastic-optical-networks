@@ -2,8 +2,8 @@
 
 #include <limits>
 
-Request::Request(const Path &path, const unsigned slots)
-    : path{path}, slots{slots} {}
+Request::Request(const route_t &route, const unsigned bandwidth)
+    : route{route}, bandwidth{bandwidth} {}
 
 auto from_gigabits_transmission(const double distance) -> unsigned {
   if (distance <= 160.0) {
@@ -73,13 +73,21 @@ auto make_key(unsigned x, unsigned y) -> unsigned {
   return ((x + y) * (x + y + 1) / 2) + y;
 }
 
-auto path_keys(const Path &path) -> std::vector<unsigned> {
-  assert(!path.vertices.empty());
+auto route_keys(const route_t &route) -> std::vector<unsigned> {
+  const auto &[vertices, cost] = route;
+
+  assert(!vertices.empty());
 
   std::vector<unsigned> keys;
 
-  for (auto index{1u}; index < path.vertices.size(); ++index) {
-    keys.push_back(make_key(path.vertices[index - 1], path.vertices[index]));
+  std::vector<vertex_t> v;
+
+  for (const auto &vertex : vertices) {
+    v.push_back(vertex);
+  }
+
+  for (auto index{1u}; index < v.size(); ++index) {
+    keys.push_back(make_key(v[index - 1], v[index]));
   }
 
   return keys;
@@ -100,27 +108,26 @@ auto make_hashmap(const Graph &graph,
   return hashmap;
 }
 
-auto dispatch_request(Request &connection,
-                      std::map<unsigned, Spectrum> &hashmap,
+auto dispatch_request(Request &request, std::map<unsigned, Spectrum> &hashmap,
                       const SpectrumAllocator &spectrum_allocator) -> bool {
-  const auto keys{path_keys(connection.path)};
+  const auto keys{route_keys(request.route)};
 
-  const auto search{spectrum_allocator(hashmap[keys[0]], connection.slots)};
+  const auto search{spectrum_allocator(hashmap[keys[0]], request.bandwidth)};
 
   if (!search.has_value()) {
     return false;
   }
 
-  connection.slice = search.value();
+  request.slice = search.value();
 
   for (const auto &key : keys) {
-    if (!hashmap[key].available_at(connection.slice)) {
+    if (!hashmap[key].available_at(request.slice)) {
       return false;
     }
   }
 
   for (const auto &key : keys) {
-    hashmap[key].allocate(connection.slice);
+    hashmap[key].allocate(request.slice);
   }
 
   return true;

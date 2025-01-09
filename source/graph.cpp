@@ -1,6 +1,7 @@
 #include "graph.h"
 
 #include <algorithm>
+#include <cassert>
 #include <fstream>
 #include <memory>
 #include <queue>
@@ -11,20 +12,9 @@
 
 #include "distribution.h"
 
-Path::Path(const std::vector<Vertex> &vertices, const Cost cost)
-    : vertices{vertices}, cost{cost} {}
-
-auto Path::source(void) const -> Vertex { return vertices.front(); }
-
-auto Path::destination(void) const -> Vertex { return vertices.back(); }
-
-auto Path::operator>(const Path &path) const -> bool {
-  return cost > path.cost;
-}
-
 Graph::Graph(const unsigned vertices) {
   for (auto vertex{0u}; vertex < vertices; ++vertex) {
-    add_vertex(vertex);
+    add(vertex);
   }
 }
 
@@ -53,10 +43,10 @@ auto Graph::from(const std::string &filename) noexcept -> std::optional<Graph> {
     for (auto destination{0u}; destination < size; ++destination) {
       std::getline(stream, buffer, ' ');
 
-      const auto cost = static_cast<Cost>(atof(buffer.c_str()));
+      const auto cost = static_cast<cost_t>(atof(buffer.c_str()));
 
-      if (cost != __MIN_COST__) {
-        graph.add_edge(source, destination, cost);
+      if (cost != Cost::min) {
+        graph.add({source, destination, cost});
       }
     }
 
@@ -71,7 +61,7 @@ auto Graph::size(void) const noexcept -> unsigned { return vertices.size(); }
 auto Graph::to_string(void) const noexcept -> std::string {
   std::string buffer{};
 
-  auto matrix = std::vector(size(), std::vector(size(), __MIN_COST__));
+  auto matrix = std::vector(size(), std::vector(size(), Cost::min));
 
   for (const auto &[vertex, edges] : adjacency_list) {
     for (auto &[adjacent, cost] : edges) {
@@ -90,19 +80,65 @@ auto Graph::to_string(void) const noexcept -> std::string {
   return buffer;
 }
 
-auto Graph::breadth_first_search(const Vertex source,
-                                 const Vertex destination) noexcept -> Path {
-  if (source == destination) {
-    return Path({}, __MAX_COST__);
+auto Graph::at(const vertex_t source,
+               const vertex_t destination) const -> cost_t {
+  for (const auto &[vertex, cost] : adjacency_list.at(source)) {
+    if (vertex == destination) {
+      return cost;
+    }
   }
 
-  std::unordered_map<Vertex, bool> visited;
+  return Cost::min;
+}
+
+auto Graph::at(const vertex_t vertex) const -> std::list<adjacent_t> {
+  return adjacency_list.at(vertex);
+}
+
+auto Graph::is_adjacent(const vertex_t source,
+                        const vertex_t destination) const -> bool {
+  return at(source, destination) != Cost::min;
+}
+
+auto Graph::get_vertices(void) const noexcept -> std::set<vertex_t> {
+  return vertices;
+}
+
+auto Graph::get_edges(void) const noexcept -> std::vector<edge_t> {
+  std::vector<edge_t> edges;
+
+  for (const auto &[source, adjacent_edges] : adjacency_list) {
+    for (const auto &[destination, cost] : adjacent_edges) {
+      edges.push_back({source, destination, cost});
+    }
+  }
+
+  return edges;
+}
+
+auto Graph::add(const vertex_t vertex) -> void { vertices.insert(vertex); }
+
+auto Graph::add(const edge_t &edge) -> void {
+  const auto &[source, destination, cost] = edge;
+
+  adjacency_list[source].emplace_back(destination, cost);
+}
+
+auto operator<<(std::ostream &stream, const Graph &graph) -> std::ostream & {
+  return stream << graph.to_string();
+}
+
+auto breadth_first_search(const Graph &graph, const vertex_t source,
+                          const vertex_t destination) noexcept -> route_t {
+  assert(source != destination);
+
+  std::unordered_map<vertex_t, bool> visited;
 
   std::unordered_map<int, int> predecessors;
 
-  std::queue<Vertex> queue;
+  std::queue<vertex_t> queue;
 
-  for (const auto &vertex : vertices) {
+  for (const auto &vertex : graph.get_vertices()) {
     visited[vertex] = false;
 
     predecessors[vertex] = -1;
@@ -121,7 +157,7 @@ auto Graph::breadth_first_search(const Vertex source,
       break;
     }
 
-    for (const auto &[adjacent, edges] : adjacency_list[vertex]) {
+    for (const auto &[adjacent, edges] : graph.at(vertex)) {
       if (visited[adjacent]) {
         continue;
       }
@@ -134,38 +170,32 @@ auto Graph::breadth_first_search(const Vertex source,
     }
   }
 
-  std::vector<Vertex> vertices{};
+  std::unordered_set<vertex_t> vertices;
 
-  auto vertex = static_cast<int>(destination);
+  cost_t cost = Cost::min;
 
-  while (vertex != -1) {
-    vertices.push_back(vertex);
-
-    vertex = predecessors[vertex];
+  for (int vertex = destination; vertex != -1; vertex = predecessors[vertex]) {
+    vertices.insert(vertex);
   }
 
-  std::reverse(vertices.begin(), vertices.end());
-
-  if (vertices.front() != source) {
-    vertices.clear();
+  if (*vertices.begin() != source) {
+    return {{}, Cost::max};
   }
 
-  return Path(vertices, __MAX_COST__);
+  return {vertices, cost};
 }
 
-auto Graph::depth_first_search(const Vertex source,
-                               const Vertex destination) noexcept -> Path {
-  if (source == destination) {
-    return Path({}, __MAX_COST__);
-  }
+auto depth_first_search(const Graph &graph, const vertex_t source,
+                        const vertex_t destination) noexcept -> route_t {
+  assert(source != destination);
 
-  std::unordered_map<Vertex, bool> visited;
+  std::unordered_map<vertex_t, bool> visited;
 
   std::unordered_map<int, int> predecessors;
 
-  std::stack<Vertex> stack;
+  std::stack<vertex_t> stack;
 
-  for (const auto &vertex : vertices) {
+  for (const auto &vertex : graph.get_vertices()) {
     visited[vertex] = false;
 
     predecessors[vertex] = -1;
@@ -188,7 +218,7 @@ auto Graph::depth_first_search(const Vertex source,
       break;
     }
 
-    for (const auto &[adjacent, edges] : adjacency_list[vertex]) {
+    for (const auto &[adjacent, edges] : graph.at(vertex)) {
       if (visited[adjacent]) {
         continue;
       }
@@ -199,51 +229,45 @@ auto Graph::depth_first_search(const Vertex source,
     }
   }
 
-  std::vector<Vertex> vertices{};
+  std::unordered_set<vertex_t> vertices;
 
-  auto vertex = static_cast<int>(destination);
+  cost_t cost = Cost::min;
 
-  while (vertex != -1) {
-    vertices.push_back(vertex);
-
-    vertex = predecessors[vertex];
+  for (int vertex = destination; vertex != -1; vertex = predecessors[vertex]) {
+    vertices.insert(vertex);
   }
 
-  std::reverse(vertices.begin(), vertices.end());
-
-  if (vertices.front() != source) {
-    vertices.clear();
+  if (*vertices.begin() != source) {
+    return __NO_ROUTE__;
   }
 
-  return Path(vertices, __MAX_COST__);
+  return {vertices, cost};
 }
 
-auto Graph::dijkstra(const Vertex source,
-                     const Vertex destination) noexcept -> Path {
-  if (source == destination) {
-    return Path({}, __MAX_COST__);
-  }
+auto dijkstra(const Graph &graph, const vertex_t source,
+              const vertex_t destination) noexcept -> route_t {
+  assert(source != destination);
 
-  std::unordered_map<int, Cost> costs;
+  std::unordered_map<int, cost_t> costs;
 
   std::unordered_map<int, int> predecessors;
 
   std::unordered_map<int, int> edge_hops;
 
-  // {cost, {hops, vertex}}
-  using PathInfo = std::tuple<Cost, int, int>;
+  // {cost, hops, vertex}
+  using path_t = std::tuple<cost_t, int, int>;
 
-  std::priority_queue<PathInfo, std::vector<PathInfo>, std::greater<>> queue;
+  std::priority_queue<path_t, std::vector<path_t>, std::greater<>> queue;
 
-  for (const auto &vertex : vertices) {
-    costs[vertex] = __MAX_COST__;
+  for (const auto &vertex : graph.get_vertices()) {
+    costs[vertex] = Cost::max;
 
     predecessors[vertex] = -1;
 
     edge_hops[vertex] = __MAX_HOPS__;
   }
 
-  costs[source] = __MIN_COST__;
+  costs[source] = Cost::min;
 
   edge_hops[source] = __MIN_HOPS__;
 
@@ -266,7 +290,7 @@ auto Graph::dijkstra(const Vertex source,
       continue;
     }
 
-    for (const auto &[adjacent, cost] : adjacency_list[vertex]) {
+    for (const auto &[adjacent, cost] : graph.at(vertex)) {
       const auto new_cost{current_cost + cost};
 
       if (new_cost > costs[adjacent]) {
@@ -291,51 +315,49 @@ auto Graph::dijkstra(const Vertex source,
     }
   }
 
-  std::vector<Vertex> vertices{};
+  std::unordered_set<vertex_t> vertices;
 
-  auto current = static_cast<int>(destination);
+  cost_t cost = Cost::min;
 
-  while (current != -1) {
-    vertices.push_back(static_cast<unsigned>(current));
+  for (int vertex = destination; vertex != -1; vertex = predecessors[vertex]) {
+    vertices.insert(static_cast<vertex_t>(vertex));
 
-    current = predecessors[current];
+    cost += costs[vertex];
   }
 
-  std::reverse(vertices.begin(), vertices.end());
-
-  if (vertices.front() != source) {
-    vertices.clear();
+  if (*vertices.begin() != source) {
+    return __NO_ROUTE__;
   }
 
-  const Cost cost = __MAX_COST__;
-
-  return Path(vertices, cost);
+  return {vertices, cost};
 }
 
-auto Graph::k_shortest_path(const Vertex source, const Vertex destination,
-                            const unsigned k) noexcept -> std::vector<Path> {
-  if (source == destination) {
-    return {};
-  }
+auto k_shortest_path(const Graph &graph, const vertex_t source,
+                     const vertex_t destination,
+                     const unsigned k) noexcept -> std::vector<route_t> {
+  assert(source != destination);
 
-  std::vector<Path> k_paths{};
+  std::vector<route_t> k_paths{};
 
-  struct Binding {
-    Vertex vertex;
-    Path path;
+  struct stub_t {
+    vertex_t vertex;
+    route_t path;
 
-    Binding(const Vertex vertex, const Path &path)
+    stub_t(const vertex_t vertex, const route_t &path)
         : vertex{vertex}, path{path} {}
 
-    auto operator>(const Binding &binding) const -> bool {
-      return path.cost > binding.path.cost;
+    auto operator>(const stub_t &binding) const -> bool {
+      const auto &[vertices, cost] = path;
+
+      const auto &[other_vertices, other_cost] = binding.path;
+
+      return cost > other_cost;
     }
   };
 
-  std::priority_queue<Binding, std::vector<Binding>, std::greater<Binding>>
-      queue;
+  std::priority_queue<stub_t, std::vector<stub_t>, std::greater<stub_t>> queue;
 
-  queue.push(Binding(source, Path({source}, __MIN_COST__)));
+  queue.push(stub_t(source, {{source}, Cost::min}));
 
   while (!queue.empty() && k_paths.size() != k) {
     auto [vertex, path] = queue.top();
@@ -348,97 +370,38 @@ auto Graph::k_shortest_path(const Vertex source, const Vertex destination,
       continue;
     }
 
-    for (const auto &[adjacent, cost] : adjacency_list[vertex]) {
-      auto new_path{path};
+    for (const auto &[adjacent, cost] : graph.at(vertex)) {
+      auto &[vertices, path_cost] = path;
 
-      new_path.vertices.push_back(adjacent);
+      vertices.insert(adjacent);
 
-      queue.push(Binding(adjacent, Path(new_path.vertices, path.cost + cost)));
+      queue.push(stub_t(adjacent, {vertices, path_cost + cost}));
     }
   }
 
   return k_paths;
 }
 
-auto Graph::random_path(void) noexcept -> Path {
+auto random_path(const Graph &graph) noexcept -> route_t {
   std::random_device random_device;
 
-  Uniform distribution{random_device(), 0, static_cast<double>(size())};
+  Uniform distribution{random_device(), 0, static_cast<double>(graph.size())};
 
-  auto source{static_cast<unsigned>(distribution.next())};
+  auto source{static_cast<vertex_t>(distribution.next())};
 
-  auto destination{static_cast<unsigned>(distribution.next())};
+  auto destination{static_cast<vertex_t>(distribution.next())};
 
   while (true) {
-    destination = static_cast<unsigned>(distribution.next());
+    destination = static_cast<vertex_t>(distribution.next());
 
-    const auto path{dijkstra(source, destination)};
+    if (source == destination) {
+      continue;
+    }
 
-    if (!path.vertices.empty()) {
-      return path;
+    const auto &[vertices, cost] = dijkstra(graph, source, destination);
+
+    if (!vertices.empty()) {
+      return {vertices, cost};
     }
   }
-}
-
-auto Graph::random_source_destination(void) noexcept
-    -> std::pair<Vertex, Vertex> {
-  const auto path{random_path()};
-
-  return {path.source(), path.destination()};
-}
-
-auto Graph::paths(void) noexcept -> std::vector<Path> {
-  std::vector<Path> paths{};
-
-  for (auto source{0u}; source < size(); ++source) {
-    for (const auto &[destination, cost] : adjacency_list.at(source)) {
-      const auto path{dijkstra(source, destination)};
-
-      if (path.vertices.empty()) {
-        continue;
-      }
-
-      paths.push_back(path);
-    }
-  }
-
-  return paths;
-}
-
-auto Graph::at(const Vertex source, const Vertex destination) const -> Cost {
-  for (const auto &[vertex, cost] : adjacency_list.at(source)) {
-    if (vertex == destination) {
-      return cost;
-    }
-  }
-
-  return __MIN_COST__;
-}
-
-auto Graph::adjacent(const Vertex source,
-                     const Vertex destination) const -> bool {
-  return at(source, destination) != __MIN_COST__;
-}
-
-auto Graph::get_edges(void) const noexcept -> std::vector<Edge> {
-  std::vector<Edge> edges;
-
-  for (const auto &[source, adjacent_edges] : adjacency_list) {
-    for (const auto &[destination, cost] : adjacent_edges) {
-      edges.push_back({source, destination, cost});
-    }
-  }
-
-  return edges;
-}
-
-auto Graph::add_vertex(const Vertex vertex) -> void { vertices.insert(vertex); }
-
-auto Graph::add_edge(const Vertex source, const Vertex destination,
-                     const Cost cost) -> void {
-  adjacency_list[source].emplace_back(destination, cost);
-}
-
-auto operator<<(std::ostream &stream, const Graph &graph) -> std::ostream & {
-  return stream << graph.to_string();
 }

@@ -11,7 +11,7 @@
 Spectrum::Spectrum(const unsigned size)
     : resources(std::vector(size, std::make_pair(false, 0u))) {}
 
-auto Spectrum::allocate(const Slice &slice) -> void {
+auto Spectrum::allocate(const slice_t &slice) -> void {
   const auto &[start, end] = slice;
 
   assert(end < size());
@@ -33,7 +33,7 @@ auto Spectrum::allocate(const Slice &slice) -> void {
   }
 }
 
-auto Spectrum::deallocate(const Slice &slice) -> void {
+auto Spectrum::deallocate(const slice_t &slice) -> void {
   const auto &[start, end] = slice;
 
   assert(end < size());
@@ -69,7 +69,7 @@ auto Spectrum::available(void) const noexcept -> unsigned {
   return count;
 }
 
-auto Spectrum::available_at(const Slice &slice) const noexcept -> bool {
+auto Spectrum::available_at(const slice_t &slice) const noexcept -> bool {
   const auto &[start, end] = slice;
 
   auto i = resources.begin() + start;
@@ -106,15 +106,19 @@ auto Spectrum::available_partitions(void) const noexcept
       continue;
     }
 
-    if (!allocated) {
-      if (!in_free_block) {
-        in_free_block = true;
-
-        length = 1;
-      } else {
-        ++length;
-      }
+    if (allocated) {
+      continue;
     }
+
+    if (in_free_block) {
+      ++length;
+
+      continue;
+    }
+
+    in_free_block = true;
+
+    length = 1;
   }
 
   if (in_free_block) {
@@ -182,7 +186,7 @@ auto Spectrum::to_string(void) const noexcept -> std::string {
   std::string buffer;
 
   std::for_each(resources.begin(), resources.end(),
-                [&buffer](const std::pair<bool, unsigned> &resource) {
+                [&buffer](const slot_t &resource) {
                   const auto &[allocated, times_allocated] = resource;
 
                   buffer.append(allocated ? "#" : ".");
@@ -191,7 +195,7 @@ auto Spectrum::to_string(void) const noexcept -> std::string {
   return buffer;
 }
 
-auto Spectrum::at(const unsigned index) const -> std::pair<bool, unsigned> {
+auto Spectrum::at(const unsigned index) const -> slot_t {
   assert(index < size());
 
   return resources.at(index);
@@ -262,7 +266,7 @@ auto Spectrum::largest_gap(void) const -> unsigned {
 }
 
 auto best_fit(const Spectrum &spectrum,
-              const unsigned bandwidth) -> std::optional<Slice> {
+              const unsigned bandwidth) -> std::optional<slice_t> {
   assert(bandwidth <= spectrum.size());
 
   if (bandwidth > spectrum.largest_partition()) {
@@ -315,7 +319,7 @@ auto best_fit(const Spectrum &spectrum,
 }
 
 auto first_fit(const Spectrum &spectrum,
-               const unsigned bandwidth) -> std::optional<Slice> {
+               const unsigned bandwidth) -> std::optional<slice_t> {
   assert(bandwidth <= spectrum.size());
 
   if (bandwidth > spectrum.largest_partition()) {
@@ -352,7 +356,7 @@ auto first_fit(const Spectrum &spectrum,
 }
 
 auto last_fit(const Spectrum &spectrum,
-              const unsigned bandwidth) -> std::optional<Slice> {
+              const unsigned bandwidth) -> std::optional<slice_t> {
   assert(bandwidth <= spectrum.size());
 
   if (bandwidth > spectrum.largest_partition()) {
@@ -377,7 +381,7 @@ auto last_fit(const Spectrum &spectrum,
 }
 
 auto random_fit(const Spectrum &spectrum,
-                const unsigned bandwidth) -> std::optional<Slice> {
+                const unsigned bandwidth) -> std::optional<slice_t> {
   assert(bandwidth <= spectrum.size());
 
   if (bandwidth > spectrum.largest_partition()) {
@@ -420,7 +424,7 @@ auto random_fit(const Spectrum &spectrum,
 }
 
 auto worst_fit(const Spectrum &spectrum,
-               const unsigned bandwidth) -> std::optional<Slice> {
+               const unsigned bandwidth) -> std::optional<slice_t> {
   assert(bandwidth <= spectrum.size());
 
   if (bandwidth > spectrum.largest_partition()) {

@@ -9,13 +9,13 @@
 #include "spectrum.h"
 
 struct Request {
-  Path path;
-  Slice slice;
-  unsigned slots{};
+  route_t route;
+  slice_t slice;
+  unsigned bandwidth{};
 
   Request(void) = default;
 
-  Request(const Path &, const unsigned);
+  Request(const route_t &, const unsigned);
 };
 
 [[nodiscard]] auto from_gigabits_transmission(const double) -> unsigned;
@@ -24,7 +24,7 @@ struct Request {
 
 [[nodiscard]] auto make_key(unsigned, unsigned) -> unsigned;
 
-[[nodiscard]] auto path_keys(const Path &) -> std::vector<unsigned>;
+[[nodiscard]] auto route_keys(const route_t &) -> std::vector<unsigned>;
 
 [[nodiscard]] auto make_hashmap(const Graph &,
                                 const unsigned) -> std::map<unsigned, Spectrum>;

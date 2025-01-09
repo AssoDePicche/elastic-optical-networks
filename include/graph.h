@@ -7,36 +7,29 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
-using Vertex = unsigned;
+using vertex_t = unsigned;
 
-using Cost = double;
+using cost_t = double;
 
-constexpr auto __MAX_COST__ = std::numeric_limits<Cost>::max();
-
-constexpr auto __MIN_COST__ = static_cast<Cost>(0.0);
-
-struct Path {
-  std::vector<Vertex> vertices{};
-  Cost cost{};
-
-  Path(void) = default;
-
-  Path(const std::vector<Vertex> &, const Cost);
-
-  [[nodiscard]] auto source(void) const -> Vertex;
-
-  [[nodiscard]] auto destination(void) const -> Vertex;
-
-  [[nodiscard]] auto operator>(const Path &) const -> bool;
+struct Cost {
+  static constexpr auto max = std::numeric_limits<cost_t>::max();
+  static constexpr auto min = static_cast<cost_t>(0);
 };
 
-constexpr auto __MAX_HOPS__ = std::numeric_limits<int>::max();
+constexpr auto __MAX_HOPS__ = std::numeric_limits<unsigned>::max();
 
-constexpr auto __MIN_HOPS__ = static_cast<int>(0);
+constexpr auto __MIN_HOPS__ = static_cast<unsigned>(0);
 
-using Edge = std::tuple<Vertex, Vertex, Cost>;
+using adjacent_t = std::pair<vertex_t, cost_t>;
+
+using edge_t = std::tuple<vertex_t, vertex_t, cost_t>;
+
+using route_t = std::pair<std::unordered_set<vertex_t>, cost_t>;
+
+const route_t __NO_ROUTE__ = {{}, Cost::max};
 
 class Graph final {
  public:
@@ -51,38 +44,38 @@ class Graph final {
 
   [[nodiscard]] auto to_string(void) const noexcept -> std::string;
 
-  [[nodiscard]] auto breadth_first_search(const Vertex,
-                                          const Vertex) noexcept -> Path;
+  [[nodiscard]] auto at(const vertex_t, const vertex_t) const -> cost_t;
 
-  [[nodiscard]] auto depth_first_search(const Vertex,
-                                        const Vertex) noexcept -> Path;
+  [[nodiscard]] auto at(const vertex_t) const -> std::list<adjacent_t>;
 
-  [[nodiscard]] auto dijkstra(const Vertex, const Vertex) noexcept -> Path;
+  [[nodiscard]] auto is_adjacent(const vertex_t, const vertex_t) const -> bool;
 
-  [[nodiscard]] auto k_shortest_path(
-      const Vertex, const Vertex, const unsigned) noexcept -> std::vector<Path>;
+  [[nodiscard]] auto get_vertices(void) const noexcept -> std::set<vertex_t>;
 
-  [[nodiscard]] auto random_path(void) noexcept -> Path;
+  [[nodiscard]] auto get_edges(void) const noexcept -> std::vector<edge_t>;
 
-  [[nodiscard]] auto random_source_destination(void) noexcept
-      -> std::pair<Vertex, Vertex>;
+  auto add(const vertex_t) -> void;
 
-  [[nodiscard]] auto paths(void) noexcept -> std::vector<Path>;
-
-  [[nodiscard]] auto at(const Vertex, const Vertex) const -> Cost;
-
-  [[nodiscard]] auto adjacent(const Vertex, const Vertex) const -> bool;
-
-  [[nodiscard]] auto get_edges(void) const noexcept -> std::vector<Edge>;
-
-  auto add_vertex(const Vertex) -> void;
-
-  auto add_edge(const Vertex, const Vertex, const Cost) -> void;
+  auto add(const edge_t &) -> void;
 
  private:
-  std::set<Vertex> vertices;
-  std::unordered_map<unsigned, std::list<std::pair<Vertex, Cost>>>
-      adjacency_list;
+  std::unordered_map<vertex_t, std::list<adjacent_t>> adjacency_list;
+  std::set<vertex_t> vertices;
 };
 
 [[nodiscard]] auto operator<<(std::ostream &, const Graph &) -> std::ostream &;
+
+[[nodiscard]] auto breadth_first_search(const Graph &, const vertex_t,
+                                        const vertex_t) noexcept -> route_t;
+
+[[nodiscard]] auto depth_first_search(const Graph &, const vertex_t,
+                                      const vertex_t) noexcept -> route_t;
+
+[[nodiscard]] auto dijkstra(const Graph &, const vertex_t,
+                            const vertex_t) noexcept -> route_t;
+
+[[nodiscard]] auto k_shortest_path(const Graph &, const vertex_t,
+                                   const vertex_t, const unsigned) noexcept
+    -> std::vector<route_t>;
+
+[[nodiscard]] auto random_path(const Graph &) noexcept -> route_t;
