@@ -20,6 +20,8 @@ using Point2D = std::pair<float, float>;
 
 using BoundingBox = std::tuple<Point2D, float, float, Color>;
 
+auto draw(const BoundingBox&) -> void;
+
 [[nodiscard]] auto collide(const BoundingBox&, const BoundingBox&) -> bool;
 
 struct Object;

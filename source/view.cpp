@@ -22,6 +22,14 @@ auto euclidean_distance(const Point2D& p, const Point2D& q) -> float {
   return std::sqrt(dx * dx + dy * dy);
 }
 
+auto draw(const BoundingBox& box) -> void {
+  const auto& [point, width, height, hex] = box;
+
+  const auto& [x, y] = point;
+
+  raylib::DrawRectangleLinesEx({x, y, width, width}, 1.0f, raylib::RED);
+}
+
 auto collide(const BoundingBox& a, const BoundingBox& b) -> bool {
   const auto& [p1, w1, h1, c1] = a;
 
