@@ -1,7 +1,8 @@
 {
-  "window": {
+  "view": {
     "title": "App",
     "height": 720,
-    "width": 1280
+    "width": 1280,
+    "fps": 60
   }
 }
