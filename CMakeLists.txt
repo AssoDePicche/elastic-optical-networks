@@ -9,6 +9,12 @@ set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+cmake_policy(SET CMP0135 NEW)
+
+set(DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+
 include(FetchContent)
 
 set(BUILD_EXAMPLES OFF CACHE BOOL "Don't build raylib examples")
@@ -24,11 +30,20 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(raylib)
 
+include(FetchContent)
+
+FetchContent_Declare(
+  json
+  URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+)
+
+FetchContent_MakeAvailable(json)
+
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 file(GLOB SOURCES ${PROJECT_SOURCE_DIR}/source/*.cpp)
 
-set(COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -DALLOWLOGS)
+set(COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -fPIC -DALLOWLOGS)
 
 foreach(SOURCE ${SOURCES})
   if (NOT ${SOURCE} MATCHES main.cpp)
@@ -39,6 +54,8 @@ foreach(SOURCE ${SOURCES})
     target_compile_options(${LIBRARY} PRIVATE ${COMPILE_OPTIONS})
 
     target_link_libraries(${LIBRARY} raylib)
+
+    target_link_libraries(${LIBRARY} nlohmann_json::nlohmann_json)
   endif()
 endforeach(SOURCE)
 
@@ -47,3 +64,5 @@ add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/source/main.cpp ${SOURCES})
 target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
 target_link_libraries(${PROJECT_NAME} raylib)
+
+target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
