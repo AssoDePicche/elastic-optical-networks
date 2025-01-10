@@ -9,6 +9,8 @@ namespace raylib {
 
 using Point2D = std::pair<float, float>;
 
+[[nodiscard]] auto euclidean_distance(const Point2D&, const Point2D&) -> float;
+
 struct Object;
 
 using draw_fn = std::function<void(const Object&)>;
