@@ -2,6 +2,14 @@
 
 #include <cmath>
 
+[[nodiscard]] auto deg2rad(const float degrees) -> float {
+  return degrees * M_PI / 180.0f;
+}
+
+[[nodiscard]] auto rad2deg(const float radians) -> float {
+  return radians * 180.0f / M_PI;
+}
+
 auto euclidean_distance(const Point2D& p, const Point2D& q) -> float {
   const auto& [x1, y1] = p;
 

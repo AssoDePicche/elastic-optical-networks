@@ -1,11 +1,16 @@
 #pragma once
 
 #include <functional>
+#include <numbers>
 #include <utility>
 
 namespace raylib {
 #include <raylib.h>
 };
+
+[[nodiscard]] auto deg2rad(const float) -> float;
+
+[[nodiscard]] auto rad2deg(const float) -> float;
 
 using Color = unsigned int;
 
