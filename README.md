@@ -46,7 +46,7 @@ git clone git@github.com:AssoDePicche/elastic-optical-networks.git
 3. Build
 
 ```bash
-cmake -S . -B build && cmake --build build
+mkdir -p third_party && cmake -DCMAKE_BUILD_TYPE=Release -S . -B build && cmake --build build -j12
 ```
 
 ## Usage
