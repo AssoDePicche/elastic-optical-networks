@@ -55,7 +55,7 @@ Run the binary created in the [Installation section](#installation) with the arg
 
 You must pass the following arguments for the simulation:
 - `--arrival-rate`: the call arrival rate per unit of time
-- `--channels`: the number of resources available per link
+- `--bandwidth`: the number of resources available per link
 - `--seed`: the seed number for random processes
 - `--service-rate`: the service rate per unit of time
 - `--spectrum-allocator`: the [spectrum allocation algorithm](#features)
@@ -65,7 +65,7 @@ You must pass the following arguments for the simulation:
 For example:
 
 ```bash
-./build/source/App --time-units 100000 --seed 227953 --channels 10 --service-rate 0.133 --arrival-rate 1 --topology topology.txt --spectrum-allocator first-fit
+./build/source/App --time-units 100000 --seed 227953 --bandwidth 10 --service-rate 0.133 --arrival-rate 1 --topology topology.txt --spectrum-allocator first-fit
 ```
 
 With the topology.txt file as follows:
