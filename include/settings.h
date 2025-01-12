@@ -15,7 +15,7 @@ struct Settings {
   double arrival_rate;
   double service_rate;
   double time_units;
-  std::size_t channels;
+  unsigned bandwidth;
 
   [[nodiscard]] static auto from(const std::vector<std::string> &)
       -> std::optional<Settings>;

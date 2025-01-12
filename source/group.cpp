@@ -79,7 +79,7 @@ auto Report::from(const Group &group, const Settings &settings) -> Report {
 
   report.seed = settings.seed;
 
-  report.channels = settings.channels;
+  report.bandwidth = settings.bandwidth;
 
   report.calls = group.size();
 
@@ -93,7 +93,7 @@ auto Report::from(const Group &group, const Settings &settings) -> Report {
 
   report.busy_channels = (1.0 - report.grade_of_service);
 
-  report.occupancy = (report.busy_channels / report.channels);
+  report.occupancy = (report.busy_channels / report.bandwidth);
 
   return report;
 }
@@ -103,7 +103,7 @@ auto Report::to_string(void) const -> std::string {
 
   str.append("Seed: " + std::to_string(seed) + "\n");
 
-  str.append("Channels (C): " + std::to_string(channels) + "\n");
+  str.append("Channels (C): " + std::to_string(bandwidth) + "\n");
 
   str.append("Calls (n): " + std::to_string(calls) + "\n");
 

@@ -33,7 +33,7 @@ class Group final {
 struct Report {
   std::string group_str;
   unsigned long long seed;
-  unsigned channels;
+  unsigned bandwidth;
   unsigned calls;
   double arrival_rate;
   double service_rate;

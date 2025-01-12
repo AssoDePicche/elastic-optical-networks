@@ -9,7 +9,7 @@
 auto Settings::from(const std::vector<std::string> &argv)
     -> std::optional<Settings> {
   const std::set<std::string> args{
-      "--channels",           "--service-rate", "--arrival-rate", "--topology",
+      "--bandwidth",          "--service-rate", "--arrival-rate", "--topology",
       "--spectrum-allocator", "--seed",         "--time-units"};
 
   if (argv.size() < args.size()) {
@@ -32,8 +32,8 @@ auto Settings::from(const std::vector<std::string> &argv)
     }
   }
 
-  const auto str_to_size_t = [](const std::string &str) {
-    return static_cast<std::size_t>(std::atoi(str.c_str()));
+  const auto str_to_unsigned = [](const std::string &str) {
+    return static_cast<unsigned>(std::atoi(str.c_str()));
   };
 
   const auto str_to_double = [](const std::string &str) {
@@ -42,7 +42,7 @@ auto Settings::from(const std::vector<std::string> &argv)
 
   Settings settings;
 
-  settings.channels = str_to_size_t(parser.parse("--channels"));
+  settings.bandwidth = str_to_unsigned(parser.parse("--bandwidth"));
 
   settings.time_units = str_to_double(parser.parse("--time-units"));
 

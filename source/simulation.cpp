@@ -26,7 +26,7 @@ auto Snapshot::str(void) const -> std::string {
 auto simulation(Settings &settings) -> std::string {
   auto active_calls{0u};
 
-  auto hashmap{make_hashmap(settings.graph, settings.channels)};
+  auto hashmap{make_hashmap(settings.graph, settings.bandwidth)};
 
   EventQueue<Request> queue{settings.arrival_rate, settings.service_rate,
                             settings.seed};
@@ -54,9 +54,9 @@ auto simulation(Settings &settings) -> std::string {
       return 0.0;
     }
 
-    free_slots /= settings.channels;
+    free_slots /= settings.bandwidth;
 
-    occupied_slots /= settings.channels;
+    occupied_slots /= settings.bandwidth;
 
     return -(occupied_slots * std::log2(occupied_slots) +
              free_slots * std::log2(free_slots));
@@ -116,7 +116,7 @@ auto simulation(Settings &settings) -> std::string {
 
     auto accepted = false;
 
-    if (active_calls < settings.channels &&
+    if (active_calls < settings.bandwidth &&
         dispatch_request(request, hashmap, allocator)) {
       ++active_calls;
 
