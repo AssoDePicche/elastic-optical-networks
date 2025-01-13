@@ -6,6 +6,7 @@ from sklearn.metrics import (classification_report, f1_score,
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
+from sklearn.tree import DecisionTreeClassifier
 
 
 def make_report(classifier, x, y, kfold):
@@ -74,11 +75,12 @@ if __name__ == "__main__":
 
     x = StandardScaler().fit_transform(x)
 
-    kfold: KFold = KFold(n_splits=3, shuffle=True, random_state=RANDOM_STATE)
+    kfold: KFold = KFold(n_splits=10, shuffle=True, random_state=RANDOM_STATE)
 
     classifiers = [
         (GaussianNB(), {}),
         (LogisticRegression(max_iter=5000, random_state=RANDOM_STATE), {}),
+        (DecisionTreeClassifier(random_state=RANDOM_STATE), {}),
     ]
 
     for classifier, param_grid in classifiers:
