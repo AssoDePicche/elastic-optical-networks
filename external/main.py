@@ -1,6 +1,6 @@
 import numpy
 import pandas
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.metrics import (classification_report, f1_score,
                              matthews_corrcoef, roc_auc_score)
 from sklearn.model_selection import GridSearchCV, KFold
@@ -79,6 +79,7 @@ if __name__ == "__main__":
 
     classifiers = [
         (GaussianNB(), {}),
+        (SGDClassifier(), {}),
         (LogisticRegression(max_iter=5000, random_state=RANDOM_STATE), {}),
         (DecisionTreeClassifier(random_state=RANDOM_STATE), {}),
     ]
