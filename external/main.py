@@ -6,7 +6,6 @@ from sklearn.metrics import (classification_report, f1_score,
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
-from sklearn.tree import DecisionTreeClassifier
 
 
 def make_report(classifier, x, y, kfold):
@@ -50,8 +49,16 @@ def make_report(classifier, x, y, kfold):
 if __name__ == "__main__":
     RANDOM_STATE: int = 42
 
-    # 7.51 E | 10 channels | Seed 0
-    dataframe: pandas.DataFrame = pandas.read_csv("dataset.csv")
+    # (7.51 + 14.68 + 29.36) E | 10 channels | Seed 0
+    dataframe: pandas.DataFrame = pandas.read_csv("dataset10.csv")
+
+    dataframe2: pandas.DataFrame = pandas.read_csv("dataset40.csv")
+
+    dataframe3: pandas.DataFrame = pandas.read_csv("dataset85.csv")
+
+    dataframe = pandas.concat([dataframe, dataframe2, dataframe3])
+
+    dataframe.reset_index(inplace=True, drop=True)
 
     x = dataframe.drop(columns=["accepted"])
 
@@ -81,7 +88,6 @@ if __name__ == "__main__":
         (GaussianNB(), {}),
         (SGDClassifier(), {}),
         (LogisticRegression(max_iter=5000, random_state=RANDOM_STATE), {}),
-        (DecisionTreeClassifier(random_state=RANDOM_STATE), {}),
     ]
 
     for classifier, param_grid in classifiers:
