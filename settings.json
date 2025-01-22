@@ -1,8 +1,10 @@
 {
-  "view": {
-    "title": "App",
-    "height": 720,
-    "width": 1280,
-    "fps": 60
+  "simulation": {
+    "arrival-rate": 1,
+    "service-rate": 0.133138064,
+    "bandwidth": 10,
+    "seed": 0,
+    "time-units": 1000000,
+    "graph": "resources/graph/point-to-point.txt"
   }
 }
