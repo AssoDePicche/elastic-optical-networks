@@ -17,6 +17,9 @@ struct Settings {
   double time_units;
   unsigned bandwidth;
 
+  [[nodiscard]] static auto from(const std::string &)
+      -> std::optional<Settings>;
+
   [[nodiscard]] static auto from(const std::vector<std::string> &)
       -> std::optional<Settings>;
 };

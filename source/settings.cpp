@@ -4,7 +4,42 @@
 #include <map>
 #include <set>
 
+#include "json.h"
 #include "parser.h"
+
+auto Settings::from(const std::string &filename) -> std::optional<Settings> {
+  const auto container = read_json(filename);
+
+  if (!container.has_value()) {
+    return std::nullopt;
+  }
+
+  const auto json = container.value();
+
+  Settings settings;
+
+  settings.bandwidth = json["simulation"]["bandwidth"];
+
+  settings.time_units = json["simulation"]["time-units"];
+
+  settings.arrival_rate = json["simulation"]["arrival-rate"];
+
+  settings.service_rate = json["simulation"]["service-rate"];
+
+  const auto graph_file = json["simulation"]["graph"];
+
+  const auto graph_container = Graph::from(graph_file);
+
+  if (!graph_container.has_value()) {
+    return std::nullopt;
+  }
+
+  settings.graph = graph_container.value();
+
+  settings.seed = json["simulation"]["seed"];
+
+  return settings;
+}
 
 auto Settings::from(const std::vector<std::string> &argv)
     -> std::optional<Settings> {
