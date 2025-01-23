@@ -62,7 +62,7 @@ By default, the application will look for the settings.json file, which should l
         "service-rate": 0.133,
         "bandwidth": 10,
         "seed": 0,
-        "time-units": 0,
+        "time-units": 1000000,
         "graph": "./resources/graph/point-to-point.txt"
     }
 }
