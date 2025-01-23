@@ -59,13 +59,17 @@ By default, the application will look for the settings.json file, which should l
 {
     "simulation": {
         "arrival-rate": 1,
-        "service-rate": 0.133,
+        "service-rate": 0.1333138,
         "bandwidth": 10,
         "seed": 0,
         "time-units": 1000000,
         "graph": "./resources/graph/point-to-point.txt"
     }
 }
+```
+
+```bash
+./build/App
 ```
 
 If the application cannot find the settings.json file, it is expected that the arguments have been passed as described below:
@@ -81,7 +85,7 @@ If the application cannot find the settings.json file, it is expected that the a
 For example:
 
 ```bash
-./build/source/App --time-units 1000000 --seed 0 --bandwidth 10 --service-rate 0.133 --arrival-rate 1 --topology ./resources/graph/point-to-point.txt --spectrum-allocator first-fit
+./build/App --time-units 1000000 --seed 0 --bandwidth 10 --service-rate 0.1333138 --arrival-rate 1 --topology ./resources/graph/point-to-point.txt --spectrum-allocator first-fit
 ```
 
 With the point-to-point.txt file as follows:
@@ -99,16 +103,20 @@ Execution time: 44s
 Simulation time: 99999.888274
 Seed: 0
 Channels (C): 10
-Calls (n): 100202
+Calls (n): 998698
 Arrival rate (λ): 1.000000
-Service rate (μ): 0.133000
-Traffic Intensity (ρ): 7.518797
-Grade of Service (ε): 0.100966
-Busy Channels (1-ε): 0.899034
-Occupancy ((1-ε)/C): 0.089903
+Service rate (μ): 0.1333138
+Traffic Intensity (ρ): 7.511000
+Grade of Service (ε): 0.100028
+Busy Channels (1-ε): 0.899972
+Occupancy ((1-ε)/C): 0.089997
 Type 1
 Ratio: 1.000000
-BP(ε): 0.100966
+BP(ε): 0.100028
+Mean fragmentation: 0.108498
+STDDEV fragmentation: 0.10049
+Mean entropy: -0.139791
+STDDEV entropy: 0.185635
 ```
 
 ## Contributing
