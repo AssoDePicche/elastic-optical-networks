@@ -51,9 +51,25 @@ mkdir -p third_party && cmake -DCMAKE_BUILD_TYPE=Release -S . -B build && cmake 
 
 ## Usage
 
-Run the binary created in the [Installation section](#installation) with the arguments specified below. At the end of the simulation, in addition to the parameter information, the network grade of service (GoS) calculated using the [Erlang B formula](https://en.wikipedia.org/wiki/Erlang_(unit)), the proportion of request types (3-slot or 7-slot requests), the blocking probability (BP) per request type will be available and some other information.
+Run the binary created in the [Installation section](#installation). At the end of the simulation, in addition to the parameter information, the network grade of service (GoS) calculated using the [Erlang B formula](https://en.wikipedia.org/wiki/Erlang_(unit)), the blocking probability (BP) per request type will be available and some other information.
 
-You must pass the following arguments for the simulation:
+By default, the application will look for the settings.json file, which should look like this:
+
+```json
+{
+    "simulation": {
+        "arrival-rate": 1,
+        "service-rate": 0.133,
+        "bandwidth": 10,
+        "seed": 0,
+        "time-units": 0,
+        "graph": "./resources/graph/point-to-point.txt"
+    }
+}
+```
+
+If the application cannot find the settings.json file, it is expected that the arguments have been passed as described below:
+
 - `--arrival-rate`: the call arrival rate per unit of time
 - `--bandwidth`: the number of resources available per link
 - `--seed`: the seed number for random processes
@@ -65,10 +81,10 @@ You must pass the following arguments for the simulation:
 For example:
 
 ```bash
-./build/source/App --time-units 100000 --seed 227953 --bandwidth 10 --service-rate 0.133 --arrival-rate 1 --topology topology.txt --spectrum-allocator first-fit
+./build/source/App --time-units 1000000 --seed 0 --bandwidth 10 --service-rate 0.133 --arrival-rate 1 --topology ./resources/graph/point-to-point.txt --spectrum-allocator first-fit
 ```
 
-With the topology.txt file as follows:
+With the point-to-point.txt file as follows:
 
 ```txt
 2
