@@ -42,7 +42,7 @@ void Simulation::next(void) {
   INFO("Now: " + std::to_string(now));
 
   if (signal == Signal::DEPARTURE) {
-    --active_calls;
+    --active_requests;
 
     INFO("Request for " + std::to_string(request.bandwidth) +
          " slots departing");
@@ -65,9 +65,11 @@ void Simulation::next(void) {
 
   auto accepted = false;
 
-  if (active_calls < settings.bandwidth &&
+  if (active_requests < settings.bandwidth &&
       dispatch_request(request, hashmap, allocator)) {
-    ++active_calls;
+    ++active_requests;
+
+    ++accepted_requests;
 
     queue.push(request, now).of_type(Signal::DEPARTURE);
 
@@ -85,6 +87,8 @@ void Simulation::next(void) {
     accepted = true;
 
   } else {
+    ++blocked_requests;
+
     INFO("Blocking request for " + std::to_string(request.bandwidth) +
          " slots");
 
@@ -92,7 +96,7 @@ void Simulation::next(void) {
   }
 
   snapshots.push_back(Snapshot(now, request.bandwidth, accepted,
-                               fragmentation(), entropy(), group.blocking()));
+                               fragmentation(), entropy(), blocking()));
 
   queue.push(Request{random_path(settings.graph), group.next()}, now)
       .of_type(Signal::ARRIVAL);
@@ -100,6 +104,10 @@ void Simulation::next(void) {
 
 bool Simulation::has_next(void) const {
   return queue.top().value().time <= settings.time_units;
+}
+
+double Simulation::blocking(void) const {
+  return accepted_requests / (blocked_requests + accepted_requests);
 }
 
 double Simulation::entropy(void) const {

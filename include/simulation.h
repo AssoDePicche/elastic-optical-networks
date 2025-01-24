@@ -32,6 +32,8 @@ struct Simulation final {
 
   bool has_next(void) const;
 
+  double blocking(void) const;
+
   double entropy(void) const;
 
   double fragmentation(void) const;
@@ -44,5 +46,7 @@ struct Simulation final {
   std::map<unsigned, Spectrum> hashmap;
   std::vector<Snapshot> snapshots{};
   double time{0.0f};
-  unsigned active_calls{0u};
+  unsigned active_requests{0u};
+  double accepted_requests{0.0};
+  double blocked_requests{0.0};
 };
