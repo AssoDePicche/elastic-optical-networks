@@ -60,25 +60,11 @@ if __name__ == "__main__":
 
     dataframe.reset_index(inplace=True, drop=True)
 
+    dataframe["accepted"] = LabelEncoder().fit_transform(dataframe["accepted"])
+
     x = dataframe.drop(columns=["accepted"])
 
     y = dataframe["accepted"]
-
-    y = LabelEncoder().fit_transform(y)
-
-    categorical_columns = x.select_dtypes(include=["object"]).columns.tolist()
-
-    encoder = OneHotEncoder(sparse_output=False, drop="first")
-
-    encoded = encoder.fit_transform(x[categorical_columns])
-
-    encoded_dataframe = pandas.DataFrame(
-        encoded, columns=encoder.get_feature_names_out(categorical_columns)
-    )
-
-    x = pandas.concat(
-        [x.drop(columns=categorical_columns), encoded_dataframe], axis=1
-    )
 
     x = StandardScaler().fit_transform(x)
 
