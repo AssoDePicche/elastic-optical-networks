@@ -5,7 +5,7 @@ from sklearn.metrics import (classification_report, f1_score,
                              matthews_corrcoef, roc_auc_score)
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.naive_bayes import GaussianNB
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 
 def make_report(classifier, x, y, kfold):
