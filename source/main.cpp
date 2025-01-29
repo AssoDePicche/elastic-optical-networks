@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -41,31 +42,48 @@ auto main(const int argc, const char **argv) -> int {
 
   timer.stop();
 
+  std::string filename =
+      "dataset" + std::to_string(simulation.blocking()) + ".csv";
+
+  std::ofstream stream(filename);
+
+  if (!stream.is_open()) {
+    std::cerr << "Failed to open " << filename << '!' << std::endl;
+
+    return 1;
+  }
+
+  stream << "time,bandwidth,accepted,fragmentation,entropy,blocking"
+         << std::endl;
+
   std::vector<double> fragmentation_states;
 
   std::vector<double> entropy_states;
 
   for (const auto &snapshot : simulation.get_snapshots()) {
+    stream << snapshot.str() << std::endl;
+
     fragmentation_states.push_back(snapshot.fragmentation);
 
     entropy_states.push_back(snapshot.entropy);
   }
 
-  std::cout << "Execution time: " << timer.elapsed<std::chrono::seconds>()
+  stream.close();
+
+  std::cout << "Runtime: " << timer.elapsed<std::chrono::seconds>() << "s"
             << std::endl;
 
-  std::cout << "Simulation time: " << simulation.time << std::endl;
+  std::cout << "Simulated time units: " << simulation.time << std::endl;
 
   std::cout << Report::from(simulation.group, settings).to_string()
             << std::endl;
 
-  std::cout << "Mean fragmentation: " << MEAN(fragmentation_states)
-            << std::endl;
+  std::cout << "AVG fragmentation: " << MEAN(fragmentation_states) << std::endl;
 
   std::cout << "STDDEV fragmentation: " << STDDEV(fragmentation_states)
             << std::endl;
 
-  std::cout << "Mean entropy: " << MEAN(entropy_states) << std::endl;
+  std::cout << "AVG entropy: " << MEAN(entropy_states) << std::endl;
 
   std::cout << "STDDEV entropy: " << STDDEV(entropy_states) << std::endl;
 }
