@@ -8,19 +8,19 @@
 #include "statistics.h"
 #include "timer.h"
 
-Snapshot::Snapshot(float t, int slots, bool acc, float frag, float entr,
-                   float blocking)
-    : time{t},
-      slots{slots},
-      accepted{acc},
-      fragmentation{frag},
-      entropy{entr},
+Snapshot::Snapshot(float time, int bandwidth, bool accepted,
+                   float fragmentation, float entropy, float blocking)
+    : time{time},
+      bandwidth{bandwidth},
+      accepted{accepted},
+      fragmentation{fragmentation},
+      entropy{entropy},
       blocking{blocking} {}
 
 auto Snapshot::str(void) const -> std::string {
-  return std::to_string(time) + ", " + std::to_string(slots) + ", " +
-         (accepted ? "True" : "False") + ", " + std::to_string(fragmentation) +
-         ", " + std::to_string(entropy) + ", " + std::to_string(blocking);
+  return std::to_string(time) + ',' + std::to_string(bandwidth) + ',' +
+         (accepted ? "True" : "False") + ',' + std::to_string(fragmentation) +
+         ',' + std::to_string(entropy) + ',' + std::to_string(blocking);
 }
 
 Simulation::Simulation(Settings& settings)
@@ -45,7 +45,7 @@ void Simulation::next(void) {
     --active_requests;
 
     INFO("Request for " + std::to_string(request.bandwidth) +
-         " slots departing");
+         " bandwidth slots departing");
 
     const auto keys{route_keys(request.route)};
 
@@ -54,8 +54,9 @@ void Simulation::next(void) {
 
       INFO(hashmap[key].to_string());
 
-      INFO("A (u): " + std::to_string(hashmap[key].available()) +
-           " F (%): " + std::to_string(hashmap[key].fragmentation()));
+      INFO("Free (u): " + std::to_string(hashmap[key].available()) +
+           " Fragmentation (%): " +
+           std::to_string(hashmap[key].fragmentation()));
     }
 
     return;
@@ -73,15 +74,17 @@ void Simulation::next(void) {
 
     queue.push(request, now).of_type(Signal::DEPARTURE);
 
-    INFO("Accept request for " + std::to_string(request.bandwidth) + " slots");
+    INFO("Accept request for " + std::to_string(request.bandwidth) +
+         " bandwidth slots");
 
     const auto keys{route_keys(request.route)};
 
     for (const auto& key : keys) {
       INFO(hashmap[key].to_string());
 
-      INFO("A (u): " + std::to_string(hashmap[key].available()) +
-           " F (%): " + std::to_string(hashmap[key].fragmentation()));
+      INFO("Free (u): " + std::to_string(hashmap[key].available()) +
+           " Fragmentation (%): " +
+           std::to_string(hashmap[key].fragmentation()));
     }
 
     accepted = true;
@@ -90,7 +93,7 @@ void Simulation::next(void) {
     ++blocked_requests;
 
     INFO("Blocking request for " + std::to_string(request.bandwidth) +
-         " slots");
+         " bandwidth slots");
 
     group.count_blocking(request.bandwidth);
   }
@@ -111,30 +114,30 @@ double Simulation::blocking(void) const {
 }
 
 double Simulation::entropy(void) const {
-  auto free_slots = 0.0;
+  auto free_bandwidth = 0.0;
 
-  auto occupied_slots = 0.0;
+  auto occupied_bandwidth = 0.0;
 
   for (const auto& [source, destination, cost] : settings.graph.get_edges()) {
     const auto key = make_key(source, destination);
 
     const auto spectrum = hashmap.at(key);
 
-    free_slots += spectrum.available();
+    free_bandwidth += spectrum.available();
 
-    occupied_slots += spectrum.size() - spectrum.available();
+    occupied_bandwidth += spectrum.size() - spectrum.available();
   }
 
-  if (free_slots == 0.0 || occupied_slots == 0.0) {
+  if (free_bandwidth == 0.0 || occupied_bandwidth == 0.0) {
     return 0.0;
   }
 
-  free_slots /= settings.bandwidth;
+  free_bandwidth /= settings.bandwidth;
 
-  occupied_slots /= settings.bandwidth;
+  occupied_bandwidth /= settings.bandwidth;
 
-  return -(occupied_slots * std::log2(occupied_slots) +
-           free_slots * std::log2(free_slots));
+  return -(occupied_bandwidth * std::log2(occupied_bandwidth) +
+           free_bandwidth * std::log2(free_bandwidth));
 }
 
 double Simulation::fragmentation(void) const {

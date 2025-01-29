@@ -14,7 +14,7 @@
 
 struct Snapshot final {
   float time;
-  int slots;
+  int bandwidth;
   bool accepted;
   float fragmentation;
   float entropy;
