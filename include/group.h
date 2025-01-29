@@ -34,7 +34,7 @@ struct Report {
   std::string group_str;
   unsigned long long seed;
   unsigned bandwidth;
-  unsigned calls;
+  unsigned requests;
   double arrival_rate;
   double service_rate;
   double traffic_intensity;

@@ -81,7 +81,7 @@ auto Report::from(const Group &group, const Settings &settings) -> Report {
 
   report.bandwidth = settings.bandwidth;
 
-  report.calls = group.size();
+  report.requests = group.size();
 
   report.arrival_rate = settings.arrival_rate;
 
@@ -89,7 +89,8 @@ auto Report::from(const Group &group, const Settings &settings) -> Report {
 
   report.traffic_intensity = (settings.arrival_rate / settings.service_rate);
 
-  report.grade_of_service = static_cast<double>(group.blocked()) / report.calls;
+  report.grade_of_service =
+      static_cast<double>(group.blocked()) / report.requests;
 
   report.busy_channels = (1.0 - report.grade_of_service);
 
@@ -103,9 +104,9 @@ auto Report::to_string(void) const -> std::string {
 
   str.append("Seed: " + std::to_string(seed) + "\n");
 
-  str.append("Channels (C): " + std::to_string(bandwidth) + "\n");
+  str.append("Bandwidth (C): " + std::to_string(bandwidth) + "\n");
 
-  str.append("Calls (n): " + std::to_string(calls) + "\n");
+  str.append("Requests (n): " + std::to_string(requests) + "\n");
 
   str.append("Arrival rate (λ): " + std::to_string(arrival_rate) + "\n");
 
