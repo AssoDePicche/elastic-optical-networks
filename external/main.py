@@ -1,5 +1,6 @@
 import numpy
 import pandas
+from imblearn.over_sampling import SMOTE
 from pandas import DataFrame
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.metrics import (classification_report, f1_score,
@@ -22,13 +23,13 @@ if __name__ == "__main__":
 
     dataframe.reset_index(inplace=True, drop=True)
 
-    dataframe["accepted"] = LabelEncoder().fit_transform(dataframe["accepted"])
-
-    x = dataframe.drop(columns=["accepted"])
+    x, y = SMOTE(random_state=RANDOM_STATE).fit_resample(
+        dataframe.drop(columns=["accepted"]), dataframe["accepted"]
+    )
 
     x = StandardScaler().fit_transform(x)
 
-    y = dataframe["accepted"]
+    dataframe["accepted"] = LabelEncoder().fit_transform(dataframe["accepted"])
 
     kfold: KFold = KFold(n_splits=10, shuffle=True, random_state=RANDOM_STATE)
 
