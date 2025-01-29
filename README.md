@@ -99,11 +99,11 @@ With the point-to-point.txt file as follows:
 Output:
 
 ```txt
-Execution time: 44s
-Simulation time: 99999.888274
+Runtime: 44s
+Simulated time units: 99999.888274
 Seed: 0
-Channels (C): 10
-Calls (n): 998698
+Bandwidth (C): 10
+Requests (n): 998698
 Arrival rate (λ): 1.000000
 Service rate (μ): 0.1333138
 Traffic Intensity (ρ): 7.511000
@@ -113,9 +113,9 @@ Occupancy ((1-ε)/C): 0.089997
 Type 1
 Ratio: 1.000000
 BP(ε): 0.100028
-Mean fragmentation: 0.108498
+AVG fragmentation: 0.108498
 STDDEV fragmentation: 0.10049
-Mean entropy: -0.139791
+AVG entropy: -0.139791
 STDDEV entropy: 0.185635
 ```
 
