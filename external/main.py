@@ -1,5 +1,6 @@
 import numpy
 import pandas
+from pandas import DataFrame
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.metrics import (classification_report, f1_score,
                              matthews_corrcoef, roc_auc_score)
@@ -7,56 +8,17 @@ from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
-
-def make_report(classifier, x, y, kfold):
-    f1_scores = []
-
-    roc_auc_scores = []
-
-    mcc_scores = []
-
-    y_trues = []
-
-    y_predictions = []
-
-    for train_index, test_index in kfold.split(x, y):
-        x_train, x_test = x[train_index], x[test_index]
-
-        y_train, y_test = y[train_index], y[test_index]
-
-        y_predicted = best_classifier.fit(x_train, y_train).predict(x_test)
-
-        y_trues.extend(y_test)
-
-        y_predictions.extend(y_predicted)
-
-        f1_scores.append(f1_score(y_test, y_predicted))
-
-        roc_auc_scores.append(roc_auc_score(y_test, y_predicted))
-
-        mcc_scores.append(matthews_corrcoef(y_test, y_predicted))
-
-    report = classification_report(y_trues, y_predictions)
-
-    return {
-        "f1_score": numpy.mean(f1_scores),
-        "roc_auc": numpy.mean(roc_auc_scores),
-        "mcc": numpy.mean(mcc_scores),
-        "classification_report": report,
-    }
-
-
 if __name__ == "__main__":
     RANDOM_STATE: int = 42
 
-    # (7.51 + 14.68 + 29.36) E | 10 channels | Seed 0
-    dataframe: pandas.DataFrame = pandas.read_csv("dataset10.csv")
-
-    dataframe2: pandas.DataFrame = pandas.read_csv("dataset40.csv")
-
-    dataframe3: pandas.DataFrame = pandas.read_csv("dataset85.csv")
-
-    dataframe = pandas.concat([dataframe, dataframe2, dataframe3])
+    # (7.51 + 14.68 + 29.36) E | 10 bandwidth | Seed 0
+    dataframe: DataFrame = pandas.concat(
+        [
+            pandas.read_csv("dataset0.146997.csv"),
+            pandas.read_csv("dataset0.256196.csv"),
+            pandas.read_csv("dataset0.418617.csv"),
+        ]
+    )
 
     dataframe.reset_index(inplace=True, drop=True)
 
@@ -64,9 +26,9 @@ if __name__ == "__main__":
 
     x = dataframe.drop(columns=["accepted"])
 
-    y = dataframe["accepted"]
-
     x = StandardScaler().fit_transform(x)
+
+    y = dataframe["accepted"]
 
     kfold: KFold = KFold(n_splits=10, shuffle=True, random_state=RANDOM_STATE)
 
@@ -85,14 +47,39 @@ if __name__ == "__main__":
 
         best_classifier = grid_search.best_estimator_
 
-        report = make_report(best_classifier, x, y, kfold)
+        f1_scores = []
 
-        print(f"Classifier: {classifier.__class__.__name__}")
+        roc_auc_scores = []
 
-        print(f"AVG F1-Score: {report['f1_score']: .4f}")
+        mcc_scores = []
 
-        print(f"AVG ROC-AUC Score: {report['roc_auc']: .4f}")
+        y_trues = []
 
-        print(f"AVG MCC: {report['mcc']: .4f}")
+        y_predictions = []
 
-        print(f"Classification Report:\n{report['classification_report']}")
+        for train_index, test_index in kfold.split(x, y):
+            x_train, x_test = x[train_index], x[test_index]
+
+            y_train, y_test = y[train_index], y[test_index]
+
+            y_predicted = best_classifier.fit(x_train, y_train).predict(x_test)
+
+            y_trues.extend(y_test)
+
+            y_predictions.extend(y_predicted)
+
+            f1_scores.append(f1_score(y_test, y_predicted, zero_division=0.0))
+
+            roc_auc_scores.append(roc_auc_score(y_test, y_predicted))
+
+            mcc_scores.append(matthews_corrcoef(y_test, y_predicted))
+
+        print(f"Classifier: {best_classifier.__class__.__name__}")
+
+        print(f"AVG F1 Score: {numpy.mean(f1_scores): .4f}")
+
+        print(f"AVG ROC-AUC Score: {numpy.mean(roc_auc_scores): .4f}")
+
+        print(f"AVG MCC: {numpy.mean(mcc_scores): .4f}")
+
+        print(classification_report(y_trues, y_predictions, zero_division=0.0))
