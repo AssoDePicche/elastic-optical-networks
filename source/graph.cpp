@@ -317,12 +317,12 @@ auto dijkstra(const Graph &graph, const vertex_t source,
 
   std::unordered_set<vertex_t> vertices;
 
-  cost_t cost = Cost::min;
+  cost_t cost = costs[predecessors[destination]];
 
   for (int vertex = destination; vertex != -1; vertex = predecessors[vertex]) {
     vertices.insert(static_cast<vertex_t>(vertex));
 
-    cost += costs[vertex];
+    cost += costs[predecessors[vertex]];
   }
 
   if (*vertices.begin() != source) {
