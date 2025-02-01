@@ -2,7 +2,23 @@
 
 #include "graph.h"
 
-TEST(Graph, DijkstraMinCost) {
+TEST(Graph, DepthFistSearch) {
+  Graph graph(3);
+
+  graph.add({0, 1, 2.0f});
+
+  graph.add({1, 2, 2.0f});
+
+  graph.add({0, 2, 5.0f});
+
+  const std::unordered_set<vertex_t> expected_vertices = {0, 2};
+
+  const auto& [vertices, cost] = depth_first_search(graph, 0, 2);
+
+  ASSERT_EQ(vertices, expected_vertices);
+}
+
+TEST(Graph, Dijkstra) {
   Graph graph(3);
 
   graph.add({0, 1, 2.0f});
