@@ -11,12 +11,22 @@ TEST(Graph, DijkstraMinCost) {
 
   graph.add({0, 2, 5.0f});
 
+  const auto expected_cost = 4.0f;
+
+  const auto expected_hops = 1;
+
   const auto& [vertices, cost] = dijkstra(graph, 0, 2);
 
-  ASSERT_EQ(cost, 4.0f);
+  // HOPS are vertices - 2 (we must exclude source and destination)
+
+  const auto hops = vertices.size() - 2;
+
+  ASSERT_EQ(cost, expected_cost);
+
+  ASSERT_EQ(hops, expected_hops);
 }
 
-TEST(Graph, DijkstraMinHopsCost) {
+TEST(Graph, KShortestPath) {
   Graph graph(3);
 
   graph.add({0, 1, 2.0f});
@@ -25,11 +35,21 @@ TEST(Graph, DijkstraMinHopsCost) {
 
   graph.add({0, 2, 4.0f});
 
-  const auto& [vertices, cost] = dijkstra(graph, 0, 2);
+  const auto k = 2u;
 
-  // HOPS are vertices - 2 (we must exclude source and destination)
+  const auto& k_paths = k_shortest_path(graph, 0, 2, k);
 
-  ASSERT_EQ(vertices.size() - 2, 1);
+  const auto expected_cost = 8.0f;
+
+  auto total_cost = Cost::min;
+
+  for (const auto& [vertices, cost] : k_paths) {
+    total_cost += cost;
+  }
+
+  ASSERT_EQ(k_paths.size(), k);
+
+  ASSERT_EQ(total_cost, expected_cost);
 }
 
 auto main(int argc, char** argv) -> int {
