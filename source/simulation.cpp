@@ -9,7 +9,8 @@
 #include "timer.h"
 
 Snapshot::Snapshot(float time, int bandwidth, bool accepted,
-                   float fragmentation, float entropy, float blocking)
+                   std::vector<float>& fragmentation,
+                   std::vector<float>& entropy, float blocking)
     : time{time},
       bandwidth{bandwidth},
       accepted{accepted},
@@ -18,9 +19,18 @@ Snapshot::Snapshot(float time, int bandwidth, bool accepted,
       blocking{blocking} {}
 
 auto Snapshot::str(void) const -> std::string {
-  return std::to_string(time) + ',' + std::to_string(bandwidth) + ',' +
-         (accepted ? "True" : "False") + ',' + std::to_string(fragmentation) +
-         ',' + std::to_string(entropy) + ',' + std::to_string(blocking);
+  std::string string = std::to_string(time) + ',' + std::to_string(bandwidth) +
+                       ',' + (accepted ? "True" : "False") + ',';
+
+  for (const auto& f : fragmentation) {
+    string += std::to_string(f) + ',';
+  }
+
+  for (const auto& e : entropy) {
+    string += std::to_string(e) + ',';
+  }
+
+  return string + std::to_string(blocking);
 }
 
 Simulation::Simulation(Settings& settings)
@@ -98,8 +108,12 @@ void Simulation::next(void) {
     group.count_blocking(request.bandwidth);
   }
 
-  snapshots.push_back(Snapshot(now, request.bandwidth, accepted,
-                               fragmentation(), entropy(), blocking()));
+  auto f = fragmentation();
+
+  auto e = entropy();
+
+  snapshots.push_back(
+      Snapshot(now, request.bandwidth, accepted, f, e, blocking()));
 
   queue.push(Request{random_path(settings.graph), group.next()}, now)
       .of_type(Signal::ARRIVAL);
@@ -113,43 +127,28 @@ double Simulation::blocking(void) const {
   return accepted_requests / (blocked_requests + accepted_requests);
 }
 
-double Simulation::entropy(void) const {
-  auto free_bandwidth = 0.0;
-
-  auto occupied_bandwidth = 0.0;
+std::vector<float> Simulation::entropy(void) const {
+  std::vector<float> link_entropy;
 
   for (const auto& [source, destination, cost] : settings.graph.get_edges()) {
     const auto key = make_key(source, destination);
 
-    const auto spectrum = hashmap.at(key);
-
-    free_bandwidth += spectrum.available();
-
-    occupied_bandwidth += spectrum.size() - spectrum.available();
+    link_entropy.push_back(shannon_entropy(hashmap.at(key)));
   }
 
-  if (free_bandwidth == 0.0 || occupied_bandwidth == 0.0) {
-    return 0.0;
-  }
-
-  free_bandwidth /= settings.bandwidth;
-
-  occupied_bandwidth /= settings.bandwidth;
-
-  return -(occupied_bandwidth * std::log2(occupied_bandwidth) +
-           free_bandwidth * std::log2(free_bandwidth));
+  return link_entropy;
 }
 
-double Simulation::fragmentation(void) const {
-  auto fragmentation{0.0};
+std::vector<float> Simulation::fragmentation(void) const {
+  std::vector<float> link_fragmentation;
 
   for (const auto& [source, destination, cost] : settings.graph.get_edges()) {
     const auto key = make_key(source, destination);
 
-    fragmentation += hashmap.at(key).fragmentation();
+    link_fragmentation.push_back(hashmap.at(key).fragmentation());
   }
 
-  return (fragmentation / settings.graph.get_edges().size());
+  return link_fragmentation;
 }
 
 std::vector<Snapshot> Simulation::get_snapshots(void) const {

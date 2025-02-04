@@ -16,11 +16,11 @@ struct Snapshot final {
   float time;
   int bandwidth;
   bool accepted;
-  float fragmentation;
-  float entropy;
+  std::vector<float> fragmentation;
+  std::vector<float> entropy;
   float blocking;
 
-  Snapshot(float, int, bool, float, float, float);
+  Snapshot(float, int, bool, std::vector<float>&, std::vector<float>&, float);
 
   [[nodiscard]] auto str(void) const -> std::string;
 };
@@ -34,9 +34,9 @@ struct Simulation final {
 
   double blocking(void) const;
 
-  double entropy(void) const;
+  std::vector<float> entropy(void) const;
 
-  double fragmentation(void) const;
+  std::vector<float> fragmentation(void) const;
 
   std::vector<Snapshot> get_snapshots(void) const;
 

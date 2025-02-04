@@ -53,8 +53,16 @@ auto main(const int argc, const char **argv) -> int {
     return 1;
   }
 
-  stream << "time,bandwidth,accepted,fragmentation,entropy,blocking"
-         << std::endl;
+  stream << "time,bandwidth,accepted,";
+
+  for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
+    auto column =
+        "from_" + std::to_string(source) + "_to_" + std::to_string(destination);
+
+    stream << column << "_fragmentation," << column << "_entropy,";
+  }
+
+  stream << "blocking" << std::endl;
 
   std::vector<double> fragmentation_states;
 
@@ -63,9 +71,13 @@ auto main(const int argc, const char **argv) -> int {
   for (const auto &snapshot : simulation.get_snapshots()) {
     stream << snapshot.str() << std::endl;
 
-    fragmentation_states.push_back(snapshot.fragmentation);
+    for (const auto &fragmentation : snapshot.fragmentation) {
+      fragmentation_states.push_back(fragmentation);
+    }
 
-    entropy_states.push_back(snapshot.entropy);
+    for (const auto &entropy : snapshot.entropy) {
+      fragmentation_states.push_back(entropy);
+    }
   }
 
   stream.close();
