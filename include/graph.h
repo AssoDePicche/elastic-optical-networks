@@ -25,7 +25,11 @@ constexpr auto __MIN_HOPS__ = static_cast<unsigned>(0);
 
 using adjacent_t = std::pair<vertex_t, cost_t>;
 
-using edge_t = std::tuple<vertex_t, vertex_t, cost_t>;
+struct edge_t final {
+  cost_t cost;
+  vertex_t source;
+  vertex_t destination;
+};
 
 using route_t = std::pair<std::unordered_set<vertex_t>, cost_t>;
 
@@ -56,7 +60,7 @@ class Graph final {
 
   auto add(const vertex_t) -> void;
 
-  auto add(const edge_t &) -> void;
+  auto add(const vertex_t, const vertex_t, const cost_t) -> void;
 
  private:
   std::unordered_map<vertex_t, std::list<adjacent_t>> adjacency_list;

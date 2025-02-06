@@ -46,7 +46,7 @@ auto Graph::from(const std::string &filename) noexcept -> std::optional<Graph> {
       const auto cost = static_cast<cost_t>(atof(buffer.c_str()));
 
       if (cost != Cost::min) {
-        graph.add({source, destination, cost});
+        graph.add(source, destination, cost);
       }
     }
 
@@ -82,7 +82,7 @@ auto Graph::to_string(void) const noexcept -> std::string {
 
 auto Graph::at(const vertex_t source,
                const vertex_t destination) const -> cost_t {
-  for (const auto &[vertex, cost] : adjacency_list.at(source)) {
+  for (const auto &[vertex, cost] : at(source)) {
     if (vertex == destination) {
       return cost;
     }
@@ -109,18 +109,21 @@ auto Graph::get_edges(void) const noexcept -> std::vector<edge_t> {
 
   for (const auto &[source, adjacent_edges] : adjacency_list) {
     for (const auto &[destination, cost] : adjacent_edges) {
-      edges.push_back({source, destination, cost});
+      edges.push_back({cost, source, destination});
     }
   }
 
   return edges;
 }
 
-auto Graph::add(const vertex_t vertex) -> void { vertices.insert(vertex); }
+auto Graph::add(const vertex_t vertex) -> void {
+  vertices.insert(vertex);
 
-auto Graph::add(const edge_t &edge) -> void {
-  const auto &[source, destination, cost] = edge;
+  adjacency_list[vertex] = {};
+}
 
+auto Graph::add(const vertex_t source, const vertex_t destination,
+                const cost_t cost) -> void {
   adjacency_list[source].emplace_back(destination, cost);
 }
 
@@ -157,7 +160,7 @@ auto breadth_first_search(const Graph &graph, const vertex_t source,
       break;
     }
 
-    for (const auto &[adjacent, edges] : graph.at(vertex)) {
+    for (const auto &[adjacent, cost] : graph.at(vertex)) {
       if (visited[adjacent]) {
         continue;
       }
@@ -218,7 +221,7 @@ auto depth_first_search(const Graph &graph, const vertex_t source,
       break;
     }
 
-    for (const auto &[adjacent, edges] : graph.at(vertex)) {
+    for (const auto &[adjacent, cost] : graph.at(vertex)) {
       if (visited[adjacent]) {
         continue;
       }
