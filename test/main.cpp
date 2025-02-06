@@ -5,11 +5,11 @@
 TEST(Graph, DepthFistSearch) {
   Graph graph(3);
 
-  graph.add({0, 1, 2.0f});
+  graph.add(0, 1, 2.0f);
 
-  graph.add({1, 2, 2.0f});
+  graph.add(1, 2, 2.0f);
 
-  graph.add({0, 2, 5.0f});
+  graph.add(0, 2, 5.0f);
 
   const std::unordered_set<vertex_t> expected_vertices = {0, 2};
 
@@ -21,11 +21,11 @@ TEST(Graph, DepthFistSearch) {
 TEST(Graph, Dijkstra) {
   Graph graph(3);
 
-  graph.add({0, 1, 2.0f});
+  graph.add(0, 1, 2.0f);
 
-  graph.add({1, 2, 2.0f});
+  graph.add(1, 2, 2.0f);
 
-  graph.add({0, 2, 5.0f});
+  graph.add(0, 2, 5.0f);
 
   const auto expected_cost = 4.0f;
 
@@ -45,11 +45,11 @@ TEST(Graph, Dijkstra) {
 TEST(Graph, KShortestPath) {
   Graph graph(3);
 
-  graph.add({0, 1, 2.0f});
+  graph.add(0, 1, 2.0f);
 
-  graph.add({1, 2, 2.0f});
+  graph.add(1, 2, 2.0f);
 
-  graph.add({0, 2, 4.0f});
+  graph.add(0, 2, 4.0f);
 
   const auto k = 2u;
 
