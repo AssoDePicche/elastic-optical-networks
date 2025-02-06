@@ -12,6 +12,22 @@
 
 #include "distribution.h"
 
+int operator<=>(const edge_t &u, const edge_t &v) {
+  if (u.source != v.source) {
+    return u.source < v.source ? -1 : 1;
+  }
+
+  if (u.destination != v.destination) {
+    return u.destination < v.destination ? -1 : 1;
+  }
+
+  if (u.cost == v.cost) {
+    return 0;
+  }
+
+  return u.cost < v.cost ? -1 : 1;
+}
+
 Graph::Graph(const unsigned vertices) {
   for (auto vertex{0u}; vertex < vertices; ++vertex) {
     add(vertex);
@@ -104,12 +120,12 @@ auto Graph::get_vertices(void) const noexcept -> std::set<vertex_t> {
   return vertices;
 }
 
-auto Graph::get_edges(void) const noexcept -> std::vector<edge_t> {
-  std::vector<edge_t> edges;
+auto Graph::get_edges(void) const noexcept -> std::set<edge_t> {
+  std::set<edge_t> edges;
 
   for (const auto &[source, adjacent_edges] : adjacency_list) {
     for (const auto &[destination, cost] : adjacent_edges) {
-      edges.push_back({cost, source, destination});
+      edges.insert({cost, source, destination});
     }
   }
 
@@ -340,7 +356,9 @@ auto k_shortest_path(const Graph &graph, const vertex_t source,
                      const unsigned k) noexcept -> std::vector<route_t> {
   assert(source != destination);
 
-  std::vector<route_t> k_paths{};
+  std::vector<route_t> k_paths;
+
+  k_paths.reserve(k);
 
   struct stub_t {
     vertex_t vertex;
@@ -368,7 +386,7 @@ auto k_shortest_path(const Graph &graph, const vertex_t source,
     queue.pop();
 
     if (vertex == destination) {
-      k_paths.push_back(path);
+      k_paths.emplace_back(path);
 
       continue;
     }

@@ -31,6 +31,8 @@ struct edge_t final {
   vertex_t destination;
 };
 
+int operator<=>(const edge_t &, const edge_t &);
+
 using route_t = std::pair<std::unordered_set<vertex_t>, cost_t>;
 
 const route_t __NO_ROUTE__ = {{}, Cost::max};
@@ -56,7 +58,7 @@ class Graph final {
 
   [[nodiscard]] auto get_vertices(void) const noexcept -> std::set<vertex_t>;
 
-  [[nodiscard]] auto get_edges(void) const noexcept -> std::vector<edge_t>;
+  [[nodiscard]] auto get_edges(void) const noexcept -> std::set<edge_t>;
 
   auto add(const vertex_t) -> void;
 
