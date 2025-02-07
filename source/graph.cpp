@@ -28,6 +28,14 @@ int operator<=>(const edge_t &u, const edge_t &v) {
   return u.cost < v.cost ? -1 : 1;
 }
 
+vertex_t route_t::source(void) const { return *vertices.begin(); }
+
+vertex_t route_t::destination(void) const {
+  return *vertices.begin() + vertices.size() - 1;
+}
+
+route_t route_t::none(void) { return {{}, Cost::max, __MAX_HOPS__}; }
+
 Graph::Graph(const unsigned vertices) {
   for (auto vertex{0u}; vertex < vertices; ++vertex) {
     add(vertex);
@@ -198,10 +206,12 @@ auto breadth_first_search(const Graph &graph, const vertex_t source,
   }
 
   if (*vertices.begin() != source) {
-    return {{}, Cost::max};
+    return route_t::none();
   }
 
-  return {vertices, cost};
+  const unsigned hops = vertices.size() - 2u;
+
+  return {vertices, cost, hops};
 }
 
 auto depth_first_search(const Graph &graph, const vertex_t source,
@@ -257,10 +267,12 @@ auto depth_first_search(const Graph &graph, const vertex_t source,
   }
 
   if (*vertices.begin() != source) {
-    return __NO_ROUTE__;
+    return route_t::none();
   }
 
-  return {vertices, cost};
+  const unsigned hops = vertices.size() - 2u;
+
+  return {vertices, cost, hops};
 }
 
 auto dijkstra(const Graph &graph, const vertex_t source,
@@ -345,10 +357,12 @@ auto dijkstra(const Graph &graph, const vertex_t source,
   }
 
   if (*vertices.begin() != source) {
-    return __NO_ROUTE__;
+    return route_t::none();
   }
 
-  return {vertices, cost};
+  const unsigned hops = vertices.size() - 2u;
+
+  return {vertices, cost, hops};
 }
 
 auto k_shortest_path(const Graph &graph, const vertex_t source,
@@ -362,23 +376,19 @@ auto k_shortest_path(const Graph &graph, const vertex_t source,
 
   struct stub_t {
     vertex_t vertex;
-    route_t path;
+    route_t route;
 
-    stub_t(const vertex_t vertex, const route_t &path)
-        : vertex{vertex}, path{path} {}
+    stub_t(const vertex_t vertex, const route_t &route)
+        : vertex{vertex}, route{route} {}
 
     auto operator>(const stub_t &binding) const -> bool {
-      const auto &[vertices, cost] = path;
-
-      const auto &[other_vertices, other_cost] = binding.path;
-
-      return cost > other_cost;
+      return route.cost > binding.route.cost;
     }
   };
 
   std::priority_queue<stub_t, std::vector<stub_t>, std::greater<stub_t>> queue;
 
-  queue.push(stub_t(source, {{source}, Cost::min}));
+  queue.push(stub_t(source, {{source}, Cost::min, __MIN_HOPS__}));
 
   while (!queue.empty() && k_paths.size() != k) {
     auto [vertex, path] = queue.top();
@@ -392,11 +402,11 @@ auto k_shortest_path(const Graph &graph, const vertex_t source,
     }
 
     for (const auto &[adjacent, cost] : graph.at(vertex)) {
-      auto &[vertices, path_cost] = path;
+      path.vertices.insert(adjacent);
 
-      vertices.insert(adjacent);
+      const unsigned hops = path.vertices.size() - 2u;
 
-      queue.push(stub_t(adjacent, {vertices, path_cost + cost}));
+      queue.push(stub_t(adjacent, {path.vertices, path.cost + cost, hops}));
     }
   }
 
@@ -419,10 +429,10 @@ auto random_path(const Graph &graph) noexcept -> route_t {
       continue;
     }
 
-    const auto &[vertices, cost] = dijkstra(graph, source, destination);
+    const auto &route = dijkstra(graph, source, destination);
 
-    if (!vertices.empty()) {
-      return {vertices, cost};
+    if (!route.vertices.empty()) {
+      return route;
     }
   }
 }

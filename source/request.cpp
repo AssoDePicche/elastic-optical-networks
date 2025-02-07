@@ -74,15 +74,13 @@ auto make_key(unsigned x, unsigned y) -> unsigned {
 }
 
 auto route_keys(const route_t &route) -> std::vector<unsigned> {
-  const auto &[vertices, cost] = route;
-
-  assert(!vertices.empty());
+  assert(!route.vertices.empty());
 
   std::vector<unsigned> keys;
 
   std::vector<vertex_t> v;
 
-  for (const auto &vertex : vertices) {
+  for (const auto &vertex : route.vertices) {
     v.push_back(vertex);
   }
 

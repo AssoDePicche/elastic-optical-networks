@@ -33,9 +33,17 @@ struct edge_t final {
 
 int operator<=>(const edge_t &, const edge_t &);
 
-using route_t = std::pair<std::unordered_set<vertex_t>, cost_t>;
+struct route_t final {
+  std::unordered_set<vertex_t> vertices;
+  cost_t cost;
+  unsigned hops;
 
-const route_t __NO_ROUTE__ = {{}, Cost::max};
+  [[nodiscard]] vertex_t source(void) const;
+
+  [[nodiscard]] vertex_t destination(void) const;
+
+  [[nodiscard]] static route_t none(void);
+};
 
 class Graph final {
  public:
