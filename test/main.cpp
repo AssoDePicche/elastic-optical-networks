@@ -13,7 +13,7 @@ TEST(Graph, DepthFistSearch) {
 
   const std::unordered_set<vertex_t> expected_vertices = {0, 2};
 
-  const auto& [vertices, cost] = depth_first_search(graph, 0, 2);
+  const auto& [vertices, cost, hops] = depth_first_search(graph, 0, 2);
 
   ASSERT_EQ(vertices, expected_vertices);
 }
@@ -31,11 +31,7 @@ TEST(Graph, Dijkstra) {
 
   const auto expected_hops = 1;
 
-  const auto& [vertices, cost] = dijkstra(graph, 0, 2);
-
-  // HOPS are vertices - 2 (we must exclude source and destination)
-
-  const auto hops = vertices.size() - 2;
+  const auto& [vertices, cost, hops] = dijkstra(graph, 0, 2);
 
   ASSERT_EQ(cost, expected_cost);
 
@@ -59,7 +55,7 @@ TEST(Graph, KShortestPath) {
 
   auto total_cost = Cost::min;
 
-  for (const auto& [vertices, cost] : k_paths) {
+  for (const auto& [vertices, cost, hops] : k_paths) {
     total_cost += cost;
   }
 
