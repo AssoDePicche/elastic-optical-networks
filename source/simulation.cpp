@@ -63,10 +63,6 @@ void Simulation::next(void) {
       hashmap[key].deallocate(request.slice);
 
       INFO(hashmap[key].to_string());
-
-      INFO("Free (u): " + std::to_string(hashmap[key].available()) +
-           " Fragmentation (%): " +
-           std::to_string(hashmap[key].fragmentation()));
     }
 
     return;
@@ -91,10 +87,6 @@ void Simulation::next(void) {
 
     for (const auto& key : keys) {
       INFO(hashmap[key].to_string());
-
-      INFO("Free (u): " + std::to_string(hashmap[key].available()) +
-           " Fragmentation (%): " +
-           std::to_string(hashmap[key].fragmentation()));
     }
 
     accepted = true;
