@@ -71,13 +71,12 @@ auto main(const int argc, const char **argv) -> int {
   for (const auto &snapshot : simulation.get_snapshots()) {
     stream << snapshot.str() << std::endl;
 
-    for (const auto &fragmentation : snapshot.fragmentation) {
-      fragmentation_states.push_back(fragmentation);
-    }
+    fragmentation_states.insert(fragmentation_states.end(),
+                                snapshot.fragmentation.begin(),
+                                snapshot.fragmentation.end());
 
-    for (const auto &entropy : snapshot.entropy) {
-      fragmentation_states.push_back(entropy);
-    }
+    entropy_states.insert(entropy_states.end(), snapshot.entropy.begin(),
+                          snapshot.entropy.end());
   }
 
   stream.close();
