@@ -185,6 +185,10 @@ auto Spectrum::fragmentation(const unsigned size) const noexcept -> double {
 auto Spectrum::to_string(void) const noexcept -> std::string {
   std::string buffer;
 
+  buffer.append("\nEntropy: " + std::to_string(shannon_entropy(*this)) + "\n");
+
+  buffer.append("Fragmentation: " + std::to_string(fragmentation()) + "\n");
+
   std::for_each(resources.begin(), resources.end(),
                 [&buffer](const slot_t &resource) {
                   const auto &[allocated, times_allocated] = resource;
