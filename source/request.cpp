@@ -2,71 +2,71 @@
 
 #include <limits>
 
-Request::Request(const route_t &route, const unsigned bandwidth)
+Request::Request(const route_t &route, const bandwidth_t bandwidth)
     : route{route}, bandwidth{bandwidth} {}
 
-auto from_gigabits_transmission(const double distance) -> unsigned {
-  if (distance <= 160.0) {
+bandwidth_t from_gigabits_transmission(const cost_t cost) noexcept {
+  if (cost <= 160.0f) {
     return 5u;
   }
 
-  if (distance <= 880.0) {
+  if (cost <= 880.0f) {
     return 6u;
   }
 
-  if (distance <= 2480.0) {
+  if (cost <= 2480.0f) {
     return 7u;
   }
 
-  if (distance <= 3120.0) {
+  if (cost <= 3120.0f) {
     return 9u;
   }
 
-  if (distance <= 5000) {
+  if (cost <= 5000.0f) {
     return 10u;
   }
 
-  if (distance <= 6080.0) {
+  if (cost <= 6080.0f) {
     return 12u;
   }
 
-  if (distance <= 8000.0) {
+  if (cost <= 8000.0f) {
     return 13u;
   }
 
-  return std::numeric_limits<unsigned>::max();
+  return max_bandwidth;
 }
 
-auto from_terabits_transmission(const double distance) -> unsigned {
-  if (distance <= 400.0) {
+bandwidth_t from_terabits_transmission(const cost_t cost) noexcept {
+  if (cost <= 400.0f) {
     return 14u;
   }
 
-  if (distance <= 800.0) {
+  if (cost <= 800.0f) {
     return 15u;
   }
 
-  if (distance <= 1600.0) {
+  if (cost <= 1600.0f) {
     return 17u;
   }
 
-  if (distance <= 3040.0) {
+  if (cost <= 3040.0f) {
     return 19u;
   }
 
-  if (distance <= 4160.0) {
+  if (cost <= 4160.0f) {
     return 22u;
   }
 
-  if (distance <= 6400.0) {
+  if (cost <= 6400.0f) {
     return 25u;
   }
 
-  if (distance <= 8000.0) {
+  if (cost <= 8000.0f) {
     return 28u;
   }
 
-  return std::numeric_limits<unsigned>::max();
+  return max_bandwidth;
 }
 
 auto make_key(unsigned x, unsigned y) -> unsigned {
@@ -76,16 +76,18 @@ auto make_key(unsigned x, unsigned y) -> unsigned {
 auto route_keys(const route_t &route) -> std::vector<unsigned> {
   assert(!route.vertices.empty());
 
+  std::vector<vertex_t> vertices(route.vertices.begin(), route.vertices.end());
+
   std::vector<unsigned> keys;
 
-  std::vector<vertex_t> v;
+  keys.reserve(vertices.size() - 1);
 
-  for (const auto &vertex : route.vertices) {
-    v.push_back(vertex);
-  }
+  for (auto index = 1u; index < vertices.size(); ++index) {
+    const auto x = vertices.at(index - 1);
 
-  for (auto index{1u}; index < v.size(); ++index) {
-    keys.push_back(make_key(v[index - 1], v[index]));
+    const auto y = vertices.at(index);
+
+    keys.emplace_back(make_key(x, y));
   }
 
   return keys;
@@ -95,9 +97,7 @@ auto make_hashmap(const Graph &graph,
                   const unsigned size) -> std::map<unsigned, Spectrum> {
   std::map<unsigned, Spectrum> hashmap;
 
-  const auto edges = graph.get_edges();
-
-  for (const auto &[source, destination, cost] : edges) {
+  for (const auto &[source, destination, cost] : graph.get_edges()) {
     const auto key = make_key(source, destination);
 
     hashmap[key] = Spectrum(size);

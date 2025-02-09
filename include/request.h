@@ -8,19 +8,23 @@
 #include "graph.h"
 #include "spectrum.h"
 
+using bandwidth_t = unsigned;
+
+constexpr auto max_bandwidth = std::numeric_limits<bandwidth_t>::max();
+
 struct Request {
   route_t route;
   slice_t slice;
-  unsigned bandwidth{};
+  bandwidth_t bandwidth{};
 
   Request(void) = default;
 
-  Request(const route_t &, const unsigned);
+  Request(const route_t &, const bandwidth_t);
 };
 
-[[nodiscard]] auto from_gigabits_transmission(const double) -> unsigned;
+[[nodiscard]] bandwidth_t from_gigabits_transmission(const cost_t) noexcept;
 
-[[nodiscard]] auto from_terabits_transmission(const double) -> unsigned;
+[[nodiscard]] bandwidth_t from_terabits_transmission(const cost_t) noexcept;
 
 [[nodiscard]] auto make_key(unsigned, unsigned) -> unsigned;
 
