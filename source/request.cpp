@@ -1,6 +1,7 @@
 #include "request.h"
 
 #include <limits>
+#include <ranges>
 
 Request::Request(const route_t &route, const bandwidth_t bandwidth)
     : route{route}, bandwidth{bandwidth} {}
@@ -80,9 +81,9 @@ auto route_keys(const route_t &route) -> std::vector<unsigned> {
 
   std::vector<unsigned> keys;
 
-  keys.reserve(vertices.size() - 1);
+  keys.reserve(vertices.size() - 1u);
 
-  for (auto index = 1u; index < vertices.size(); ++index) {
+  for (const auto &index : std::views::iota(1u, vertices.size())) {
     const auto x = vertices.at(index - 1);
 
     const auto y = vertices.at(index);
