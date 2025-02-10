@@ -15,6 +15,8 @@
 
 [[nodiscard]] auto standard_deviation(const std::vector<double> &) -> double;
 
+[[nodiscard]] bool is_equal(const double, const double, const double) noexcept;
+
 #define MEAN(X) mean(X)
 
 #define MAE(X, Y) mean_absolute_error(X, Y)

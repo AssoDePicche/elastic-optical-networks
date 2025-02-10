@@ -65,3 +65,7 @@ auto standard_deviation(const std::vector<double> &dataset) -> double {
 
   return std::sqrt(variance);
 }
+
+bool is_equal(const double x, const double y, const double tolerance) noexcept {
+  return std::abs(x - y) < tolerance;
+}
