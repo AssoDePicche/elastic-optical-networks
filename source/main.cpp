@@ -82,19 +82,18 @@ auto main(const int argc, const char **argv) -> int {
 
   stream.close();
 
-  std::cout << "Runtime: " << runtime << "s" << std::endl;
-
-  std::cout << "Simulated time units: " << simulation.time << std::endl;
+  std::cout << "runtime: " << runtime << "s" << std::endl;
 
   std::cout << Report::from(simulation.group, settings).to_string()
             << std::endl;
 
-  std::cout << "AVG fragmentation: " << MEAN(fragmentation_states) << std::endl;
-
-  std::cout << "STDDEV fragmentation: " << STDDEV(fragmentation_states)
+  std::cout << "mean fragmentation: " << mean(fragmentation_states)
             << std::endl;
 
-  std::cout << "AVG entropy: " << MEAN(entropy_states) << std::endl;
+  std::cout << "stddev fragmentation: " << stddev(fragmentation_states)
+            << std::endl;
 
-  std::cout << "STDDEV entropy: " << STDDEV(entropy_states) << std::endl;
+  std::cout << "mean entropy: " << mean(entropy_states) << std::endl;
+
+  std::cout << "stddev entropy: " << stddev(entropy_states) << std::endl;
 }

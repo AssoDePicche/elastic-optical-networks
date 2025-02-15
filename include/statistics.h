@@ -17,12 +17,10 @@
 
 [[nodiscard]] bool is_equal(const double, const double, const double) noexcept;
 
-#define MEAN(X) mean(X)
+#define mae(X, Y) mean_absolute_error(X, Y)
 
-#define MAE(X, Y) mean_absolute_error(X, Y)
+#define mse(X, Y) mean_squared_error(X, Y)
 
-#define MSE(X, Y) mean_squared_error(X, Y)
+#define rmse(X, Y) root_mean_square_error(X, Y)
 
-#define RMSE(X, Y) root_mean_square_error(X, Y)
-
-#define STDDEV(X) standard_deviation(X)
+#define stddev(X) standard_deviation(X)
