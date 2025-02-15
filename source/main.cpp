@@ -1,3 +1,4 @@
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -7,7 +8,6 @@
 #include "settings.h"
 #include "simulation.h"
 #include "statistics.h"
-#include "timer.h"
 
 auto main(const int argc, const char **argv) -> int {
   std::optional<Settings> typed_settings;
@@ -30,9 +30,7 @@ auto main(const int argc, const char **argv) -> int {
 
   auto settings{typed_settings.value()};
 
-  Timer timer;
-
-  timer.start();
+  const auto start = std::chrono::system_clock::now();
 
   Simulation simulation(settings);
 
@@ -40,7 +38,10 @@ auto main(const int argc, const char **argv) -> int {
     simulation.next();
   }
 
-  timer.stop();
+  const auto end = std::chrono::system_clock::now();
+
+  const auto runtime =
+      std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
 
   std::string filename =
       "dataset" + std::to_string(simulation.blocking()) + ".csv";
@@ -81,8 +82,7 @@ auto main(const int argc, const char **argv) -> int {
 
   stream.close();
 
-  std::cout << "Runtime: " << timer.elapsed<std::chrono::seconds>() << "s"
-            << std::endl;
+  std::cout << "Runtime: " << runtime << "s" << std::endl;
 
   std::cout << "Simulated time units: " << simulation.time << std::endl;
 
