@@ -2,8 +2,7 @@ import numpy
 import pandas
 from imblearn.over_sampling import SMOTE
 from pandas import DataFrame
-from sklearn.ensemble import (AdaBoostClassifier, BaggingClassifier,
-                              RandomForestClassifier)
+from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier
 from sklearn.linear_model import LogisticRegressionCV, SGDClassifier
 from sklearn.metrics import (accuracy_score, classification_report, f1_score,
                              log_loss, matthews_corrcoef, precision_score,
@@ -11,7 +10,6 @@ from sklearn.metrics import (accuracy_score, classification_report, f1_score,
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
@@ -44,13 +42,6 @@ if __name__ == "__main__":
         (LinearSVC(), {}),
         (AdaBoostClassifier(), {}),
         (BaggingClassifier(), {}),
-        (RandomForestClassifier(), {}),
-        (
-            MLPClassifier(
-                solver="lbfgs", alpha=1e-5, hidden_layer_sizes=(5, 2)
-            ),
-            {},
-        ),
         (XGBClassifier(), {}),
     ]
 
