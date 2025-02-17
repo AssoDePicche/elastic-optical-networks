@@ -19,7 +19,9 @@ if __name__ == "__main__":
     # (7.51 + 14.68 + 29.36) E | 10 bandwidth | Seed 0
     dataframe: DataFrame = pandas.concat(
         [
-            pandas.read_csv("dataset.csv"),
+            pandas.read_csv("dataset0.146997.csv"),
+            pandas.read_csv("dataset0.256196.csv"),
+            pandas.read_csv("dataset0.418617.csv"),
         ]
     )
 
