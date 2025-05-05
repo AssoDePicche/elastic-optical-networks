@@ -1,8 +1,19 @@
 {
-  "view": {
-    "title": "App",
-    "height": 720,
-    "width": 1280,
-    "fps": 60
+  "params": {
+    "arrival-rate": 1,
+    "service-rate": 0.133138064,
+    "seed": 0,
+    "requests": [
+      {
+        "type": "low-demand",
+        "bandwidth": 37.5,
+        "modulation": "BPSK",
+        "allocator": "first-fit"
+      }
+    ],
+    "simulation-duration": 1000000,
+    "slot-width": 12.5,
+    "spectrum-width": 125,
+    "topology": "resources/graph/point-to-point.txt"
   }
 }
