@@ -21,8 +21,8 @@ Normal::Normal(const Seed seed, const double mean, const double deviation)
 
 auto Normal::next(void) -> double { return distribution(generator); }
 
-Discrete::Discrete(const Seed seed, const std::initializer_list<double> &list)
-    : Distribution(seed), distribution{list} {}
+Discrete::Discrete(const Seed seed, const std::vector<double> &list)
+    : Distribution(seed), distribution{list.begin(), list.end()} {}
 
 auto Discrete::next(void) -> double {
   return static_cast<double>(distribution(generator));

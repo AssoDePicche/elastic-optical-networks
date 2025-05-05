@@ -2,70 +2,71 @@
 
 #include <initializer_list>
 #include <random>
+#include <vector>
 
 using Seed = long long unsigned;
 
 class Distribution {
-public:
+ public:
   Distribution(const Seed);
 
   virtual auto next(void) -> double = 0;
 
   [[nodiscard]] auto get_seed(void) const -> Seed;
 
-private:
+ private:
   Seed seed;
 
-protected:
+ protected:
   std::mt19937 generator;
 };
 
 class Exponential final : public Distribution {
-public:
+ public:
   Exponential(const Seed, const double);
 
   auto next(void) -> double override;
 
-private:
+ private:
   std::exponential_distribution<double> distribution;
 };
 
 class Poisson final : public Distribution {
-public:
+ public:
   Poisson(const Seed, const double);
 
   auto next(void) -> double override;
 
-private:
+ private:
   std::poisson_distribution<int> distribution;
 };
 
 class Normal final : public Distribution {
-public:
+ public:
   Normal(const Seed, const double, const double);
 
   auto next(void) -> double override;
 
-private:
+ private:
   std::normal_distribution<double> distribution;
 };
 
 class Discrete final : public Distribution {
-public:
-  Discrete(const Seed, const std::initializer_list<double> &);
+ public:
+  Discrete(const Seed, const std::vector<double> &);
 
   auto next(void) -> double override;
 
-private:
+ private:
   std::discrete_distribution<int> distribution;
 };
 
 class Uniform final : public Distribution {
-public:
+ public:
   Uniform(const Seed, const double, const double);
 
   auto next(void) -> double override;
 
-private:
+ private:
   std::uniform_real_distribution<double> distribution;
 };
