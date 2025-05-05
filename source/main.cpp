@@ -1,23 +1,31 @@
+#include <filesystem>
 #include <iostream>
+#include <optional>
 #include <string>
 
 #include "settings.h"
 #include "simulation.h"
 
 auto main(const int argc, const char **argv) -> int {
-  std::vector<std::string> args;
+  const std::string filename = "settings.json";
 
-  for (auto arg{1u}; arg < static_cast<std::size_t>(argc); ++arg) {
-    args.push_back(std::string(argv[arg]));
+  std::optional<Settings> settings;
+
+  if (!std::filesystem::exists(filename)) {
+    std::vector<std::string> args;
+
+    for (auto arg{1u}; arg < static_cast<std::size_t>(argc); ++arg) {
+      args.push_back(std::string(argv[arg]));
+    }
+
+    settings = Settings::from(args);
+  } else {
+    settings = Settings::from(filename);
   }
 
-  const auto typed_settings{Settings::from(args)};
-
-  if (!typed_settings.has_value()) {
+  if (!settings.has_value()) {
     return 1;
   }
 
-  auto settings{typed_settings.value()};
-
-  std::cout << simulation(settings) << std::endl;
+  std::cout << simulation(settings.value()) << std::endl;
 }
