@@ -2,8 +2,8 @@
 
 #include <cassert>
 
-Group::Group(const Seed seed, const std::initializer_list<double> &predicted,
-             const std::initializer_list<unsigned> &resources)
+Group::Group(const Seed seed, const std::vector<double> &predicted,
+             const std::vector<unsigned> &resources)
     : roulette{seed, predicted} {
   assert(predicted.size() == resources.size());
 
@@ -100,22 +100,6 @@ auto Report::from(const Group &group, const Settings &settings) -> Report {
 
 auto Report::to_string(void) const -> std::string {
   std::string str{};
-
-  str.append("Seed: " + std::to_string(seed) + "\n");
-
-  str.append("Channels (C): " + std::to_string(bandwidth) + "\n");
-
-  str.append("Calls (n): " + std::to_string(calls) + "\n");
-
-  str.append("Arrival rate (λ): " + std::to_string(arrival_rate) + "\n");
-
-  str.append("Service rate (μ): " + std::to_string(service_rate) + "\n");
-
-  str.append("Traffic Intensity (ρ): " + std::to_string(traffic_intensity) +
-             "\n");
-
-  str.append("Grade of Service (ε): " + std::to_string(grade_of_service) +
-             "\n");
 
   str.append("Busy Channels (1-ε): " + std::to_string(busy_channels) + "\n");
 

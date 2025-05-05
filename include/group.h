@@ -1,15 +1,15 @@
 #pragma once
 
-#include <initializer_list>
 #include <tuple>
+#include <vector>
 
 #include "distribution.h"
 #include "settings.h"
 
 class Group final {
  public:
-  Group(const Seed seed, const std::initializer_list<double> &,
-        const std::initializer_list<unsigned> &);
+  Group(const Seed seed, const std::vector<double> &,
+        const std::vector<unsigned> &);
 
   auto count_blocking(const unsigned) -> void;
 
