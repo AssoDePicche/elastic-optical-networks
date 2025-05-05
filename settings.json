@@ -6,7 +6,7 @@
     "requests": [
       {
         "type": "low-demand",
-        "bandwidth": 37.5,
+        "bandwidth": 12.5,
         "modulation": "BPSK",
         "allocator": "first-fit"
       }
