@@ -1,5 +1,8 @@
 #include "simulation.h"
 
+#include <format>
+#include <unordered_map>
+
 #include "event_queue.h"
 #include "graph.h"
 #include "group.h"
@@ -31,7 +34,26 @@ auto simulation(Settings &settings) -> std::string {
   EventQueue<Request> queue{settings.arrival_rate, settings.service_rate,
                             settings.seed};
 
-  Group group{settings.seed, {50.0, 50.0}, {3, 5}};
+  std::vector<double> probs(settings.requests.size(),
+                            1.0f / settings.requests.size());
+
+  std::unordered_map<std::string, unsigned> modulation_slots = {
+      {"BPSK", 1},   {"QPSK", 2},    {"8-QAM", 3},
+      {"8-QAM", 3},  {"16-QAM", 4},  {"32-QAM", 5},
+      {"64-QAM", 6}, {"128-QAM", 7}, {"256-QAM", 8},
+  };
+
+  std::vector<unsigned> slots;
+
+  slots.reserve(settings.requests.size());
+
+  for (const auto &request : settings.requests) {
+    slots.emplace_back(from_modulation(
+        request.second.bandwidth, modulation_slots[request.second.modulation],
+        settings.slot_width));
+  }
+
+  Group group{settings.seed, probs, slots};
 
   std::vector<Snapshot> snapshots{};
 
@@ -112,7 +134,21 @@ auto simulation(Settings &settings) -> std::string {
       continue;
     }
 
-    const auto allocator = (request.bandwidth == 3) ? first_fit : last_fit;
+    auto allocator = first_fit;
+
+    for (auto &requestType : settings.requests) {
+      const auto fsus = from_modulation(
+          requestType.second.bandwidth,
+          modulation_slots[requestType.second.modulation], settings.slot_width);
+
+      if (fsus == request.bandwidth) {
+        allocator = *requestType.second.allocator.target<
+            std::optional<std::pair<unsigned int, unsigned int>> (*)(
+                const Spectrum &, unsigned int)>();
+
+        break;
+      }
+    }
 
     auto accepted = false;
 
@@ -169,23 +205,45 @@ auto simulation(Settings &settings) -> std::string {
     entropy_states.push_back(snapshot.entropy);
   }
 
-  str.append("Execution time: " +
-             std::to_string(timer.elapsed<std::chrono::seconds>()) + "s\n");
+  std::string buffer{""};
 
-  str.append("Simulation time: " + std::to_string(time) + "\n");
+  buffer.append("seed: {}\n", settings.seed);
 
-  str.append(Report::from(group, settings).to_string() + "\n");
+  const double execution_time = timer.elapsed<std::chrono::seconds>();
 
-  str.append("Mean fragmentation: " +
-             std::to_string(MEAN(fragmentation_states)) + "\n");
+  buffer.append(std::format("execution time (s): {:.3f}\n", execution_time));
 
-  str.append("STDDEV fragmentation: " +
-             std::to_string(STDDEV(fragmentation_states)) + "\n");
+  buffer.append(std::format("simulated time: {:.3f}\n", time));
 
-  str.append("Mean entropy: " + std::to_string(MEAN(entropy_states)) + "\n");
+  buffer.append(
+      std::format("spectrum width (GHz): {:.2f}\n", settings.spectrum_width));
 
-  str.append("STDDEV entropy: " + std::to_string(STDDEV(entropy_states)) +
-             "\n");
+  buffer.append(std::format("slot width (GHz): {:.2f}\n", settings.slot_width));
 
-  return str;
+  buffer.append(std::format("slots per link: {}\n", settings.bandwidth));
+
+  buffer.append(std::format("mean fragmentation: {:.3f} ± {:.3f}\n",
+                            MEAN(fragmentation_states),
+                            STDDEV(fragmentation_states)));
+
+  buffer.append(std::format("mean entropy: {:.3f} ± {:.3f}\n",
+                            MEAN(entropy_states), STDDEV(entropy_states)));
+
+  const double load = settings.arrival_rate / settings.service_rate;
+
+  // TODO: implement algorithm to discard the first N requests
+
+  buffer.append(std::format("load (E): {:.3f}\n", load));
+
+  buffer.append(std::format("arrival rate: {:.3f}\n", settings.arrival_rate));
+
+  buffer.append(std::format("service rate: {:.3f}\n", settings.service_rate));
+
+  buffer.append(std::format("grade of service: {:.3f}\n", group.blocking()));
+
+  buffer.append(std::format("requests: {}\n", group.size()));
+
+  buffer.append(std::format("{}\n", Report::from(group, settings).to_string()));
+
+  return buffer;
 }
