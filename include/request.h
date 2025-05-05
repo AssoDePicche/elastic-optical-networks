@@ -18,6 +18,8 @@ struct Request {
   Request(const route_t &, const unsigned);
 };
 
+[[nodiscard]] auto from_modulation(double, unsigned, double) -> unsigned;
+
 [[nodiscard]] auto from_gigabits_transmission(const double) -> unsigned;
 
 [[nodiscard]] auto from_terabits_transmission(const double) -> unsigned;

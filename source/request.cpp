@@ -5,6 +5,11 @@
 Request::Request(const route_t &route, const unsigned bandwidth)
     : route{route}, bandwidth{bandwidth} {}
 
+auto from_modulation(double bandwidth, unsigned spectralEfficiency,
+                     double slotWidth) -> unsigned {
+  return bandwidth / (spectralEfficiency * slotWidth);
+}
+
 auto from_gigabits_transmission(const double distance) -> unsigned {
   if (distance <= 160.0) {
     return 5u;
