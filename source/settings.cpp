@@ -1,9 +1,12 @@
 #include "settings.h"
 
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <set>
 
+#include "json.h"
 #include "parser.h"
 
 auto Settings::from(const std::vector<std::string> &argv)
@@ -88,6 +91,63 @@ auto Settings::from(const std::vector<std::string> &argv)
       spectrum_allocation_strategies.at(spectrum_allocation_strategy);
 
   settings.seed = std::stoul(parser.parse("--seed"));
+
+  return settings;
+}
+
+auto Settings::from(const std::string &filename) -> std::optional<Settings> {
+  const auto json = read_json(filename);
+
+  if (!json.has_value()) {
+    return std::nullopt;
+  }
+
+  const std::map<std::string, SpectrumAllocator> spectrum_allocation_strategies{
+      {"best-fit", best_fit},
+      {"first-fit", first_fit},
+      {"last-fit", last_fit},
+      {"random-fit", random_fit},
+      {"worst-fit", worst_fit}};
+
+  const auto buffer = json.value();
+
+  Settings settings;
+
+  settings.time_units = buffer["params"]["simulation-duration"];
+
+  settings.arrival_rate = buffer["params"]["arrival-rate"];
+
+  settings.service_rate = buffer["params"]["service-rate"];
+
+  settings.seed = buffer["params"]["seed"];
+
+  settings.spectrum_width = buffer["params"]["spectrum-width"];
+
+  settings.slot_width = buffer["params"]["slot-width"];
+
+  settings.bandwidth = settings.spectrum_width / settings.slot_width;
+
+  for (const auto &row : buffer["params"]["requests"]) {
+    RequestType request;
+
+    request.type = row["type"];
+
+    request.modulation = row["modulation"];
+
+    request.bandwidth = row["bandwidth"];
+
+    request.allocator = spectrum_allocation_strategies.at(row["allocator"]);
+
+    settings.requests[request.type] = request;
+  }
+
+  const auto graph = Graph::from(buffer["params"]["topology"]);
+
+  if (!graph.has_value()) {
+    return std::nullopt;
+  }
+
+  settings.graph = graph.value();
 
   return settings;
 }
