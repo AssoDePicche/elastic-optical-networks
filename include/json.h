@@ -1,5 +1,7 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include <optional>
+#include <string>
 
-using json = nlohmann::json;
+[[nodiscard]] std::optional<nlohmann::json> read_json(const std::string&);
