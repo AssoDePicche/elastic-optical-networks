@@ -27,7 +27,13 @@ auto Snapshot::str(void) const -> std::string {
 }
 
 auto simulation(Settings &settings) -> std::string {
-  auto active_calls{0u};
+  bool ignored_first = false;
+
+  auto request_count = 0u;
+
+  auto blocked_count = 0u;
+
+  auto active_requests{0u};
 
   auto hashmap{make_hashmap(settings.graph, settings.bandwidth)};
 
@@ -105,7 +111,18 @@ auto simulation(Settings &settings) -> std::string {
   queue.push(Request{random_path(settings.graph), group.next()}, time)
       .of_type(Signal::ARRIVAL);
 
+  ++request_count;
+
   while (queue.top().value().time <= settings.time_units) {
+    if (static_cast<unsigned>(0.1 * settings.time_units) == request_count &&
+        !ignored_first) {
+      ignored_first = true;
+
+      request_count = 0u;
+
+      blocked_count = 0u;
+    }
+
     const auto top{queue.pop()};
 
     auto [now, signal, request] = top.value();
@@ -115,7 +132,7 @@ auto simulation(Settings &settings) -> std::string {
     INFO("Now: " + std::to_string(now));
 
     if (signal == Signal::DEPARTURE) {
-      --active_calls;
+      --active_requests;
 
       INFO("Request for " + std::to_string(request.bandwidth) +
            " slots departing");
@@ -152,9 +169,9 @@ auto simulation(Settings &settings) -> std::string {
 
     auto accepted = false;
 
-    if (active_calls < settings.bandwidth &&
+    if (active_requests < settings.bandwidth &&
         dispatch_request(request, hashmap, allocator)) {
-      ++active_calls;
+      ++active_requests;
 
       queue.push(request, now).of_type(Signal::DEPARTURE);
 
@@ -171,12 +188,13 @@ auto simulation(Settings &settings) -> std::string {
       }
 
       accepted = true;
-
     } else {
       INFO("Blocking request for " + std::to_string(request.bandwidth) +
            " slots");
 
       group.count_blocking(request.bandwidth);
+
+      ++blocked_count;
     }
 
     snapshots.push_back(Snapshot(now, request.bandwidth, accepted,
@@ -185,6 +203,8 @@ auto simulation(Settings &settings) -> std::string {
 
     queue.push(Request{random_path(settings.graph), group.next()}, now)
         .of_type(Signal::ARRIVAL);
+
+    ++request_count;
   }
 
   timer.stop();
@@ -231,17 +251,17 @@ auto simulation(Settings &settings) -> std::string {
 
   const double load = settings.arrival_rate / settings.service_rate;
 
-  // TODO: implement algorithm to discard the first N requests
-
   buffer.append(std::format("load (E): {:.3f}\n", load));
 
   buffer.append(std::format("arrival rate: {:.3f}\n", settings.arrival_rate));
 
   buffer.append(std::format("service rate: {:.3f}\n", settings.service_rate));
 
-  buffer.append(std::format("grade of service: {:.3f}\n", group.blocking()));
+  buffer.append(
+      std::format("grade of service: {:.3f}\n",
+                  blocked_count / static_cast<double>(request_count)));
 
-  buffer.append(std::format("requests: {}\n", group.size()));
+  buffer.append(std::format("requests: {}\n", request_count));
 
   buffer.append(std::format("{}\n", Report::from(group, settings).to_string()));
 
