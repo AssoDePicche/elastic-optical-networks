@@ -9,7 +9,7 @@
 #include "distribution.h"
 
 Spectrum::Spectrum(const unsigned size)
-    : resources(std::vector(size, std::make_pair(false, 0u))) {}
+    : resources(std::vector(size, FSU(false, 0u))) {}
 
 auto Spectrum::allocate(const slice_t &slice) -> void {
   const auto &[start, end] = slice;
@@ -23,11 +23,11 @@ auto Spectrum::allocate(const slice_t &slice) -> void {
   const auto j = resources.begin() + end + 1;
 
   while (i != j) {
-    auto &[allocated, times_allocated] = *i;
+    auto &[allocated, occupancy] = *i;
 
     allocated = true;
 
-    ++times_allocated;
+    ++occupancy;
 
     ++i;
   }
@@ -45,7 +45,7 @@ auto Spectrum::deallocate(const slice_t &slice) -> void {
   const auto j = resources.begin() + end + 1;
 
   while (i != j) {
-    auto &[allocated, times_allocated] = *i;
+    auto &[allocated, occupancy] = *i;
 
     allocated = false;
 
@@ -60,7 +60,7 @@ auto Spectrum::size(void) const noexcept -> unsigned {
 auto Spectrum::available(void) const noexcept -> unsigned {
   auto count = 0u;
 
-  for (const auto &[allocated, times_allocated] : resources) {
+  for (const auto &[allocated, occupancy] : resources) {
     if (!allocated) {
       ++count;
     }
@@ -77,7 +77,7 @@ auto Spectrum::available_at(const slice_t &slice) const noexcept -> bool {
   const auto j = resources.begin() + end + 1;
 
   while (i != j) {
-    const auto &[allocated, times_allocated] = *i;
+    const auto &[allocated, occupancy] = *i;
 
     if (allocated) {
       return false;
@@ -97,7 +97,7 @@ auto Spectrum::available_partitions(void) const noexcept
 
   std::vector<unsigned> partitions{};
 
-  for (const auto &[allocated, times_allocated] : resources) {
+  for (const auto &[allocated, occupancy] : resources) {
     if (allocated && in_free_block) {
       in_free_block = false;
 
@@ -186,8 +186,8 @@ auto Spectrum::to_string(void) const noexcept -> std::string {
   std::string buffer;
 
   std::for_each(resources.begin(), resources.end(),
-                [&buffer](const slot_t &resource) {
-                  const auto &[allocated, times_allocated] = resource;
+                [&buffer](const FSU &resource) {
+                  const auto &[allocated, occupancy] = resource;
 
                   buffer.append(allocated ? "#" : ".");
                 });
@@ -195,7 +195,7 @@ auto Spectrum::to_string(void) const noexcept -> std::string {
   return buffer;
 }
 
-auto Spectrum::at(const unsigned index) const -> slot_t {
+auto Spectrum::at(const unsigned index) const -> FSU {
   assert(index < size());
 
   return resources.at(index);
@@ -206,7 +206,7 @@ auto Spectrum::gaps(void) const -> unsigned {
 
   auto in_gap = false;
 
-  for (const auto &[allocated, times_allocated] : resources) {
+  for (const auto &[allocated, occupancy] : resources) {
     if (!allocated && in_gap) {
       continue;
     }
@@ -234,7 +234,7 @@ auto Spectrum::largest_gap(void) const -> unsigned {
 
   auto gap_size = 0u;
 
-  for (const auto &[allocated, times_allocated] : resources) {
+  for (const auto &[allocated, occupancy] : resources) {
     if (!allocated && in_gap) {
       ++gap_size;
 
@@ -282,7 +282,7 @@ auto best_fit(const Spectrum &spectrum,
   auto current_start_index{0u};
 
   for (auto index{0u}; index < spectrum.size(); ++index) {
-    const auto &[allocated, times_allocated] = spectrum.at(index);
+    const auto &[allocated, occupancy] = spectrum.at(index);
 
     if (!allocated && current_block_size == 0u) {
       current_start_index = index;
@@ -332,7 +332,7 @@ auto first_fit(const Spectrum &spectrum,
     auto fit = true;
 
     for (auto end{0u}; end < bandwidth && (start + end) < size; ++end) {
-      const auto &[allocated, times_allocated] = spectrum.at(start + end);
+      const auto &[allocated, occupancy] = spectrum.at(start + end);
 
       if (allocated) {
         fit = false;
@@ -366,7 +366,7 @@ auto last_fit(const Spectrum &spectrum,
   auto count{0u};
 
   for (auto index{static_cast<int>(spectrum.size()) - 1}; 0 <= index; --index) {
-    const auto &[allocated, times_allocated] = spectrum.at(index);
+    const auto &[allocated, occupancy] = spectrum.at(index);
 
     if (!allocated) {
       ++count;
@@ -394,7 +394,7 @@ auto random_fit(const Spectrum &spectrum,
     auto fit{true};
 
     for (auto end{0u}; end < bandwidth; ++end) {
-      const auto &[allocated, times_allocated] = spectrum.at(start + end);
+      const auto &[allocated, occupancy] = spectrum.at(start + end);
 
       if (allocated) {
         fit = false;
@@ -440,7 +440,7 @@ auto worst_fit(const Spectrum &spectrum,
   auto current_start_index{0u};
 
   for (auto index{0u}; index < spectrum.size(); ++index) {
-    const auto &[allocated, times_allocated] = spectrum.at(index);
+    const auto &[allocated, occupancy] = spectrum.at(index);
 
     if (!allocated) {
       if (current_block_size == 0) {

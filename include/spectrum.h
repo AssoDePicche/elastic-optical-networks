@@ -6,9 +6,12 @@
 #include <utility>
 #include <vector>
 
-using slice_t = std::pair<unsigned, unsigned>;
+struct FSU final {
+  bool allocated;
+  unsigned occupancy;
+};
 
-using slot_t = std::pair<bool, unsigned>;
+using slice_t = std::pair<unsigned, unsigned>;
 
 class Spectrum final {
  public:
@@ -42,14 +45,14 @@ class Spectrum final {
 
   [[nodiscard]] auto to_string(void) const noexcept -> std::string;
 
-  [[nodiscard]] auto at(const unsigned) const -> slot_t;
+  [[nodiscard]] auto at(const unsigned) const -> FSU;
 
   [[nodiscard]] auto gaps(void) const -> unsigned;
 
   [[nodiscard]] auto largest_gap(void) const -> unsigned;
 
  private:
-  std::vector<slot_t> resources;
+  std::vector<FSU> resources;
 };
 
 [[nodiscard]] auto best_fit(const Spectrum &,
