@@ -1,8 +1,12 @@
 {
+  "enable-logging": true,
+  "export-dataset": true,
   "params": {
     "arrival-rate": 1,
+    "ignore-first": true,
     "service-rate": 0.133138064,
     "seed": 0,
+    "spectrum-allocation": "modulation",
     "requests": [
       {
         "type": "low-demand",
