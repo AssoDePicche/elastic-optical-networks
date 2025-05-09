@@ -1,11 +1,13 @@
 #include "simulation.h"
 
 #include <format>
+#include <tuple>
 #include <unordered_map>
+#include <vector>
 
+#include "distribution.h"
 #include "event_queue.h"
 #include "graph.h"
-#include "group.h"
 #include "logger.h"
 #include "request.h"
 #include "statistics.h"
@@ -27,23 +29,25 @@ auto Snapshot::str(void) const -> std::string {
 }
 
 auto simulation(Settings &settings) -> std::string {
-  bool ignored_first = false;
+  const auto kToIgnore = static_cast<unsigned>(0.1 * settings.timeUnits);
 
-  auto request_count = 0u;
+  bool ignoredFirst = false;
 
-  auto blocked_count = 0u;
+  auto requestCount = 0u;
 
-  auto active_requests{0u};
+  auto blockedCount = 0u;
+
+  auto activeRequests = 0u;
 
   auto hashmap{make_hashmap(settings.graph, settings.bandwidth)};
 
-  EventQueue<Request> queue{settings.arrival_rate, settings.service_rate,
+  EventQueue<Request> queue{settings.arrivalRate, settings.serviceRate,
                             settings.seed};
 
   std::vector<double> probs(settings.requests.size(),
                             1.0f / settings.requests.size());
 
-  std::unordered_map<std::string, unsigned> modulation_slots = {
+  const std::unordered_map<std::string, unsigned> kModulationSlots = {
       {"BPSK", 1},   {"QPSK", 2},    {"8-QAM", 3},
       {"8-QAM", 3},  {"16-QAM", 4},  {"32-QAM", 5},
       {"64-QAM", 6}, {"128-QAM", 7}, {"256-QAM", 8},
@@ -55,11 +59,17 @@ auto simulation(Settings &settings) -> std::string {
 
   for (const auto &request : settings.requests) {
     slots.emplace_back(from_modulation(
-        request.second.bandwidth, modulation_slots[request.second.modulation],
-        settings.slot_width));
+        request.second.bandwidth,
+        kModulationSlots.at(request.second.modulation), settings.slotWidth));
   }
 
-  Group group{settings.seed, probs, slots};
+  std::vector<std::tuple<unsigned, unsigned, unsigned>> container;
+
+  for (auto index = 0u; index < probs.size(); ++index) {
+    container.push_back({slots[index], 0, 0});
+  }
+
+  Discrete distribution{settings.seed, probs};
 
   std::vector<Snapshot> snapshots{};
 
@@ -108,19 +118,23 @@ auto simulation(Settings &settings) -> std::string {
 
   auto time{0.0};
 
-  queue.push(Request{random_path(settings.graph), group.next()}, time)
+  auto &[resource, counting, blocking] = container[distribution.next()];
+
+  ++counting;
+
+  queue.push(Request{random_path(settings.graph), resource}, time)
       .of_type(Signal::ARRIVAL);
 
-  ++request_count;
+  ++requestCount;
 
-  while (queue.top().value().time <= settings.time_units) {
-    if (static_cast<unsigned>(0.1 * settings.time_units) == request_count &&
-        !ignored_first) {
-      ignored_first = true;
+  while (queue.top().value().time <= settings.timeUnits) {
+    if (settings.ignoreFirst && kToIgnore == queue.top().value().time &&
+        !ignoredFirst) {
+      ignoredFirst = true;
 
-      request_count = 0u;
+      requestCount = 0u;
 
-      blocked_count = 0u;
+      blockedCount = 0u;
     }
 
     const auto top{queue.pop()};
@@ -132,7 +146,7 @@ auto simulation(Settings &settings) -> std::string {
     INFO("Now: " + std::to_string(now));
 
     if (signal == Signal::DEPARTURE) {
-      --active_requests;
+      --activeRequests;
 
       INFO("Request for " + std::to_string(request.bandwidth) +
            " slots departing");
@@ -154,9 +168,10 @@ auto simulation(Settings &settings) -> std::string {
     auto allocator = first_fit;
 
     for (auto &requestType : settings.requests) {
-      const auto fsus = from_modulation(
-          requestType.second.bandwidth,
-          modulation_slots[requestType.second.modulation], settings.slot_width);
+      const auto fsus =
+          from_modulation(requestType.second.bandwidth,
+                          kModulationSlots.at(requestType.second.modulation),
+                          settings.slotWidth);
 
       if (fsus == request.bandwidth) {
         allocator = *requestType.second.allocator.target<
@@ -169,9 +184,9 @@ auto simulation(Settings &settings) -> std::string {
 
     auto accepted = false;
 
-    if (active_requests < settings.bandwidth &&
+    if (activeRequests < settings.bandwidth &&
         dispatch_request(request, hashmap, allocator)) {
-      ++active_requests;
+      ++activeRequests;
 
       queue.push(request, now).of_type(Signal::DEPARTURE);
 
@@ -192,19 +207,29 @@ auto simulation(Settings &settings) -> std::string {
       INFO("Blocking request for " + std::to_string(request.bandwidth) +
            " slots");
 
-      group.count_blocking(request.bandwidth);
+      for (auto &[res, c, b] : container) {
+        if (res != request.bandwidth) {
+          continue;
+        }
 
-      ++blocked_count;
+        ++b;
+      }
+
+      ++blockedCount;
     }
 
     snapshots.push_back(Snapshot(now, request.bandwidth, accepted,
                                  network_fragmentation(), entropy(),
-                                 group.blocking()));
+                                 blockedCount / requestCount));
 
-    queue.push(Request{random_path(settings.graph), group.next()}, now)
+    auto &[_Resource, _Counting, _Blocking] = container[distribution.next()];
+
+    ++_Counting;
+
+    queue.push(Request{random_path(settings.graph), _Resource}, now)
         .of_type(Signal::ARRIVAL);
 
-    ++request_count;
+    ++requestCount;
   }
 
   timer.stop();
@@ -213,16 +238,16 @@ auto simulation(Settings &settings) -> std::string {
 
   str.append("time,slots,accepted,fragmentation,entropy,blocking\n");
 
-  std::vector<double> fragmentation_states;
+  std::vector<double> fragmentationStates;
 
-  std::vector<double> entropy_states;
+  std::vector<double> entropyStates;
 
   for (const auto &snapshot : snapshots) {
     str.append(snapshot.str() + "\n");
 
-    fragmentation_states.push_back(snapshot.fragmentation);
+    fragmentationStates.push_back(snapshot.fragmentation);
 
-    entropy_states.push_back(snapshot.entropy);
+    entropyStates.push_back(snapshot.entropy);
   }
 
   std::string buffer{""};
@@ -236,34 +261,41 @@ auto simulation(Settings &settings) -> std::string {
   buffer.append(std::format("simulated time: {:.3f}\n", time));
 
   buffer.append(
-      std::format("spectrum width (GHz): {:.2f}\n", settings.spectrum_width));
+      std::format("spectrum width (GHz): {:.2f}\n", settings.spectrumWidth));
 
-  buffer.append(std::format("slot width (GHz): {:.2f}\n", settings.slot_width));
+  buffer.append(std::format("slot width (GHz): {:.2f}\n", settings.slotWidth));
 
   buffer.append(std::format("slots per link: {}\n", settings.bandwidth));
 
   buffer.append(std::format("mean fragmentation: {:.3f} ± {:.3f}\n",
-                            MEAN(fragmentation_states),
-                            STDDEV(fragmentation_states)));
+                            MEAN(fragmentationStates),
+                            STDDEV(fragmentationStates)));
 
   buffer.append(std::format("mean entropy: {:.3f} ± {:.3f}\n",
-                            MEAN(entropy_states), STDDEV(entropy_states)));
+                            MEAN(entropyStates), STDDEV(entropyStates)));
 
-  const double load = settings.arrival_rate / settings.service_rate;
+  const double load = settings.arrivalRate / settings.serviceRate;
 
   buffer.append(std::format("load (E): {:.3f}\n", load));
 
-  buffer.append(std::format("arrival rate: {:.3f}\n", settings.arrival_rate));
+  buffer.append(std::format("arrival rate: {:.3f}\n", settings.arrivalRate));
 
-  buffer.append(std::format("service rate: {:.3f}\n", settings.service_rate));
+  buffer.append(std::format("service rate: {:.3f}\n", settings.serviceRate));
 
-  buffer.append(
-      std::format("grade of service: {:.3f}\n",
-                  blocked_count / static_cast<double>(request_count)));
+  buffer.append(std::format("grade of service: {:.3f}\n",
+                            blockedCount / static_cast<double>(requestCount)));
 
-  buffer.append(std::format("requests: {}\n", request_count));
+  buffer.append(std::format("total requests: {}\n", requestCount));
 
-  buffer.append(std::format("{}\n", Report::from(group, settings).to_string()));
+  for (const auto &[_r, _c, _b] : container) {
+    const auto ratio = _c / static_cast<double>(requestCount);
+
+    const auto gos = _b / static_cast<double>(requestCount);
+
+    buffer.append(std::format(
+        "requests for {} FSU(s)\nratio: {:.3f}\ngrade of service: {:.3f}\n", _r,
+        ratio, gos));
+  }
 
   return buffer;
 }

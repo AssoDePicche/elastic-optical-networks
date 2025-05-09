@@ -18,15 +18,18 @@ struct RequestType {
 
 struct Settings {
   Graph graph;
-  SpectrumAllocator spectrum_allocator;
+  SpectrumAllocator spectrumAllocator;
   std::unordered_map<std::string, RequestType> requests;
   Seed seed;
-  double arrival_rate;
-  double service_rate;
-  double time_units;
+  double arrivalRate;
+  double serviceRate;
+  double timeUnits;
   unsigned bandwidth;
-  double spectrum_width;
-  double slot_width;
+  double spectrumWidth;
+  double slotWidth;
+  bool ignoreFirst;
+  bool exportDataset;
+  bool enableLogging;
 
   [[nodiscard]] static auto from(const std::vector<std::string> &)
       -> std::optional<Settings>;

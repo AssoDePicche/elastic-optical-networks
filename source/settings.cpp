@@ -47,17 +47,17 @@ auto Settings::from(const std::vector<std::string> &argv)
 
   settings.bandwidth = str_to_unsigned(parser.parse("--bandwidth"));
 
-  settings.time_units = str_to_double(parser.parse("--time-units"));
+  settings.timeUnits = str_to_double(parser.parse("--time-units"));
 
-  settings.arrival_rate = str_to_double(parser.parse("--arrival-rate"));
+  settings.arrivalRate = str_to_double(parser.parse("--arrival-rate"));
 
-  if (settings.arrival_rate <= 0.0) {
+  if (settings.arrivalRate <= 0.0) {
     return std::nullopt;
   }
 
-  settings.service_rate = str_to_double(parser.parse("--service-rate"));
+  settings.serviceRate = str_to_double(parser.parse("--service-rate"));
 
-  if (settings.service_rate <= 0.0) {
+  if (settings.serviceRate <= 0.0) {
     return std::nullopt;
   }
 
@@ -87,7 +87,7 @@ auto Settings::from(const std::vector<std::string> &argv)
     return std::nullopt;
   }
 
-  settings.spectrum_allocator =
+  settings.spectrumAllocator =
       spectrum_allocation_strategies.at(spectrum_allocation_strategy);
 
   settings.seed = std::stoul(parser.parse("--seed"));
@@ -113,19 +113,25 @@ auto Settings::from(const std::string &filename) -> std::optional<Settings> {
 
   Settings settings;
 
-  settings.time_units = buffer["params"]["simulation-duration"];
+  settings.enableLogging = buffer["enable-logging"];
 
-  settings.arrival_rate = buffer["params"]["arrival-rate"];
+  settings.exportDataset = buffer["export-dataset"];
 
-  settings.service_rate = buffer["params"]["service-rate"];
+  settings.ignoreFirst = buffer["params"]["ignore-first"];
+
+  settings.timeUnits = buffer["params"]["simulation-duration"];
+
+  settings.arrivalRate = buffer["params"]["arrival-rate"];
+
+  settings.serviceRate = buffer["params"]["service-rate"];
 
   settings.seed = buffer["params"]["seed"];
 
-  settings.spectrum_width = buffer["params"]["spectrum-width"];
+  settings.spectrumWidth = buffer["params"]["spectrum-width"];
 
-  settings.slot_width = buffer["params"]["slot-width"];
+  settings.slotWidth = buffer["params"]["slot-width"];
 
-  settings.bandwidth = settings.spectrum_width / settings.slot_width;
+  settings.bandwidth = settings.spectrumWidth / settings.slotWidth;
 
   for (const auto &row : buffer["params"]["requests"]) {
     RequestType request;
