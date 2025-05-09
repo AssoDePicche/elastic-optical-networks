@@ -24,12 +24,12 @@ Snapshot::Snapshot(float t, int slots, bool acc, float frag, float entr,
 
 auto Snapshot::str(void) const -> std::string {
   return std::to_string(time) + ", " + std::to_string(slots) + ", " +
-         (accepted ? "true" : "false") + ", " + std::to_string(fragmentation) +
+         (accepted ? "True" : "False") + ", " + std::to_string(fragmentation) +
          ", " + std::to_string(entropy) + ", " + std::to_string(blocking);
 }
 
 auto simulation(Settings &settings) -> std::string {
-  const auto kToIgnore = static_cast<unsigned>(0.1 * settings.timeUnits);
+  const auto kToIgnore = 0.1 * settings.timeUnits;
 
   bool ignoredFirst = false;
 
