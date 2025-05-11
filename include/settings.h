@@ -14,6 +14,9 @@ struct RequestType {
   std::string modulation;
   SpectrumAllocator allocator;
   double bandwidth;
+  unsigned blocking;
+  unsigned resources;
+  unsigned counting;
 };
 
 struct Settings {
