@@ -1,7 +1,10 @@
 #include "simulation.h"
 
 #include <algorithm>
+#include <ctime>
 #include <format>
+#include <fstream>
+#include <stdexcept>
 #include <unordered_map>
 #include <vector>
 
@@ -238,17 +241,42 @@ auto simulation(Settings &settings) -> std::string {
 
   timer.stop();
 
-  std::string str{""};
+  if (settings.exportDataset) {
+    std::string buffer{""};
 
-  str.append("time,slots,accepted,fragmentation,entropy,blocking\n");
+    buffer.append("time, slots, accepted, fragmentation, entropy, blocking\n");
+
+    std::for_each(snapshots.begin(), snapshots.end(),
+                  [&buffer](Snapshot &snapshot) {
+                    buffer.append(std::format("{}\n", snapshot.str()));
+                  });
+
+    const auto time = std::time(nullptr);
+
+    const auto localtime = std::localtime(&time);
+
+    const std::string filename =
+        std::format("{:02}-{:02}-{:04} {:02}h{:02}.csv", localtime->tm_mday,
+                    localtime->tm_mon + 1, localtime->tm_year + 1900,
+                    localtime->tm_hour, localtime->tm_min);
+
+    std::ofstream stream(filename);
+
+    if (!stream.is_open()) {
+      throw std::runtime_error(
+          std::format("Failed to write {} file", filename));
+    }
+
+    stream << buffer;
+
+    stream.close();
+  }
 
   std::vector<double> fragmentationStates;
 
   std::vector<double> entropyStates;
 
   for (const auto &snapshot : snapshots) {
-    str.append(snapshot.str() + "\n");
-
     fragmentationStates.push_back(snapshot.fragmentation);
 
     entropyStates.push_back(snapshot.entropy);
