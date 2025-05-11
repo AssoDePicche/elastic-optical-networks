@@ -1,7 +1,7 @@
 #include "simulation.h"
 
+#include <algorithm>
 #include <format>
-#include <tuple>
 #include <unordered_map>
 #include <vector>
 
@@ -53,21 +53,23 @@ auto simulation(Settings &settings) -> std::string {
       {"64-QAM", 6}, {"128-QAM", 7}, {"256-QAM", 8},
   };
 
-  std::vector<unsigned> slots;
-
-  slots.reserve(settings.requests.size());
-
-  for (const auto &request : settings.requests) {
-    slots.emplace_back(from_modulation(
+  for (auto &request : settings.requests) {
+    request.second.resources = from_modulation(
         request.second.bandwidth,
-        kModulationSlots.at(request.second.modulation), settings.slotWidth));
+        kModulationSlots.at(request.second.modulation), settings.slotWidth);
+
+    request.second.counting = 0u;
+
+    request.second.blocking = 0u;
   }
 
-  std::vector<std::tuple<unsigned, unsigned, unsigned>> container;
+  std::vector<std::string> requestsKeys;
 
-  for (auto index = 0u; index < probs.size(); ++index) {
-    container.push_back({slots[index], 0, 0});
-  }
+  requestsKeys.reserve(settings.requests.size());
+
+  std::transform(settings.requests.begin(), settings.requests.end(),
+                 std::back_inserter(requestsKeys),
+                 [](const auto &pair) { return pair.first; });
 
   Discrete distribution{settings.seed, probs};
 
@@ -118,11 +120,11 @@ auto simulation(Settings &settings) -> std::string {
 
   auto time{0.0};
 
-  auto &[resource, counting, blocking] = container[distribution.next()];
+  auto &firstRequest = settings.requests[requestsKeys[distribution.next()]];
 
-  ++counting;
+  ++firstRequest.counting;
 
-  queue.push(Request{random_path(settings.graph), resource}, time)
+  queue.push(Request{random_path(settings.graph), firstRequest.resources}, time)
       .of_type(Signal::ARRIVAL);
 
   ++requestCount;
@@ -207,12 +209,14 @@ auto simulation(Settings &settings) -> std::string {
       INFO("Blocking request for " + std::to_string(request.bandwidth) +
            " slots");
 
-      for (auto &[res, c, b] : container) {
-        if (res != request.bandwidth) {
+      for (auto &req : settings.requests) {
+        if (request.bandwidth != req.second.resources) {
           continue;
         }
 
-        ++b;
+        ++req.second.blocking;
+
+        break;
       }
 
       ++blockedCount;
@@ -222,11 +226,11 @@ auto simulation(Settings &settings) -> std::string {
                                  network_fragmentation(), entropy(),
                                  blockedCount / requestCount));
 
-    auto &[_Resource, _Counting, _Blocking] = container[distribution.next()];
+    auto &req = settings.requests[requestsKeys[distribution.next()]];
 
-    ++_Counting;
+    ++req.counting;
 
-    queue.push(Request{random_path(settings.graph), _Resource}, now)
+    queue.push(Request{random_path(settings.graph), req.resources}, now)
         .of_type(Signal::ARRIVAL);
 
     ++requestCount;
@@ -287,14 +291,14 @@ auto simulation(Settings &settings) -> std::string {
 
   buffer.append(std::format("total requests: {}\n", requestCount));
 
-  for (const auto &[_r, _c, _b] : container) {
-    const auto ratio = _c / static_cast<double>(requestCount);
+  for (const auto &req : settings.requests) {
+    const auto ratio = req.second.counting / static_cast<double>(requestCount);
 
-    const auto gos = _b / static_cast<double>(requestCount);
+    const auto gos = req.second.blocking / static_cast<double>(requestCount);
 
     buffer.append(std::format(
-        "requests for {} FSU(s)\nratio: {:.3f}\ngrade of service: {:.3f}\n", _r,
-        ratio, gos));
+        "requests for {} FSU(s)\nratio: {:.3f}\ngrade of service: {:.3f}\n",
+        req.second.resources, ratio, gos));
   }
 
   return buffer;
