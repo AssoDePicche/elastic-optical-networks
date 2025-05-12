@@ -13,5 +13,11 @@ auto main(void) -> int {
 
   std::optional<Settings> settings = Settings::From(json);
 
-  std::cout << simulation(settings.value()) << std::endl;
+  Simulation simulation(settings.value());
+
+  while (simulation.HasNext()) {
+    simulation.Next();
+  }
+
+  std::cout << simulation.Report() << std::endl;
 }

@@ -31,99 +31,19 @@ auto Snapshot::str(void) const -> std::string {
          ", " + std::to_string(entropy) + ", " + std::to_string(blocking);
 }
 
-auto simulation(Settings &settings) -> std::string {
-  const auto kToIgnore = 0.1 * settings.timeUnits;
-
-  bool ignoredFirst = false;
-
-  auto requestCount = 0u;
-
-  auto blockedCount = 0u;
-
-  auto activeRequests = 0u;
-
-  auto hashmap{make_hashmap(settings.graph, settings.bandwidth)};
-
-  EventQueue<Request> queue{settings.arrivalRate, settings.serviceRate,
-                            settings.seed};
-
-  std::vector<double> probs(settings.requests.size(),
-                            1.0f / settings.requests.size());
-
-  const std::unordered_map<std::string, unsigned> kModulationSlots = {
-      {"BPSK", 1},   {"QPSK", 2},    {"8-QAM", 3},
-      {"8-QAM", 3},  {"16-QAM", 4},  {"32-QAM", 5},
-      {"64-QAM", 6}, {"128-QAM", 7}, {"256-QAM", 8},
-  };
-
-  for (auto &request : settings.requests) {
-    request.second.resources = from_modulation(
-        request.second.bandwidth,
-        kModulationSlots.at(request.second.modulation), settings.slotWidth);
-
-    request.second.counting = 0u;
-
-    request.second.blocking = 0u;
-  }
-
-  std::vector<std::string> requestsKeys;
-
+Simulation::Simulation(Settings &settings)
+    : settings{settings},
+      queue{settings.arrivalRate, settings.serviceRate, settings.seed},
+      distribution{settings.seed, settings.probs},
+      kToIgnore{0.1 * settings.timeUnits},
+      hashmap{make_hashmap(settings.graph, settings.bandwidth)},
+      requestsKeys{} {
   requestsKeys.reserve(settings.requests.size());
 
   std::transform(settings.requests.begin(), settings.requests.end(),
                  std::back_inserter(requestsKeys),
                  [](const auto &pair) { return pair.first; });
-
-  Discrete distribution{settings.seed, probs};
-
-  std::vector<Snapshot> snapshots{};
-
-  const auto entropy = [&](void) {
-    auto free_slots = 0.0;
-
-    auto occupied_slots = 0.0;
-
-    for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
-      const auto key = make_key(source, destination);
-
-      const auto spectrum = hashmap[key];
-
-      free_slots += spectrum.available();
-
-      occupied_slots += spectrum.size() - spectrum.available();
-    }
-
-    if (free_slots == 0.0 || occupied_slots == 0.0) {
-      return 0.0;
-    }
-
-    free_slots /= settings.bandwidth;
-
-    occupied_slots /= settings.bandwidth;
-
-    return -(occupied_slots * std::log2(occupied_slots) +
-             free_slots * std::log2(free_slots));
-  };
-
-  const auto network_fragmentation = [&](void) {
-    auto fragmentation{0.0};
-
-    for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
-      const auto key = make_key(source, destination);
-
-      fragmentation += hashmap[key].fragmentation();
-    }
-
-    return (fragmentation / settings.graph.get_edges().size());
-  };
-
-  Timer timer;
-
-  timer.start();
-
-  auto time{0.0};
-
-  auto &firstRequest = settings.requests[requestsKeys[distribution.next()]];
+  auto &firstRequest = settings.requests.at(requestsKeys[distribution.next()]);
 
   ++firstRequest.counting;
 
@@ -132,113 +52,126 @@ auto simulation(Settings &settings) -> std::string {
 
   ++requestCount;
 
-  while (queue.top().value().time <= settings.timeUnits) {
-    if (settings.ignoreFirst && kToIgnore == queue.top().value().time &&
-        !ignoredFirst) {
-      ignoredFirst = true;
+  timer.start();
+}
 
-      requestCount = 0u;
+bool Simulation::HasNext(void) const {
+  return queue.top().value().time <= settings.timeUnits;
+}
 
-      blockedCount = 0u;
-    }
+void Simulation::Next(void) {
+  const std::unordered_map<std::string, unsigned> kModulationSlots = {
+      {"BPSK", 1},   {"QPSK", 2},    {"8-QAM", 3},
+      {"8-QAM", 3},  {"16-QAM", 4},  {"32-QAM", 5},
+      {"64-QAM", 6}, {"128-QAM", 7}, {"256-QAM", 8},
+  };
 
-    const auto top{queue.pop()};
+  if (settings.ignoreFirst && kToIgnore == queue.top().value().time &&
+      !ignoredFirst) {
+    ignoredFirst = true;
 
-    auto [now, signal, request] = top.value();
+    requestCount = 0u;
 
-    time = now;
-
-    INFO("Now: " + std::to_string(now));
-
-    if (signal == Signal::DEPARTURE) {
-      --activeRequests;
-
-      INFO("Request for " + std::to_string(request.bandwidth) +
-           " slots departing");
-
-      const auto keys{route_keys(request.route)};
-
-      for (const auto &key : keys) {
-        hashmap[key].deallocate(request.slice);
-
-        INFO(hashmap[key].to_string());
-
-        INFO("A (u): " + std::to_string(hashmap[key].available()) +
-             " F (%): " + std::to_string(hashmap[key].fragmentation()));
-      }
-
-      continue;
-    }
-
-    SpectrumAllocator allocator;
-
-    for (auto &requestType : settings.requests) {
-      const auto fsus =
-          from_modulation(requestType.second.bandwidth,
-                          kModulationSlots.at(requestType.second.modulation),
-                          settings.slotWidth);
-
-      if (fsus == request.bandwidth) {
-        allocator = *requestType.second.allocator.target<
-            std::optional<std::pair<unsigned int, unsigned int>> (*)(
-                const Spectrum &, unsigned int)>();
-
-        break;
-      }
-    }
-
-    auto accepted = false;
-
-    if (activeRequests < settings.bandwidth &&
-        dispatch_request(request, hashmap, allocator)) {
-      ++activeRequests;
-
-      queue.push(request, now).of_type(Signal::DEPARTURE);
-
-      INFO("Accept request for " + std::to_string(request.bandwidth) +
-           " slots");
-
-      const auto keys{route_keys(request.route)};
-
-      for (const auto &key : keys) {
-        INFO(hashmap[key].to_string());
-
-        INFO("A (u): " + std::to_string(hashmap[key].available()) +
-             " F (%): " + std::to_string(hashmap[key].fragmentation()));
-      }
-
-      accepted = true;
-    } else {
-      INFO("Blocking request for " + std::to_string(request.bandwidth) +
-           " slots");
-
-      for (auto &req : settings.requests) {
-        if (request.bandwidth != req.second.resources) {
-          continue;
-        }
-
-        ++req.second.blocking;
-
-        break;
-      }
-
-      ++blockedCount;
-    }
-
-    snapshots.push_back(Snapshot(now, request.bandwidth, accepted,
-                                 network_fragmentation(), entropy(),
-                                 blockedCount / requestCount));
-
-    auto &req = settings.requests[requestsKeys[distribution.next()]];
-
-    ++req.counting;
-
-    queue.push(Request{random_path(settings.graph), req.resources}, now)
-        .of_type(Signal::ARRIVAL);
-
-    ++requestCount;
+    blockedCount = 0u;
   }
 
+  const auto top{queue.pop()};
+
+  auto [now, signal, request] = top.value();
+
+  time = now;
+
+  INFO("Now: " + std::to_string(now));
+
+  if (signal == Signal::DEPARTURE) {
+    --activeRequests;
+
+    INFO("Request for " + std::to_string(request.bandwidth) +
+         " slots departing");
+
+    const auto keys{route_keys(request.route)};
+
+    for (const auto &key : keys) {
+      hashmap[key].deallocate(request.slice);
+
+      INFO(hashmap[key].to_string());
+
+      INFO("A (u): " + std::to_string(hashmap[key].available()) +
+           " F (%): " + std::to_string(hashmap[key].fragmentation()));
+    }
+
+    return;
+  }
+
+  SpectrumAllocator allocator;
+
+  for (auto &requestType : settings.requests) {
+    const auto fsus = from_modulation(
+        requestType.second.bandwidth,
+        kModulationSlots.at(requestType.second.modulation), settings.slotWidth);
+
+    if (fsus == request.bandwidth) {
+      allocator =
+          *requestType.second.allocator
+               .target<std::optional<std::pair<unsigned int, unsigned int>> (*)(
+                   const Spectrum &, unsigned int)>();
+
+      break;
+    }
+  }
+
+  auto accepted = false;
+
+  if (activeRequests < settings.bandwidth &&
+      dispatch_request(request, hashmap, allocator)) {
+    ++activeRequests;
+
+    queue.push(request, now).of_type(Signal::DEPARTURE);
+
+    INFO("Accept request for " + std::to_string(request.bandwidth) + " slots");
+
+    const auto keys{route_keys(request.route)};
+
+    for (const auto &key : keys) {
+      INFO(hashmap[key].to_string());
+
+      INFO("A (u): " + std::to_string(hashmap[key].available()) +
+           " F (%): " + std::to_string(hashmap[key].fragmentation()));
+    }
+
+    accepted = true;
+  } else {
+    INFO("Blocking request for " + std::to_string(request.bandwidth) +
+         " slots");
+
+    for (auto &req : settings.requests) {
+      if (request.bandwidth != req.second.resources) {
+        continue;
+      }
+
+      ++req.second.blocking;
+
+      break;
+    }
+
+    ++blockedCount;
+  }
+
+  snapshots.push_back(Snapshot(now, request.bandwidth, accepted,
+                               network_fragmentation(), entropy(),
+                               blockedCount / requestCount));
+
+  auto &req = settings.requests[requestsKeys[distribution.next()]];
+
+  ++req.counting;
+
+  queue.push(Request{random_path(settings.graph), req.resources}, now)
+      .of_type(Signal::ARRIVAL);
+
+  ++requestCount;
+}
+
+std::string Simulation::Report(void) {
   timer.stop();
 
   if (settings.exportDataset) {
@@ -330,4 +263,43 @@ auto simulation(Settings &settings) -> std::string {
   }
 
   return buffer;
+}
+
+double Simulation::network_fragmentation(void) {
+  auto fragmentation{0.0};
+
+  for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
+    const auto key = make_key(source, destination);
+
+    fragmentation += hashmap[key].fragmentation();
+  }
+
+  return (fragmentation / settings.graph.get_edges().size());
+}
+
+double Simulation::entropy(void) {
+  auto free_slots = 0.0;
+
+  auto occupied_slots = 0.0;
+
+  for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
+    const auto key = make_key(source, destination);
+
+    const auto spectrum = hashmap[key];
+
+    free_slots += spectrum.available();
+
+    occupied_slots += spectrum.size() - spectrum.available();
+  }
+
+  if (free_slots == 0.0 || occupied_slots == 0.0) {
+    return 0.0;
+  }
+
+  free_slots /= settings.bandwidth;
+
+  occupied_slots /= settings.bandwidth;
+
+  return -(occupied_slots * std::log2(occupied_slots) +
+           free_slots * std::log2(free_slots));
 }
