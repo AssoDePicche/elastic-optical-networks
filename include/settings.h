@@ -3,6 +3,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "distribution.h"
 #include "graph.h"
@@ -23,6 +24,7 @@ struct Settings {
   Graph graph;
   SpectrumAllocator spectrumAllocator;
   std::unordered_map<std::string, RequestType> requests;
+  std::vector<double> probs;
   Seed seed;
   double arrivalRate;
   double serviceRate;

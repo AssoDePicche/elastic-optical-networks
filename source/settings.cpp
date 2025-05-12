@@ -1,5 +1,7 @@
 #include "settings.h"
 
+#include "request.h"
+
 auto Settings::From(const Json &json) -> std::optional<Settings> {
   const std::unordered_map<std::string, SpectrumAllocator>
       spectrum_allocation_strategies{{"best-fit", best_fit},
@@ -46,6 +48,27 @@ auto Settings::From(const Json &json) -> std::optional<Settings> {
 
     settings.requests[request.type] = request;
   }
+
+  const std::unordered_map<std::string, unsigned> kModulationSlots = {
+      {"BPSK", 1},   {"QPSK", 2},    {"8-QAM", 3},
+      {"8-QAM", 3},  {"16-QAM", 4},  {"32-QAM", 5},
+      {"64-QAM", 6}, {"128-QAM", 7}, {"256-QAM", 8},
+  };
+
+  for (auto &request : settings.requests) {
+    request.second.resources = from_modulation(
+        request.second.bandwidth,
+        kModulationSlots.at(request.second.modulation), settings.slotWidth);
+
+    request.second.counting = 0u;
+
+    request.second.blocking = 0u;
+  }
+
+  const auto probs = std::vector<double>(settings.requests.size(),
+                                         1.0f / settings.requests.size());
+
+  settings.probs = probs;
 
   const auto graph =
       Graph::from(json.Get<std::string>("params.topology").value());
