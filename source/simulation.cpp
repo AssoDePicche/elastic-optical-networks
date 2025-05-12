@@ -75,29 +75,26 @@ void Simulation::Next(void) {
     blockedCount = 0u;
   }
 
-  const auto top{queue.pop()};
+  auto event = queue.pop().value();
 
-  auto [now, signal, request] = top.value();
+  time = event.time;
 
-  time = now;
+  INFO(std::format("Now: {}\n", time));
 
-  INFO("Now: " + std::to_string(now));
-
-  if (signal == Signal::DEPARTURE) {
+  if (event.signal == Signal::DEPARTURE) {
     --activeRequests;
 
-    INFO("Request for " + std::to_string(request.bandwidth) +
-         " slots departing");
+    INFO(std::format("Request for {} slots departing", event.value.bandwidth));
 
-    const auto keys{route_keys(request.route)};
+    const auto keys{route_keys(event.value.route)};
 
     for (const auto &key : keys) {
-      hashmap[key].deallocate(request.slice);
+      hashmap[key].deallocate(event.value.slice);
 
       INFO(hashmap[key].to_string());
 
-      INFO("A (u): " + std::to_string(hashmap[key].available()) +
-           " F (%): " + std::to_string(hashmap[key].fragmentation()));
+      INFO(std::format("A (u): {} F (%): {}", hashmap[key].available(),
+                       hashmap[key].fragmentation()));
     }
 
     return;
@@ -110,7 +107,7 @@ void Simulation::Next(void) {
         requestType.second.bandwidth,
         kModulationSlots.at(requestType.second.modulation), settings.slotWidth);
 
-    if (fsus == request.bandwidth) {
+    if (fsus == event.value.bandwidth) {
       allocator =
           *requestType.second.allocator
                .target<std::optional<std::pair<unsigned int, unsigned int>> (*)(
@@ -123,33 +120,32 @@ void Simulation::Next(void) {
   auto accepted = false;
 
   if (activeRequests < settings.bandwidth &&
-      dispatch_request(request, hashmap, allocator)) {
+      dispatch_request(event.value, hashmap, allocator)) {
     ++activeRequests;
 
-    queue.push(request, now).of_type(Signal::DEPARTURE);
+    queue.push(event.value, time).of_type(Signal::DEPARTURE);
 
-    INFO("Accept request for " + std::to_string(request.bandwidth) + " slots");
+    INFO(std::format("Accept request for {} FSU(s)", event.value.bandwidth));
 
-    const auto keys{route_keys(request.route)};
+    const auto keys{route_keys(event.value.route)};
 
     for (const auto &key : keys) {
       INFO(hashmap[key].to_string());
 
-      INFO("A (u): " + std::to_string(hashmap[key].available()) +
-           " F (%): " + std::to_string(hashmap[key].fragmentation()));
+      INFO(std::format("A (u): {} F (%): {}", hashmap[key].available(),
+                       hashmap[key].fragmentation()));
     }
 
     accepted = true;
   } else {
-    INFO("Blocking request for " + std::to_string(request.bandwidth) +
-         " slots");
+    INFO(std::format("Blocking request for {} FSU(s)", event.value.bandwidth));
 
-    for (auto &req : settings.requests) {
-      if (request.bandwidth != req.second.resources) {
+    for (auto &request : settings.requests) {
+      if (event.value.bandwidth != request.second.resources) {
         continue;
       }
 
-      ++req.second.blocking;
+      ++request.second.blocking;
 
       break;
     }
@@ -157,15 +153,15 @@ void Simulation::Next(void) {
     ++blockedCount;
   }
 
-  snapshots.push_back(Snapshot(now, request.bandwidth, accepted,
+  snapshots.push_back(Snapshot(time, event.value.bandwidth, accepted,
                                network_fragmentation(), entropy(),
                                blockedCount / requestCount));
 
-  auto &req = settings.requests[requestsKeys[distribution.next()]];
+  auto &request = settings.requests[requestsKeys[distribution.next()]];
 
-  ++req.counting;
+  ++request.counting;
 
-  queue.push(Request{random_path(settings.graph), req.resources}, now)
+  queue.push(Request{random_path(settings.graph), request.resources}, time)
       .of_type(Signal::ARRIVAL);
 
   ++requestCount;
@@ -252,14 +248,16 @@ std::string Simulation::Report(void) {
 
   buffer.append(std::format("total requests: {}\n", requestCount));
 
-  for (const auto &req : settings.requests) {
-    const auto ratio = req.second.counting / static_cast<double>(requestCount);
+  for (const auto &request : settings.requests) {
+    const auto ratio =
+        request.second.counting / static_cast<double>(requestCount);
 
-    const auto gos = req.second.blocking / static_cast<double>(requestCount);
+    const auto gos =
+        request.second.blocking / static_cast<double>(requestCount);
 
     buffer.append(std::format(
         "requests for {} FSU(s)\nratio: {:.3f}\ngrade of service: {:.3f}\n",
-        req.second.resources, ratio, gos));
+        request.second.resources, ratio, gos));
   }
 
   return buffer;
