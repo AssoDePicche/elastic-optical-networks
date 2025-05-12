@@ -170,7 +170,7 @@ auto simulation(Settings &settings) -> std::string {
       continue;
     }
 
-    auto allocator = first_fit;
+    SpectrumAllocator allocator;
 
     for (auto &requestType : settings.requests) {
       const auto fsus =
