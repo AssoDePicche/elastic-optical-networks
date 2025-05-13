@@ -49,16 +49,16 @@ auto Settings::From(const Json &json) -> std::optional<Settings> {
     settings.requests[request.type] = request;
   }
 
-  const std::unordered_map<std::string, unsigned> kModulationSlots = {
-      {"BPSK", 1},   {"QPSK", 2},    {"8-QAM", 3},
-      {"8-QAM", 3},  {"16-QAM", 4},  {"32-QAM", 5},
-      {"64-QAM", 6}, {"128-QAM", 7}, {"256-QAM", 8},
-  };
+  const auto modulations = json.Get<std::vector<nlohmann::json>>("modulation");
+
+  for (const auto &row : modulations.value()) {
+    settings.modulations[row["type"]] = row["bits-per-symbol"];
+  }
 
   for (auto &request : settings.requests) {
     request.second.resources = from_modulation(
         request.second.bandwidth,
-        kModulationSlots.at(request.second.modulation), settings.slotWidth);
+        settings.modulations.at(request.second.modulation), settings.slotWidth);
 
     request.second.counting = 0u;
 

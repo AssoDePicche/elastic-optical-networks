@@ -24,6 +24,7 @@ struct Settings {
   Graph graph;
   SpectrumAllocator spectrumAllocator;
   std::unordered_map<std::string, RequestType> requests;
+  std::unordered_map<std::string, unsigned> modulations;
   std::vector<double> probs;
   Seed seed;
   double arrivalRate;
