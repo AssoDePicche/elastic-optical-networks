@@ -60,12 +60,6 @@ bool Simulation::HasNext(void) const {
 }
 
 void Simulation::Next(void) {
-  const std::unordered_map<std::string, unsigned> kModulationSlots = {
-      {"BPSK", 1},   {"QPSK", 2},    {"8-QAM", 3},
-      {"8-QAM", 3},  {"16-QAM", 4},  {"32-QAM", 5},
-      {"64-QAM", 6}, {"128-QAM", 7}, {"256-QAM", 8},
-  };
-
   if (settings.ignoreFirst && kToIgnore == queue.top().value().time &&
       !ignoredFirst) {
     ignoredFirst = true;
@@ -103,9 +97,10 @@ void Simulation::Next(void) {
   SpectrumAllocator allocator;
 
   for (auto &requestType : settings.requests) {
-    const auto fsus = from_modulation(
-        requestType.second.bandwidth,
-        kModulationSlots.at(requestType.second.modulation), settings.slotWidth);
+    const auto fsus =
+        from_modulation(requestType.second.bandwidth,
+                        settings.modulations.at(requestType.second.modulation),
+                        settings.slotWidth);
 
     if (fsus == event.value.bandwidth) {
       allocator =
