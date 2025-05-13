@@ -1,12 +1,45 @@
 {
   "enable-logging": true,
   "export-dataset": true,
+  "modulation": [
+    {
+      "type": "BPSK",
+      "bits-per-symbol": 1
+    },
+    {
+      "type": "QPSK",
+      "bits-per-symbol": 2
+    },
+    {
+      "type": "8-QAM",
+      "bits-per-symbol": 3
+    },
+    {
+      "type": "16-QAM",
+      "bits-per-symbol": 4
+    },
+    {
+      "type": "32-QAM",
+      "bits-per-symbol": 5
+    },
+    {
+      "type": "64-QAM",
+      "bits-per-symbol": 6
+    },
+    {
+      "type": "128-QAM",
+      "bits-per-symbol": 7
+    },
+    {
+      "type": "256-QAM",
+      "bits-per-symbol": 8
+    }
+  ],
   "params": {
     "arrival-rate": 1,
     "ignore-first": true,
     "service-rate": 0.133138064,
     "seed": 0,
-    "spectrum-allocation": "modulation",
     "requests": [
       {
         "type": "low-demand",
