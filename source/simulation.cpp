@@ -1,11 +1,6 @@
 #include "simulation.h"
 
-#include <algorithm>
-#include <ctime>
 #include <format>
-#include <fstream>
-#include <stdexcept>
-#include <unordered_map>
 #include <vector>
 
 #include "distribution.h"
@@ -13,8 +8,6 @@
 #include "graph.h"
 #include "logger.h"
 #include "request.h"
-#include "statistics.h"
-#include "timer.h"
 
 Snapshot::Snapshot(float t, int slots, bool acc, float frag, float entr,
                    float blocking)
@@ -51,8 +44,6 @@ Simulation::Simulation(Settings &settings)
       .of_type(Signal::ARRIVAL);
 
   ++requestCount;
-
-  timer.start();
 }
 
 bool Simulation::HasNext(void) const {
@@ -73,12 +64,12 @@ void Simulation::Next(void) {
 
   time = event.time;
 
-  INFO(std::format("Now: {}\n", time));
+  INFO(std::format("Now: {:.3f}", time));
 
   if (event.signal == Signal::DEPARTURE) {
     --activeRequests;
 
-    INFO(std::format("Request for {} slots departing", event.value.bandwidth));
+    INFO(std::format("Request for {} FSU(s) departing", event.value.bandwidth));
 
     const auto keys{route_keys(event.value.route)};
 
@@ -87,7 +78,7 @@ void Simulation::Next(void) {
 
       INFO(hashmap[key].to_string());
 
-      INFO(std::format("A (u): {} F (%): {}", hashmap[key].available(),
+      INFO(std::format("A (u): {} F (%): {:.3f}", hashmap[key].available(),
                        hashmap[key].fragmentation()));
     }
 
@@ -127,7 +118,7 @@ void Simulation::Next(void) {
     for (const auto &key : keys) {
       INFO(hashmap[key].to_string());
 
-      INFO(std::format("A (u): {} F (%): {}", hashmap[key].available(),
+      INFO(std::format("A (u): {} F (%): {:.3f}", hashmap[key].available(),
                        hashmap[key].fragmentation()));
     }
 
@@ -162,100 +153,14 @@ void Simulation::Next(void) {
   ++requestCount;
 }
 
-std::string Simulation::Report(void) {
-  timer.stop();
+std::vector<Snapshot> Simulation::GetSnapshots(void) const { return snapshots; }
 
-  if (settings.exportDataset) {
-    std::string buffer{""};
+double Simulation::GetTime(void) const { return time; }
 
-    buffer.append("time, slots, accepted, fragmentation, entropy, blocking\n");
+double Simulation::GetRequestCount(void) const { return requestCount; }
 
-    std::for_each(snapshots.begin(), snapshots.end(),
-                  [&buffer](Snapshot &snapshot) {
-                    buffer.append(std::format("{}\n", snapshot.str()));
-                  });
-
-    const auto time = std::time(nullptr);
-
-    const auto localtime = std::localtime(&time);
-
-    const std::string filename =
-        std::format("{:02}-{:02}-{:04} {:02}h{:02}.csv", localtime->tm_mday,
-                    localtime->tm_mon + 1, localtime->tm_year + 1900,
-                    localtime->tm_hour, localtime->tm_min);
-
-    std::ofstream stream(filename);
-
-    if (!stream.is_open()) {
-      throw std::runtime_error(
-          std::format("Failed to write {} file", filename));
-    }
-
-    stream << buffer;
-
-    stream.close();
-  }
-
-  std::vector<double> fragmentationStates;
-
-  std::vector<double> entropyStates;
-
-  for (const auto &snapshot : snapshots) {
-    fragmentationStates.push_back(snapshot.fragmentation);
-
-    entropyStates.push_back(snapshot.entropy);
-  }
-
-  std::string buffer{""};
-
-  buffer.append("seed: {}\n", settings.seed);
-
-  const double execution_time = timer.elapsed<std::chrono::seconds>();
-
-  buffer.append(std::format("execution time (s): {:.3f}\n", execution_time));
-
-  buffer.append(std::format("simulated time: {:.3f}\n", time));
-
-  buffer.append(
-      std::format("spectrum width (GHz): {:.2f}\n", settings.spectrumWidth));
-
-  buffer.append(std::format("slot width (GHz): {:.2f}\n", settings.slotWidth));
-
-  buffer.append(std::format("slots per link: {}\n", settings.bandwidth));
-
-  buffer.append(std::format("mean fragmentation: {:.3f} ± {:.3f}\n",
-                            MEAN(fragmentationStates),
-                            STDDEV(fragmentationStates)));
-
-  buffer.append(std::format("mean entropy: {:.3f} ± {:.3f}\n",
-                            MEAN(entropyStates), STDDEV(entropyStates)));
-
-  const double load = settings.arrivalRate / settings.serviceRate;
-
-  buffer.append(std::format("load (E): {:.3f}\n", load));
-
-  buffer.append(std::format("arrival rate: {:.3f}\n", settings.arrivalRate));
-
-  buffer.append(std::format("service rate: {:.3f}\n", settings.serviceRate));
-
-  buffer.append(std::format("grade of service: {:.3f}\n",
-                            blockedCount / static_cast<double>(requestCount)));
-
-  buffer.append(std::format("total requests: {}\n", requestCount));
-
-  for (const auto &request : settings.requests) {
-    const auto ratio =
-        request.second.counting / static_cast<double>(requestCount);
-
-    const auto gos =
-        request.second.blocking / static_cast<double>(requestCount);
-
-    buffer.append(std::format(
-        "requests for {} FSU(s)\nratio: {:.3f}\ngrade of service: {:.3f}\n",
-        request.second.resources, ratio, gos));
-  }
-
-  return buffer;
+double Simulation::GetGradeOfService(void) const {
+  return blockedCount / requestCount;
 }
 
 double Simulation::network_fragmentation(void) {

@@ -8,7 +8,6 @@
 #include "request.h"
 #include "settings.h"
 #include "spectrum.h"
-#include "timer.h"
 
 struct Snapshot final {
   float time;
@@ -31,7 +30,13 @@ class Simulation final {
 
   void Next(void);
 
-  std::string Report(void);
+  std::vector<Snapshot> GetSnapshots(void) const;
+
+  double GetTime(void) const;
+
+  double GetRequestCount(void) const;
+
+  double GetGradeOfService(void) const;
 
  private:
   Settings settings;
@@ -46,7 +51,6 @@ class Simulation final {
   unsigned activeRequests{0u};
   double time{0.0};
   std::vector<Snapshot> snapshots;
-  Timer timer;
 
   double network_fragmentation(void);
 
