@@ -41,7 +41,7 @@ auto main(void) -> int {
 
     std::for_each(snapshots.begin(), snapshots.end(),
                   [&buffer](const Snapshot &snapshot) {
-                    buffer.append(std::format("{}\n", snapshot.str()));
+                    buffer.append(std::format("{}\n", snapshot.Serialize()));
                   });
 
     const auto time = std::time(nullptr);
@@ -81,7 +81,7 @@ auto main(void) -> int {
 
   std::string buffer{""};
 
-  buffer.append("seed: {}\n", settings.seed);
+  buffer.append(std::format("seed: {}\n", settings.seed));
 
   buffer.append(std::format("execution time (s): {}\n", execution_time));
 
@@ -115,9 +115,9 @@ auto main(void) -> int {
   buffer.append(std::format("total requests: {}\n", requestCount));
 
   for (const auto &request : settings.requests) {
-    const auto ratio = request.second.counting / requestCount;
+    const auto ratio = request.second.counting / simulation.GetRequestCount();
 
-    const auto gos = request.second.blocking / requestCount;
+    const auto gos = request.second.blocking / simulation.GetRequestCount();
 
     buffer.append(std::format(
         "requests for {} FSU(s)\nratio: {:.3f}\ngrade of service: {:.3f}\n",
