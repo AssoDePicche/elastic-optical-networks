@@ -46,6 +46,12 @@ auto Settings::From(const Json &json) -> std::optional<Settings> {
 
     request.allocator = spectrum_allocation_strategies.at(row["allocator"]);
 
+    request.blocking = 0u;
+
+    request.resources = 0u;
+
+    request.counting = 0u;
+
     settings.requests[request.type] = request;
   }
 
