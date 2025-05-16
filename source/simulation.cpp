@@ -9,19 +9,23 @@
 #include "logger.h"
 #include "request.h"
 
-Snapshot::Snapshot(float t, int slots, bool acc, float frag, float entr,
-                   float blocking)
-    : time{t},
+Snapshot::Snapshot(double time, int slots, bool accepted, double fragmentation,
+                   double entropy, double blocking)
+    : time{time},
       slots{slots},
-      accepted{acc},
-      fragmentation{frag},
-      entropy{entr},
+      accepted{accepted},
+      fragmentation{fragmentation},
+      entropy{entropy},
       blocking{blocking} {}
 
-auto Snapshot::str(void) const -> std::string {
-  return std::to_string(time) + ", " + std::to_string(slots) + ", " +
-         (accepted ? "True" : "False") + ", " + std::to_string(fragmentation) +
-         ", " + std::to_string(entropy) + ", " + std::to_string(blocking);
+std::string Snapshot::Serialize(void) const {
+  const std::unordered_map<bool, std::string> map = {
+      {false, "False"},
+      {true, "True"},
+  };
+
+  return std::format("{},{},{},{},{},{}", time, slots, map.at(accepted),
+                     fragmentation, entropy, blocking);
 }
 
 Simulation::Simulation(Settings &settings)
@@ -36,7 +40,8 @@ Simulation::Simulation(Settings &settings)
   std::transform(settings.requests.begin(), settings.requests.end(),
                  std::back_inserter(requestsKeys),
                  [](const auto &pair) { return pair.first; });
-  auto &firstRequest = settings.requests.at(requestsKeys[distribution.next()]);
+
+  auto &firstRequest = settings.requests[requestsKeys[distribution.next()]];
 
   ++firstRequest.counting;
 
@@ -51,25 +56,31 @@ bool Simulation::HasNext(void) const {
 }
 
 void Simulation::Next(void) {
-  if (settings.ignoreFirst && kToIgnore == queue.top().value().time &&
-      !ignoredFirst) {
+  auto event = queue.pop().value();
+
+  time = event.time;
+
+  if (settings.ignoreFirst && time > kToIgnore && !ignoredFirst) {
     ignoredFirst = true;
 
     requestCount = 0u;
 
     blockedCount = 0u;
+
+    for (auto &request : settings.requests) {
+      request.second.blocking = 0u;
+
+      request.second.counting = 0u;
+    }
+
+    INFO(std::format("Discard first {:.3f} time units", time));
   }
-
-  auto event = queue.pop().value();
-
-  time = event.time;
-
-  INFO(std::format("Now: {:.3f}", time));
 
   if (event.signal == Signal::DEPARTURE) {
     --activeRequests;
 
-    INFO(std::format("Request for {} FSU(s) departing", event.value.bandwidth));
+    INFO(std::format("Request for {} FSU(s) departing at {:.3f}",
+                     event.value.bandwidth, event.time));
 
     const auto keys{route_keys(event.value.route)};
 
@@ -77,9 +88,6 @@ void Simulation::Next(void) {
       hashmap[key].deallocate(event.value.slice);
 
       INFO(hashmap[key].to_string());
-
-      INFO(std::format("A (u): {} F (%): {:.3f}", hashmap[key].available(),
-                       hashmap[key].fragmentation()));
     }
 
     return;
@@ -111,20 +119,19 @@ void Simulation::Next(void) {
 
     queue.push(event.value, time).of_type(Signal::DEPARTURE);
 
-    INFO(std::format("Accept request for {} FSU(s)", event.value.bandwidth));
+    INFO(std::format("Accept request for {} FSU(s) at {:.3f}",
+                     event.value.bandwidth, time));
 
     const auto keys{route_keys(event.value.route)};
 
     for (const auto &key : keys) {
       INFO(hashmap[key].to_string());
-
-      INFO(std::format("A (u): {} F (%): {:.3f}", hashmap[key].available(),
-                       hashmap[key].fragmentation()));
     }
 
     accepted = true;
   } else {
-    INFO(std::format("Blocking request for {} FSU(s)", event.value.bandwidth));
+    INFO(std::format("Blocking request for {} FSU(s) at {:.3f}",
+                     event.value.bandwidth, event.time));
 
     for (auto &request : settings.requests) {
       if (event.value.bandwidth != request.second.resources) {
@@ -139,15 +146,16 @@ void Simulation::Next(void) {
     ++blockedCount;
   }
 
-  snapshots.push_back(Snapshot(time, event.value.bandwidth, accepted,
+  snapshots.push_back(Snapshot(event.time, event.value.bandwidth, accepted,
                                network_fragmentation(), entropy(),
-                               blockedCount / requestCount));
+                               GetGradeOfService()));
 
   auto &request = settings.requests[requestsKeys[distribution.next()]];
 
   ++request.counting;
 
-  queue.push(Request{random_path(settings.graph), request.resources}, time)
+  queue
+      .push(Request{random_path(settings.graph), request.resources}, event.time)
       .of_type(Signal::ARRIVAL);
 
   ++requestCount;
@@ -157,10 +165,12 @@ std::vector<Snapshot> Simulation::GetSnapshots(void) const { return snapshots; }
 
 double Simulation::GetTime(void) const { return time; }
 
-double Simulation::GetRequestCount(void) const { return requestCount; }
+double Simulation::GetRequestCount(void) const {
+  return static_cast<double>(requestCount);
+}
 
 double Simulation::GetGradeOfService(void) const {
-  return blockedCount / requestCount;
+  return static_cast<double>(blockedCount) / static_cast<double>(requestCount);
 }
 
 double Simulation::network_fragmentation(void) {

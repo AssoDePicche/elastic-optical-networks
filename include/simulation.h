@@ -10,16 +10,16 @@
 #include "spectrum.h"
 
 struct Snapshot final {
-  float time;
+  double time;
   int slots;
   bool accepted;
-  float fragmentation;
-  float entropy;
-  float blocking;
+  double fragmentation;
+  double entropy;
+  double blocking;
 
-  Snapshot(float, int, bool, float, float, float);
+  Snapshot(double, int, bool, double, double, double);
 
-  [[nodiscard]] auto str(void) const -> std::string;
+  [[nodiscard]] std::string Serialize(void) const;
 };
 
 class Simulation final {
@@ -39,7 +39,7 @@ class Simulation final {
   double GetGradeOfService(void) const;
 
  private:
-  Settings settings;
+  Settings &settings;
   EventQueue<Request> queue;
   Discrete distribution;
   double kToIgnore;
