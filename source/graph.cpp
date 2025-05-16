@@ -383,11 +383,12 @@ auto k_shortest_path(const Graph &graph, const vertex_t source,
 }
 
 auto random_path(const Graph &graph) noexcept -> route_t {
-  std::random_device random_device;
+  static std::random_device random_device;
 
-  Uniform distribution{random_device(), 0, static_cast<double>(graph.size())};
+  static Uniform distribution{random_device(), 0,
+                              static_cast<double>(graph.size())};
 
-  auto source{static_cast<vertex_t>(distribution.next())};
+  const auto source{static_cast<vertex_t>(distribution.next())};
 
   auto destination{static_cast<vertex_t>(distribution.next())};
 
