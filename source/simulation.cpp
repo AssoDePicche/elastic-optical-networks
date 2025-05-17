@@ -102,10 +102,8 @@ void Simulation::Next(void) {
                         settings.slotWidth);
 
     if (fsus == event.value.bandwidth) {
-      allocator =
-          *requestType.second.allocator
-               .target<std::optional<std::pair<unsigned int, unsigned int>> (*)(
-                   const Spectrum &, unsigned int)>();
+      allocator = *requestType.second.allocator.target<std::optional<Slice> (*)(
+          const Spectrum &, unsigned int)>();
 
       break;
     }

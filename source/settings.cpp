@@ -4,11 +4,11 @@
 
 auto Settings::From(const Json &json) -> std::optional<Settings> {
   const std::unordered_map<std::string, SpectrumAllocator>
-      spectrum_allocation_strategies{{"best-fit", best_fit},
-                                     {"first-fit", first_fit},
-                                     {"last-fit", last_fit},
-                                     {"random-fit", random_fit},
-                                     {"worst-fit", worst_fit}};
+      spectrum_allocation_strategies{{"best-fit", BestFit},
+                                     {"first-fit", FirstFit},
+                                     {"last-fit", LastFit},
+                                     {"random-fit", RandomFit},
+                                     {"worst-fit", WorstFit}};
 
   Settings settings;
 

@@ -10,7 +10,7 @@
 
 struct Request {
   route_t route;
-  slice_t slice;
+  Slice slice;
   unsigned bandwidth{};
 
   Request(void) = default;

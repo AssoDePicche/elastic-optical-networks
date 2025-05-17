@@ -11,7 +11,7 @@
 Spectrum::Spectrum(const unsigned size)
     : resources(std::vector(size, FSU(false, 0u))) {}
 
-auto Spectrum::allocate(const slice_t &slice) -> void {
+auto Spectrum::allocate(const Slice &slice) -> void {
   const auto &[start, end] = slice;
 
   assert(end < size());
@@ -33,7 +33,7 @@ auto Spectrum::allocate(const slice_t &slice) -> void {
   }
 }
 
-auto Spectrum::deallocate(const slice_t &slice) -> void {
+auto Spectrum::deallocate(const Slice &slice) -> void {
   const auto &[start, end] = slice;
 
   assert(end < size());
@@ -69,7 +69,7 @@ auto Spectrum::available(void) const noexcept -> unsigned {
   return count;
 }
 
-auto Spectrum::available_at(const slice_t &slice) const noexcept -> bool {
+auto Spectrum::available_at(const Slice &slice) const noexcept -> bool {
   const auto &[start, end] = slice;
 
   auto i = resources.begin() + start;
@@ -265,11 +265,10 @@ auto Spectrum::largest_gap(void) const -> unsigned {
   return largest;
 }
 
-auto best_fit(const Spectrum &spectrum,
-              const unsigned bandwidth) -> std::optional<slice_t> {
-  assert(bandwidth <= spectrum.size());
+std::optional<Slice> BestFit(const Spectrum &spectrum, const unsigned FSUs) {
+  assert(FSUs <= spectrum.size());
 
-  if (bandwidth > spectrum.largest_partition()) {
+  if (FSUs > spectrum.largest_partition()) {
     return std::nullopt;
   }
 
@@ -294,8 +293,7 @@ auto best_fit(const Spectrum &spectrum,
       continue;
     }
 
-    if (current_block_size >= bandwidth &&
-        current_block_size < min_block_size) {
+    if (current_block_size >= FSUs && current_block_size < min_block_size) {
       min_block_size = current_block_size;
 
       best_index = current_start_index;
@@ -304,7 +302,7 @@ auto best_fit(const Spectrum &spectrum,
     current_block_size = 0u;
   }
 
-  if (current_block_size >= bandwidth && current_block_size < min_block_size) {
+  if (current_block_size >= FSUs && current_block_size < min_block_size) {
     min_block_size = current_block_size;
 
     best_index = current_start_index;
@@ -314,15 +312,14 @@ auto best_fit(const Spectrum &spectrum,
     return std::nullopt;
   }
 
-  return std::make_pair(static_cast<unsigned>(best_index),
-                        static_cast<unsigned>(best_index) + bandwidth - 1);
+  return Slice(static_cast<unsigned>(best_index),
+               static_cast<unsigned>(best_index) + FSUs - 1);
 }
 
-auto first_fit(const Spectrum &spectrum,
-               const unsigned bandwidth) -> std::optional<slice_t> {
-  assert(bandwidth <= spectrum.size());
+std::optional<Slice> FirstFit(const Spectrum &spectrum, const unsigned FSUs) {
+  assert(FSUs <= spectrum.size());
 
-  if (bandwidth > spectrum.largest_partition()) {
+  if (FSUs > spectrum.largest_partition()) {
     return std::nullopt;
   }
 
@@ -331,7 +328,7 @@ auto first_fit(const Spectrum &spectrum,
   for (auto start{0u}; start < size; ++start) {
     auto fit = true;
 
-    for (auto end{0u}; end < bandwidth && (start + end) < size; ++end) {
+    for (auto end{0u}; end < FSUs && (start + end) < size; ++end) {
       const auto &[allocated, occupancy] = spectrum.at(start + end);
 
       if (allocated) {
@@ -345,21 +342,20 @@ auto first_fit(const Spectrum &spectrum,
       continue;
     }
 
-    if (start + bandwidth - 1 >= spectrum.size()) {
+    if (start + FSUs - 1 >= spectrum.size()) {
       return std::nullopt;
     }
 
-    return std::make_pair(start, start + bandwidth - 1);
+    return Slice(start, start + FSUs - 1);
   }
 
   return std::nullopt;
 }
 
-auto last_fit(const Spectrum &spectrum,
-              const unsigned bandwidth) -> std::optional<slice_t> {
-  assert(bandwidth <= spectrum.size());
+std::optional<Slice> LastFit(const Spectrum &spectrum, const unsigned FSUs) {
+  assert(FSUs <= spectrum.size());
 
-  if (bandwidth > spectrum.largest_partition()) {
+  if (FSUs > spectrum.largest_partition()) {
     return std::nullopt;
   }
 
@@ -372,19 +368,18 @@ auto last_fit(const Spectrum &spectrum,
       ++count;
     }
 
-    if (count == bandwidth) {
-      return std::make_pair(index, index + bandwidth - 1);
+    if (count == FSUs) {
+      return Slice(index, index + FSUs - 1);
     }
   }
 
   return std::nullopt;
 }
 
-auto random_fit(const Spectrum &spectrum,
-                const unsigned bandwidth) -> std::optional<slice_t> {
-  assert(bandwidth <= spectrum.size());
+std::optional<Slice> RandomFit(const Spectrum &spectrum, const unsigned FSUs) {
+  assert(FSUs <= spectrum.size());
 
-  if (bandwidth > spectrum.largest_partition()) {
+  if (FSUs > spectrum.largest_partition()) {
     return std::nullopt;
   }
 
@@ -393,7 +388,7 @@ auto random_fit(const Spectrum &spectrum,
   for (auto start{0u}; start < spectrum.size(); ++start) {
     auto fit{true};
 
-    for (auto end{0u}; end < bandwidth; ++end) {
+    for (auto end{0u}; end < FSUs; ++end) {
       const auto &[allocated, occupancy] = spectrum.at(start + end);
 
       if (allocated) {
@@ -403,7 +398,7 @@ auto random_fit(const Spectrum &spectrum,
       }
     }
 
-    if (!fit || start + bandwidth - 1 >= spectrum.size()) {
+    if (!fit || start + FSUs - 1 >= spectrum.size()) {
       continue;
     }
 
@@ -420,14 +415,13 @@ auto random_fit(const Spectrum &spectrum,
 
   const auto index{static_cast<unsigned>(distribution.next())};
 
-  return std::make_pair(indexes.at(index), indexes.at(index) + bandwidth - 1);
+  return Slice(indexes.at(index), indexes.at(index) + FSUs - 1);
 }
 
-auto worst_fit(const Spectrum &spectrum,
-               const unsigned bandwidth) -> std::optional<slice_t> {
-  assert(bandwidth <= spectrum.size());
+std::optional<Slice> WorstFit(const Spectrum &spectrum, const unsigned FSUs) {
+  assert(FSUs <= spectrum.size());
 
-  if (bandwidth > spectrum.largest_partition()) {
+  if (FSUs > spectrum.largest_partition()) {
     return std::nullopt;
   }
 
@@ -452,8 +446,7 @@ auto worst_fit(const Spectrum &spectrum,
       continue;
     }
 
-    if (current_block_size >= bandwidth &&
-        current_block_size > max_block_size) {
+    if (current_block_size >= FSUs && current_block_size > max_block_size) {
       max_block_size = current_block_size;
 
       worst_index = current_start_index;
@@ -462,7 +455,7 @@ auto worst_fit(const Spectrum &spectrum,
     current_block_size = 0;
   }
 
-  if (current_block_size >= bandwidth && current_block_size > max_block_size) {
+  if (current_block_size >= FSUs && current_block_size > max_block_size) {
     max_block_size = current_block_size;
 
     worst_index = current_start_index;
@@ -474,7 +467,7 @@ auto worst_fit(const Spectrum &spectrum,
 
   const auto start = static_cast<unsigned>(worst_index);
 
-  return std::make_pair(start, start + bandwidth - 1);
+  return Slice(start, start + FSUs - 1);
 }
 
 auto fragmentation_coefficient(const Spectrum &spectrum) -> double {
