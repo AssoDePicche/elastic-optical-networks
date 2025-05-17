@@ -11,13 +11,13 @@
 
 struct Snapshot final {
   double time;
-  int slots;
+  unsigned slots;
   bool accepted;
   double fragmentation;
   double entropy;
   double blocking;
 
-  Snapshot(double, int, bool, double, double, double);
+  Snapshot(const Event<Request> &, double, double, double);
 
   [[nodiscard]] std::string Serialize(void) const;
 };

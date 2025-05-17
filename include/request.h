@@ -11,7 +11,8 @@
 struct Request {
   route_t route;
   Slice slice;
-  unsigned bandwidth{};
+  unsigned FSUs{};
+  bool accepted;
 
   Request(void) = default;
 

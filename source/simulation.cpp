@@ -9,11 +9,11 @@
 #include "logger.h"
 #include "request.h"
 
-Snapshot::Snapshot(double time, int slots, bool accepted, double fragmentation,
+Snapshot::Snapshot(const Event<Request> &event, double fragmentation,
                    double entropy, double blocking)
-    : time{time},
-      slots{slots},
-      accepted{accepted},
+    : time{event.time},
+      slots{event.value.FSUs},
+      accepted{event.value.accepted},
       fragmentation{fragmentation},
       entropy{entropy},
       blocking{blocking} {}
@@ -80,7 +80,7 @@ void Simulation::Next(void) {
     --activeRequests;
 
     INFO(std::format("Request for {} FSU(s) departing at {:.3f}",
-                     event.value.bandwidth, event.time));
+                     event.value.FSUs, event.time));
 
     const auto keys{route_keys(event.value.route)};
 
@@ -96,12 +96,12 @@ void Simulation::Next(void) {
   SpectrumAllocator allocator;
 
   for (auto &requestType : settings.requests) {
-    const auto fsus =
+    const auto FSUs =
         from_modulation(requestType.second.bandwidth,
                         settings.modulations.at(requestType.second.modulation),
                         settings.slotWidth);
 
-    if (fsus == event.value.bandwidth) {
+    if (FSUs == event.value.FSUs) {
       allocator = *requestType.second.allocator.target<std::optional<Slice> (*)(
           const Spectrum &, unsigned int)>();
 
@@ -109,7 +109,7 @@ void Simulation::Next(void) {
     }
   }
 
-  auto accepted = false;
+  event.value.accepted = false;
 
   if (activeRequests < settings.bandwidth &&
       dispatch_request(event.value, hashmap, allocator)) {
@@ -117,8 +117,8 @@ void Simulation::Next(void) {
 
     queue.push(event.value, time).of_type(Signal::DEPARTURE);
 
-    INFO(std::format("Accept request for {} FSU(s) at {:.3f}",
-                     event.value.bandwidth, time));
+    INFO(std::format("Accept request for {} FSU(s) at {:.3f}", event.value.FSUs,
+                     time));
 
     const auto keys{route_keys(event.value.route)};
 
@@ -126,13 +126,13 @@ void Simulation::Next(void) {
       INFO(hashmap[key].to_string());
     }
 
-    accepted = true;
+    event.value.accepted = true;
   } else {
     INFO(std::format("Blocking request for {} FSU(s) at {:.3f}",
-                     event.value.bandwidth, event.time));
+                     event.value.FSUs, event.time));
 
     for (auto &request : settings.requests) {
-      if (event.value.bandwidth != request.second.resources) {
+      if (event.value.FSUs != request.second.resources) {
         continue;
       }
 
@@ -144,9 +144,8 @@ void Simulation::Next(void) {
     ++blockedCount;
   }
 
-  snapshots.push_back(Snapshot(event.time, event.value.bandwidth, accepted,
-                               network_fragmentation(), entropy(),
-                               GetGradeOfService()));
+  snapshots.push_back(
+      Snapshot(event, network_fragmentation(), entropy(), GetGradeOfService()));
 
   auto &request = settings.requests[requestsKeys[distribution.next()]];
 
