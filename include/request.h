@@ -1,11 +1,11 @@
 #pragma once
 
-#include <cassert>
-#include <map>
-#include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "graph.h"
+#include "math.h"
 #include "spectrum.h"
 
 struct Request {
@@ -19,18 +19,19 @@ struct Request {
   Request(const route_t &, const unsigned);
 };
 
-[[nodiscard]] auto from_modulation(double, unsigned, double) -> unsigned;
+[[nodiscard]] unsigned from_modulation(double, unsigned, double);
 
-[[nodiscard]] auto from_gigabits_transmission(const double) -> unsigned;
+[[nodiscard]] unsigned from_gigabits_transmission(const double);
 
-[[nodiscard]] auto from_terabits_transmission(const double) -> unsigned;
+[[nodiscard]] unsigned from_terabits_transmission(const double);
 
-[[nodiscard]] auto make_key(unsigned, unsigned) -> unsigned;
+[[nodiscard]] std::unordered_set<unsigned> route_keys(const route_t &,
+                                                      PairingFunction);
 
-[[nodiscard]] auto route_keys(const route_t &) -> std::vector<unsigned>;
+using Hashmap = std::unordered_map<unsigned, Spectrum>;
 
-[[nodiscard]] auto make_hashmap(const Graph &,
-                                const unsigned) -> std::map<unsigned, Spectrum>;
+[[nodiscard]] Hashmap GetHashmap(const Graph &, const unsigned,
+                                 PairingFunction);
 
-[[nodiscard]] auto dispatch_request(Request &, std::map<unsigned, Spectrum> &,
-                                    const SpectrumAllocator &) -> bool;
+[[nodiscard]] bool Dispatch(Request &, Hashmap &, const SpectrumAllocator &,
+                            PairingFunction);

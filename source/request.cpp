@@ -1,9 +1,12 @@
 #include "request.h"
 
-#include <limits>
+#include <array>
+#include <cassert>
+#include <ranges>
+#include <utility>
 
-Request::Request(const route_t &route, const unsigned bandwidth)
-    : route{route}, bandwidth{bandwidth} {}
+Request::Request(const route_t &route, const unsigned FSUs)
+    : route{route}, FSUs{FSUs} {}
 
 auto from_modulation(double bandwidth, unsigned spectralEfficiency,
                      double slotWidth) -> unsigned {
@@ -11,119 +14,93 @@ auto from_modulation(double bandwidth, unsigned spectralEfficiency,
 }
 
 auto from_gigabits_transmission(const double distance) -> unsigned {
-  if (distance <= 160.0) {
-    return 5u;
+  constexpr std::array<std::pair<double, unsigned>, 7> thresholds = {{
+      {160.0, 5u},
+      {880.0, 6u},
+      {2480.0, 7u},
+      {3120.0, 9u},
+      {5000.0, 10u},
+      {6080.0, 12u},
+      {8000.0, 13u},
+  }};
+
+  for (const auto &[threshold, FSUs] : thresholds) {
+    if (distance <= threshold) {
+      return FSUs;
+    }
   }
 
-  if (distance <= 880.0) {
-    return 6u;
-  }
-
-  if (distance <= 2480.0) {
-    return 7u;
-  }
-
-  if (distance <= 3120.0) {
-    return 9u;
-  }
-
-  if (distance <= 5000) {
-    return 10u;
-  }
-
-  if (distance <= 6080.0) {
-    return 12u;
-  }
-
-  if (distance <= 8000.0) {
-    return 13u;
-  }
-
-  return std::numeric_limits<unsigned>::max();
+  return FSU::max;
 }
 
 auto from_terabits_transmission(const double distance) -> unsigned {
-  if (distance <= 400.0) {
-    return 14u;
+  constexpr std::array<std::pair<double, unsigned>, 7> thresholds = {{
+      {400.0, 14u},
+      {800.0, 15u},
+      {1600.0, 17u},
+      {3040.0, 19u},
+      {4160.0, 22u},
+      {6400.0, 25u},
+      {8000.0, 28u},
+  }};
+
+  for (const auto &[threshold, FSUs] : thresholds) {
+    if (distance <= threshold) {
+      return FSUs;
+    }
   }
 
-  if (distance <= 800.0) {
-    return 15u;
-  }
-
-  if (distance <= 1600.0) {
-    return 17u;
-  }
-
-  if (distance <= 3040.0) {
-    return 19u;
-  }
-
-  if (distance <= 4160.0) {
-    return 22u;
-  }
-
-  if (distance <= 6400.0) {
-    return 25u;
-  }
-
-  if (distance <= 8000.0) {
-    return 28u;
-  }
-
-  return std::numeric_limits<unsigned>::max();
+  return FSU::max;
 }
 
-auto make_key(unsigned x, unsigned y) -> unsigned {
-  return ((x + y) * (x + y + 1) / 2) + y;
-}
-
-auto route_keys(const route_t &route) -> std::vector<unsigned> {
+std::unordered_set<unsigned> route_keys(const route_t &route,
+                                        PairingFunction make_key) {
   const auto &[vertices, cost] = route;
 
   assert(!vertices.empty());
 
-  std::vector<unsigned> keys;
+  std::unordered_set<unsigned> keys;
 
-  std::vector<vertex_t> v;
+  for (const auto &index : std::views::iota(1u, vertices.size())) {
+    const auto x = *std::next(vertices.begin(), index - 1);
 
-  for (const auto &vertex : vertices) {
-    v.push_back(vertex);
-  }
+    const auto y = *std::next(vertices.begin(), index);
 
-  for (auto index{1u}; index < v.size(); ++index) {
-    keys.push_back(make_key(v[index - 1], v[index]));
+    keys.insert(make_key(x, y));
   }
 
   return keys;
 }
 
-auto make_hashmap(const Graph &graph,
-                  const unsigned size) -> std::map<unsigned, Spectrum> {
-  std::map<unsigned, Spectrum> hashmap;
+Hashmap GetHashmap(const Graph &graph, const unsigned FSUsPerLink,
+                   PairingFunction make_key) {
+  Hashmap hashmap;
 
   const auto edges = graph.get_edges();
 
   for (const auto &[source, destination, cost] : edges) {
     const auto key = make_key(source, destination);
 
-    hashmap[key] = Spectrum(size);
+    hashmap[key] = Spectrum(FSUsPerLink);
   }
 
   return hashmap;
 }
 
-auto dispatch_request(Request &request, std::map<unsigned, Spectrum> &hashmap,
-                      const SpectrumAllocator &spectrum_allocator) -> bool {
-  const auto keys{route_keys(request.route)};
+bool Dispatch(Request &request, Hashmap &hashmap,
+              const SpectrumAllocator &spectrum_allocator,
+              PairingFunction make_key) {
+  const auto keys{route_keys(request.route, make_key)};
 
-  const auto search{spectrum_allocator(hashmap[keys[0]], request.bandwidth)};
+  const auto first = *keys.begin();
 
-  if (!search.has_value()) {
+  const auto slice{spectrum_allocator(hashmap[first], request.FSUs)};
+
+  if (!slice.has_value()) {
     return false;
   }
 
-  request.slice = search.value();
+  request.slice = slice.value();
 
   for (const auto &key : keys) {
     if (!hashmap[key].available_at(request.slice)) {
@@ -131,9 +108,8 @@ auto dispatch_request(Request &request, std::map<unsigned, Spectrum> &hashmap,
     }
   }
 
-  for (const auto &key : keys) {
-    hashmap[key].allocate(request.slice);
-  }
+  std::for_each(keys.begin(), keys.end(),
+                [&](const auto key) { hashmap[key].allocate(request.slice); });
 
   return true;
 }
