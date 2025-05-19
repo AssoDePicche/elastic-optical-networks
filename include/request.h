@@ -6,6 +6,7 @@
 
 #include "graph.h"
 #include "math.h"
+#include "route.h"
 #include "spectrum.h"
 
 struct Request {

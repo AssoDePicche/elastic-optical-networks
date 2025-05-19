@@ -54,7 +54,16 @@ Simulation::Simulation(Settings &settings)
 
   ++firstRequest.counting;
 
-  queue.push(Request{random_path(settings.graph), firstRequest.FSUs}, time)
+  auto routingStrategy = std::make_shared<RandomRouting>(settings.graph);
+
+  routingStrategy->SetDistribution(
+      std::make_shared<Uniform>(settings.seed, 0u, settings.graph.size()));
+
+  router.SetStrategy(routingStrategy);
+
+  queue
+      .push(Request{router.compute(NullVertex, NullVertex), firstRequest.FSUs},
+            time)
       .of_type(Signal::ARRIVAL);
 
   ++requestCount;
@@ -158,7 +167,9 @@ void Simulation::Next(void) {
 
   ++request.counting;
 
-  queue.push(Request{random_path(settings.graph), request.FSUs}, event.time)
+  queue
+      .push(Request{router.compute(NullVertex, NullVertex), request.FSUs},
+            event.time)
       .of_type(Signal::ARRIVAL);
 
   ++requestCount;
@@ -187,7 +198,7 @@ std::vector<double> Simulation::GetFragmentation(void) const {
     for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
       const auto key = settings.pairingFunction(source, destination);
 
-      sum += strategy.second->operator()(hashmap.at(key));
+      sum += (*strategy.second)(hashmap.at(key));
     }
 
     fragmentation.emplace_back(sum / settings.graph.get_edges().size());
@@ -207,7 +218,7 @@ double Simulation::GetEntropy(void) const {
 
     const auto spectrum = hashmap.at(key);
 
-    sum += metric->operator()(spectrum);
+    sum += (*metric)(spectrum);
   }
 
   return sum;

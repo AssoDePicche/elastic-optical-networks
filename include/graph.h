@@ -1,15 +1,17 @@
 #pragma once
 
+#include <limits>
 #include <list>
 #include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
 using Vertex = unsigned;
+
+constexpr Vertex NullVertex = std::numeric_limits<unsigned>::max();
 
 struct Cost {
   double value;
@@ -28,13 +30,6 @@ struct Cost {
 using AdjacentVertex = std::pair<Vertex, Cost>;
 
 using Edge = std::tuple<Vertex, Vertex, Cost>;
-
-struct Route final {
-  std::unordered_set<Vertex> vertices;
-  Cost cost;
-
-  [[nodiscard]] static Route None(void);
-};
 
 class Graph final {
  public:
@@ -64,18 +59,3 @@ class Graph final {
   std::unordered_map<Vertex, std::list<AdjacentVertex>> adjacency_list;
   std::set<Vertex> vertices;
 };
-
-[[nodiscard]] Route BreadthFirstSearch(const Graph &, const Vertex,
-                                       const Vertex) noexcept;
-
-[[nodiscard]] Route DepthFirstSearch(const Graph &, const Vertex,
-                                     const Vertex) noexcept;
-
-[[nodiscard]] Route Dijkstra(const Graph &, const Vertex,
-                             const Vertex) noexcept;
-
-[[nodiscard]] std::vector<Route> KShortestPath(const Graph &, const Vertex,
-                                               const Vertex,
-                                               const unsigned) noexcept;
-
-[[nodiscard]] Route random_path(const Graph &) noexcept;

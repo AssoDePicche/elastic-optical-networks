@@ -49,6 +49,7 @@ class Simulation final {
   double kToIgnore;
   Hashmap hashmap;
   std::vector<std::string> requestsKeys;
+  Router router;
   bool ignoredFirst{false};
   unsigned requestCount{0u};
   unsigned blockedCount{0u};
