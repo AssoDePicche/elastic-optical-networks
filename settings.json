@@ -40,6 +40,7 @@
     "ignore-first": true,
     "service-rate": 0.133138064,
     "seed": 0,
+    "modulation": "passband",
     "pairing-function": "cantor",
     "requests": [
       {
