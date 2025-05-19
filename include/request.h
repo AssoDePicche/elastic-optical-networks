@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -8,6 +9,51 @@
 #include "math.h"
 #include "route.h"
 #include "spectrum.h"
+
+enum class ModulationOption {
+  Passband,
+  Gigabits,
+  Terabits,
+};
+
+struct Modulation {
+  virtual ~Modulation() = default;
+
+  [[nodiscard]] virtual unsigned compute(const double) const = 0;
+};
+
+class PassbandModulation : public Modulation {
+ public:
+  PassbandModulation(double, unsigned);
+
+  [[nodiscard]] unsigned compute(const double) const override;
+
+ private:
+  double slotWidth;
+  unsigned spectralEfficiency;
+};
+
+struct DistanceAdaptativeModulation : public Modulation {};
+
+class GigabitsTransmission : public DistanceAdaptativeModulation {
+  [[nodiscard]] unsigned compute(const double) const override;
+};
+
+class TerabitsTransmission : public DistanceAdaptativeModulation {
+  [[nodiscard]] unsigned compute(const double) const override;
+};
+
+using ModulationStrategy = std::shared_ptr<Modulation>;
+
+class ModulationStrategyFactory final {
+ public:
+  ModulationStrategyFactory(ModulationOption);
+
+  [[nodiscard]] ModulationStrategy From(double, unsigned) const;
+
+ private:
+  ModulationOption option;
+};
 
 struct Request {
   Route route;
@@ -18,21 +64,55 @@ struct Request {
   Request(void) = default;
 
   Request(const Route &, const unsigned);
+
+  class Builder final {
+   public:
+    [[nodiscard]] Builder &SetRoute(const Route &);
+
+    [[nodiscard]] Builder &SetSlice(const Slice &);
+
+    [[nodiscard]] Builder &SetModulationStrategy(ModulationStrategy);
+
+    [[nodiscard]] Builder &SetFSUs(const unsigned);
+
+    [[nodiscard]] Request Build(void) const;
+
+   private:
+    Route route;
+    Slice slice;
+    unsigned FSUs;
+    ModulationStrategy strategy;
+  };
 };
 
-[[nodiscard]] unsigned from_modulation(double, unsigned, double);
+class KeyGenerator final {
+ public:
+  KeyGenerator(void) = default;
 
-[[nodiscard]] unsigned from_gigabits_transmission(const double);
+  KeyGenerator(PairingFunction);
 
-[[nodiscard]] unsigned from_terabits_transmission(const double);
+  [[nodiscard]] unsigned generate(const Vertex, const Vertex) const;
 
-[[nodiscard]] std::unordered_set<unsigned> route_keys(const Route &,
-                                                      PairingFunction);
+  [[nodiscard]] std::unordered_set<unsigned> generate(const Route &) const;
 
-using Hashmap = std::unordered_map<unsigned, Spectrum>;
+ private:
+  PairingFunction function;
+};
 
-[[nodiscard]] Hashmap GetHashmap(const Graph &, const unsigned,
-                                 PairingFunction);
+using Carriers = std::unordered_map<unsigned, Spectrum>;
 
-[[nodiscard]] bool Dispatch(Request &, Hashmap &, const SpectrumAllocator &,
-                            PairingFunction);
+class Dispatcher final {
+ public:
+  Dispatcher(Graph, KeyGenerator, unsigned);
+
+  [[nodiscard]] bool dispatch(Request &, const SpectrumAllocator &);
+
+  [[nodiscard]] Carriers GetCarriers(void) const;
+
+  void release(Request &);
+
+ private:
+  KeyGenerator keyGenerator;
+  Carriers carriers;
+  unsigned FSUsPerLink;
+};

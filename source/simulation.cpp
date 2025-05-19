@@ -41,8 +41,7 @@ Simulation::Simulation(Settings &settings)
       queue{settings.arrivalRate, settings.serviceRate, settings.seed},
       distribution{settings.seed, settings.probs},
       kToIgnore{0.1 * settings.timeUnits},
-      hashmap{GetHashmap(settings.graph, settings.bandwidth,
-                         settings.pairingFunction)},
+      dispatcher{settings.graph, settings.keyGenerator, settings.FSUsPerLink},
       requestsKeys{} {
   requestsKeys.reserve(settings.requests.size());
 
@@ -100,11 +99,10 @@ void Simulation::Next(void) {
     INFO(std::format("Request for {} FSU(s) departing at {:.3f}",
                      event.value.FSUs, event.time));
 
-    for (const auto &key :
-         route_keys(event.value.route, settings.pairingFunction)) {
-      hashmap[key].deallocate(event.value.slice);
+    dispatcher.release(event.value);
 
-      INFO(hashmap[key].Serialize());
+    for (const auto &key : settings.keyGenerator.generate(event.value.route)) {
+      INFO(dispatcher.GetCarriers().at(key).Serialize());
     }
 
     return;
@@ -113,10 +111,16 @@ void Simulation::Next(void) {
   SpectrumAllocator allocator;
 
   for (auto &requestType : settings.requests) {
-    const auto FSUs =
-        from_modulation(requestType.second.bandwidth,
-                        settings.modulations.at(requestType.second.modulation),
-                        settings.slotWidth);
+    const ModulationStrategyFactory factory(settings.modulationOption);
+
+    const auto spectralEfficiency =
+        settings.modulations.at(requestType.second.modulation);
+
+    const auto strategy = factory.From(settings.slotWidth, spectralEfficiency);
+
+    const auto FSUs = settings.modulationOption == ModulationOption::Passband
+                          ? strategy->compute(requestType.second.bandwidth)
+                          : strategy->compute(event.value.route.cost.value);
 
     if (FSUs == event.value.FSUs) {
       allocator = *requestType.second.allocator.target<std::optional<Slice> (*)(
@@ -128,8 +132,8 @@ void Simulation::Next(void) {
 
   event.value.accepted = false;
 
-  if (activeRequests < settings.bandwidth &&
-      Dispatch(event.value, hashmap, allocator, settings.pairingFunction)) {
+  if (activeRequests < settings.FSUsPerLink &&
+      dispatcher.dispatch(event.value, allocator)) {
     ++activeRequests;
 
     queue.push(event.value, time).of_type(Signal::DEPARTURE);
@@ -137,9 +141,8 @@ void Simulation::Next(void) {
     INFO(std::format("Accept request for {} FSU(s) at {:.3f}", event.value.FSUs,
                      time));
 
-    for (const auto &key :
-         route_keys(event.value.route, settings.pairingFunction)) {
-      INFO(hashmap[key].Serialize());
+    for (const auto &key : settings.keyGenerator.generate(event.value.route)) {
+      INFO(dispatcher.GetCarriers().at(key).Serialize());
     }
 
     event.value.accepted = true;
@@ -196,9 +199,9 @@ std::vector<double> Simulation::GetFragmentation(void) const {
     auto sum = 0.0;
 
     for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
-      const auto key = settings.pairingFunction(source, destination);
+      const auto key = settings.keyGenerator.generate(source, destination);
 
-      sum += (*strategy.second)(hashmap.at(key));
+      sum += (*strategy.second)(dispatcher.GetCarriers().at(key));
     }
 
     fragmentation.emplace_back(sum / settings.graph.get_edges().size());
@@ -214,11 +217,9 @@ double Simulation::GetEntropy(void) const {
   auto sum = 0.0;
 
   for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
-    const auto key = settings.pairingFunction(source, destination);
+    const auto key = settings.keyGenerator.generate(source, destination);
 
-    const auto spectrum = hashmap.at(key);
-
-    sum += (*metric)(spectrum);
+    sum += (*metric)(dispatcher.GetCarriers().at(key));
   }
 
   return sum;

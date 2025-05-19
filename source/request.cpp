@@ -8,12 +8,42 @@
 Request::Request(const Route &route, const unsigned FSUs)
     : route{route}, FSUs{FSUs} {}
 
-auto from_modulation(double bandwidth, unsigned spectralEfficiency,
-                     double slotWidth) -> unsigned {
+Request::Builder &Request::Builder::SetRoute(const Route &route) {
+  this->route = route;
+
+  return *this;
+}
+
+Request::Builder &Request::Builder::SetSlice(const Slice &slice) {
+  this->slice = slice;
+
+  return *this;
+}
+
+Request::Builder &Request::Builder::SetModulationStrategy(
+    ModulationStrategy strategy) {
+  this->strategy = strategy;
+
+  return *this;
+}
+
+Request::Builder &Request::Builder::SetFSUs(const unsigned FSUs) {
+  this->FSUs = FSUs;
+
+  return *this;
+}
+
+Request Request::Builder::Build(void) const { return Request(); }
+
+PassbandModulation::PassbandModulation(double slotWidth,
+                                       unsigned spectralEfficiency)
+    : slotWidth{slotWidth}, spectralEfficiency{spectralEfficiency} {}
+
+unsigned PassbandModulation::compute(const double bandwidth) const {
   return bandwidth / (spectralEfficiency * slotWidth);
 }
 
-auto from_gigabits_transmission(const double distance) -> unsigned {
+unsigned GigabitsTransmission::compute(const double distance) const {
   constexpr std::array<std::pair<double, unsigned>, 7> thresholds = {{
       {160.0, 5u},
       {880.0, 6u},
@@ -33,7 +63,7 @@ auto from_gigabits_transmission(const double distance) -> unsigned {
   return FSU::max;
 }
 
-auto from_terabits_transmission(const double distance) -> unsigned {
+unsigned TerabitsTransmission::compute(const double distance) const {
   constexpr std::array<std::pair<double, unsigned>, 7> thresholds = {{
       {400.0, 14u},
       {800.0, 15u},
@@ -53,8 +83,32 @@ auto from_terabits_transmission(const double distance) -> unsigned {
   return FSU::max;
 }
 
-std::unordered_set<unsigned> route_keys(const Route &route,
-                                        PairingFunction make_key) {
+ModulationStrategyFactory::ModulationStrategyFactory(ModulationOption option)
+    : option{option} {}
+
+ModulationStrategy ModulationStrategyFactory::From(
+    double slotWidth, unsigned spectralEfficiency) const {
+  switch (option) {
+    case ModulationOption::Passband:
+      return std::make_shared<PassbandModulation>(slotWidth,
+                                                  spectralEfficiency);
+    case ModulationOption::Gigabits:
+      return std::make_shared<GigabitsTransmission>();
+    case ModulationOption::Terabits:
+      return std::make_shared<TerabitsTransmission>();
+  }
+
+  return nullptr;
+}
+
+KeyGenerator::KeyGenerator(PairingFunction function) : function{function} {}
+
+unsigned KeyGenerator::generate(const Vertex source,
+                                const Vertex destination) const {
+  return function(source, destination);
+}
+
+std::unordered_set<unsigned> KeyGenerator::generate(const Route &route) const {
   const auto &[vertices, cost] = route;
 
   assert(!vertices.empty());
@@ -66,50 +120,44 @@ std::unordered_set<unsigned> route_keys(const Route &route,
 
     const auto y = *std::next(vertices.begin(), index);
 
-    keys.insert(make_key(x, y));
+    keys.insert(function(x, y));
   }
 
   return keys;
 }
 
-Hashmap GetHashmap(const Graph &graph, const unsigned FSUsPerLink,
-                   PairingFunction make_key) {
-  Hashmap hashmap;
+Dispatcher::Dispatcher(Graph graph, KeyGenerator keyGenerator,
+                       unsigned FSUsPerLink)
+    : keyGenerator{keyGenerator}, FSUsPerLink{FSUsPerLink} {
+  for (const auto &[source, destination, cost] : graph.get_edges()) {
+    const auto key = keyGenerator.generate(source, destination);
 
-  const auto edges = graph.get_edges();
-
-  for (const auto &[source, destination, cost] : edges) {
-    const auto key = make_key(source, destination);
-
-    hashmap[key] = Spectrum(FSUsPerLink);
+    carriers[key] = Spectrum(FSUsPerLink);
   }
-
-  return hashmap;
 }
 
-bool Dispatch(Request &request, Hashmap &hashmap,
-              const SpectrumAllocator &spectrum_allocator,
-              PairingFunction make_key) {
-  const auto keys{route_keys(request.route, make_key)};
+bool Dispatcher::dispatch(Request &request,
+                          const SpectrumAllocator &allocator) {
+  const auto keys = keyGenerator.generate(request.route);
 
   const auto first = *keys.begin();
 
-  const auto slice{spectrum_allocator(hashmap[first], request.FSUs)};
+  const auto slice = allocator(carriers[first], request.FSUs);
 
   if (!slice.has_value()) {
     return false;
   }
 
-  request.slice = slice.value();
-
-  for (const auto &key : keys) {
-    if (!hashmap[key].available_at(request.slice)) {
-      return false;
-    }
-  }
-
   std::for_each(keys.begin(), keys.end(),
-                [&](const auto key) { hashmap[key].allocate(request.slice); });
+                [&](const auto key) { carriers[key].allocate(request.slice); });
 
   return true;
+}
+
+Carriers Dispatcher::GetCarriers(void) const { return carriers; }
+
+void Dispatcher::release(Request &request) {
+  for (const auto &key : keyGenerator.generate(request.route)) {
+    carriers[key].deallocate(request.slice);
+  }
 }

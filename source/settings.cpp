@@ -17,6 +17,13 @@ auto Settings::From(const Json &json) -> std::optional<Settings> {
           {"cantor", CantorPairingFunction},
       };
 
+  static const std::unordered_map<std::string, ModulationOption>
+      modulationOptions{
+          {"passband", ModulationOption::Passband},
+          {"gigabits", ModulationOption::Gigabits},
+          {"terabits", ModulationOption::Terabits},
+      };
+
   Settings settings;
 
   settings.enableLogging = json.Get<bool>("enable-logging").value();
@@ -37,10 +44,13 @@ auto Settings::From(const Json &json) -> std::optional<Settings> {
 
   settings.slotWidth = json.Get<double>("params.slot-width").value();
 
-  settings.bandwidth = settings.spectrumWidth / settings.slotWidth;
+  settings.FSUsPerLink = settings.spectrumWidth / settings.slotWidth;
 
-  settings.pairingFunction = pairingFunctionStrategies.at(
-      json.Get<std::string>("params.pairing-function").value_or("cantor"));
+  settings.keyGenerator = KeyGenerator(pairingFunctionStrategies.at(
+      json.Get<std::string>("params.pairing-function").value_or("cantor")));
+
+  settings.modulationOption = modulationOptions.at(
+      json.Get<std::string>("params.modulation").value_or("passband"));
 
   const auto requests =
       json.Get<std::vector<nlohmann::json>>("params.requests");
@@ -72,9 +82,17 @@ auto Settings::From(const Json &json) -> std::optional<Settings> {
   }
 
   for (auto &request : settings.requests) {
-    request.second.FSUs = from_modulation(
-        request.second.bandwidth,
-        settings.modulations.at(request.second.modulation), settings.slotWidth);
+    const ModulationStrategyFactory factory(settings.modulationOption);
+
+    const auto spectralEfficiency =
+        settings.modulations.at(request.second.modulation);
+
+    const auto strategy = factory.From(settings.slotWidth, spectralEfficiency);
+
+    request.second.FSUs =
+        settings.modulationOption == ModulationOption::Passband
+            ? strategy->compute(request.second.bandwidth)
+            : strategy->compute(Cost::max().value);
 
     request.second.counting = 0u;
 

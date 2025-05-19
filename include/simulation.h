@@ -47,7 +47,7 @@ class Simulation final {
   EventQueue<Request> queue;
   Discrete distribution;
   double kToIgnore;
-  Hashmap hashmap;
+  Dispatcher dispatcher;
   std::vector<std::string> requestsKeys;
   Router router;
   bool ignoredFirst{false};

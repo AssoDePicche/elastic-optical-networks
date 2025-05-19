@@ -10,6 +10,7 @@
 #include "graph.h"
 #include "json.h"
 #include "math.h"
+#include "request.h"
 #include "spectrum.h"
 
 struct RequestType {
@@ -30,12 +31,13 @@ struct Settings {
   std::unordered_map<std::string, RequestType> requests;
   std::unordered_map<std::string, unsigned> modulations;
   std::vector<double> probs;
-  PairingFunction pairingFunction;
+  KeyGenerator keyGenerator;
+  ModulationOption modulationOption;
   Seed seed;
   double arrivalRate;
   double serviceRate;
   double timeUnits;
-  unsigned bandwidth;
+  unsigned FSUsPerLink;
   double spectrumWidth;
   double slotWidth;
   bool ignoreFirst;

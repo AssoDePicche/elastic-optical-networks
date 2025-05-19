@@ -101,7 +101,7 @@ auto main(void) -> int {
 
   buffer.append(std::format("slot width (GHz): {:.2f}\n", settings.slotWidth));
 
-  buffer.append(std::format("fsus per link: {}\n", settings.bandwidth));
+  buffer.append(std::format("fsus per link: {}\n", settings.FSUsPerLink));
 
   for (const auto &[key, value] : units) {
     const auto unit = Unit::New(value.begin(), value.end());
