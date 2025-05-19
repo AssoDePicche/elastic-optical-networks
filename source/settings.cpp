@@ -1,14 +1,21 @@
 #include "settings.h"
 
+#include <algorithm>
+
 #include "request.h"
 
 auto Settings::From(const Json &json) -> std::optional<Settings> {
-  const std::unordered_map<std::string, SpectrumAllocator>
-      spectrum_allocation_strategies{{"best-fit", BestFit},
-                                     {"first-fit", FirstFit},
-                                     {"last-fit", LastFit},
-                                     {"random-fit", RandomFit},
-                                     {"worst-fit", WorstFit}};
+  static const std::unordered_map<std::string, SpectrumAllocator>
+      spectrumAllocationStrategies{{"best-fit", BestFit},
+                                   {"first-fit", FirstFit},
+                                   {"last-fit", LastFit},
+                                   {"random-fit", RandomFit},
+                                   {"worst-fit", WorstFit}};
+
+  static const std::unordered_map<std::string, PairingFunction>
+      pairingFunctionStrategies{
+          {"cantor", CantorPairingFunction},
+      };
 
   Settings settings;
 
@@ -32,6 +39,9 @@ auto Settings::From(const Json &json) -> std::optional<Settings> {
 
   settings.bandwidth = settings.spectrumWidth / settings.slotWidth;
 
+  settings.pairingFunction = pairingFunctionStrategies.at(
+      json.Get<std::string>("params.pairing-function").value_or("cantor"));
+
   const auto requests =
       json.Get<std::vector<nlohmann::json>>("params.requests");
 
@@ -44,11 +54,11 @@ auto Settings::From(const Json &json) -> std::optional<Settings> {
 
     request.bandwidth = row["bandwidth"];
 
-    request.allocator = spectrum_allocation_strategies.at(row["allocator"]);
+    request.allocator = spectrumAllocationStrategies.at(row["allocator"]);
 
     request.blocking = 0u;
 
-    request.resources = 0u;
+    request.FSUs = 0u;
 
     request.counting = 0u;
 
@@ -62,7 +72,7 @@ auto Settings::From(const Json &json) -> std::optional<Settings> {
   }
 
   for (auto &request : settings.requests) {
-    request.second.resources = from_modulation(
+    request.second.FSUs = from_modulation(
         request.second.bandwidth,
         settings.modulations.at(request.second.modulation), settings.slotWidth);
 
@@ -70,6 +80,20 @@ auto Settings::From(const Json &json) -> std::optional<Settings> {
 
     request.second.blocking = 0u;
   }
+
+  settings.minFSUsPerRequest = (*settings.requests.begin()).second.FSUs;
+
+  for (const auto &request : settings.requests) {
+    if (request.second.FSUs < settings.minFSUsPerRequest) {
+      settings.minFSUsPerRequest = request.second.FSUs;
+    }
+  }
+
+  settings.fragmentationStrategies = {
+      {"external_fragmentation", std::make_shared<ExternalFragmentation>()},
+      {"entropy_based_fragmentation",
+       std::make_shared<EntropyBasedFragmentation>(settings.minFSUsPerRequest)},
+  };
 
   const auto probs = std::vector<double>(settings.requests.size(),
                                          1.0f / settings.requests.size());

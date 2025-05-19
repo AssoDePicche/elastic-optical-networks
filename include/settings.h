@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -8,6 +9,7 @@
 #include "distribution.h"
 #include "graph.h"
 #include "json.h"
+#include "math.h"
 #include "spectrum.h"
 
 struct RequestType {
@@ -16,16 +18,19 @@ struct RequestType {
   SpectrumAllocator allocator;
   double bandwidth;
   unsigned blocking;
-  unsigned resources;
+  unsigned FSUs;
   unsigned counting;
 };
 
 struct Settings {
   Graph graph;
   SpectrumAllocator spectrumAllocator;
+  std::unordered_map<std::string, FragmentationStrategy>
+      fragmentationStrategies;
   std::unordered_map<std::string, RequestType> requests;
   std::unordered_map<std::string, unsigned> modulations;
   std::vector<double> probs;
+  PairingFunction pairingFunction;
   Seed seed;
   double arrivalRate;
   double serviceRate;
@@ -36,6 +41,7 @@ struct Settings {
   bool ignoreFirst;
   bool exportDataset;
   bool enableLogging;
+  unsigned minFSUsPerRequest;
 
   [[nodiscard]] static auto From(const Json &) -> std::optional<Settings>;
 };
