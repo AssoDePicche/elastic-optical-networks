@@ -72,28 +72,6 @@ std::optional<Graph> Graph::from(const std::string &filename) noexcept {
 
 unsigned Graph::size(void) const noexcept { return vertices.size(); }
 
-std::string Graph::Serialize(void) const noexcept {
-  std::string buffer{};
-
-  auto matrix = std::vector(size(), std::vector(size(), Cost::min()));
-
-  for (const auto &[vertex, edges] : adjacency_list) {
-    for (auto &[adjacent, cost] : edges) {
-      matrix[vertex][adjacent] = cost.value;
-    }
-  }
-
-  for (const auto &row : std::views::iota(0u, size())) {
-    for (const auto &column : std::views::iota(0u, size())) {
-      buffer.append(std::format("{} ", matrix[row][column].value));
-    }
-
-    buffer.append("\n");
-  }
-
-  return buffer;
-}
-
 Cost Graph::at(const Vertex source, const Vertex destination) const {
   for (const auto &[vertex, cost] : adjacency_list.at(source)) {
     if (vertex == destination) {
@@ -270,12 +248,12 @@ Route Dijkstra(const Graph &graph, const Vertex source,
 
     predecessors[vertex] = -1;
 
-    edge_hops[vertex] = __MAX_HOPS__;
+    edge_hops[vertex] = std::numeric_limits<unsigned>::max();
   }
 
   costs[source] = Cost::min();
 
-  edge_hops[source] = __MIN_HOPS__;
+  edge_hops[source] = 0u;
 
   queue.emplace(costs[source], edge_hops[source], source);
 

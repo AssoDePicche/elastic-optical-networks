@@ -1,6 +1,5 @@
 #pragma once
 
-#include <limits>
 #include <list>
 #include <optional>
 #include <set>
@@ -26,10 +25,6 @@ struct Cost {
 
 [[nodiscard]] bool operator<(const Cost &, const Cost &);
 
-constexpr unsigned __MAX_HOPS__ = std::numeric_limits<unsigned>::max();
-
-constexpr unsigned __MIN_HOPS__ = 0;
-
 using AdjacentVertex = std::pair<Vertex, Cost>;
 
 using Edge = std::tuple<Vertex, Vertex, Cost>;
@@ -50,8 +45,6 @@ class Graph final {
   [[nodiscard]] static std::optional<Graph> from(const std::string &) noexcept;
 
   [[nodiscard]] unsigned size(void) const noexcept;
-
-  [[nodiscard]] std::string Serialize(void) const noexcept;
 
   [[nodiscard]] Cost at(const Vertex, const Vertex) const;
 
