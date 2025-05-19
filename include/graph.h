@@ -3,33 +3,40 @@
 #include <limits>
 #include <list>
 #include <optional>
-#include <ostream>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-using vertex_t = unsigned;
-
-using cost_t = double;
+using Vertex = unsigned;
 
 struct Cost {
-  static constexpr auto max = std::numeric_limits<cost_t>::max();
-  static constexpr auto min = static_cast<cost_t>(0);
+  double value;
+
+  Cost(void) = default;
+
+  Cost(double);
+
+  static Cost max(void);
+
+  static Cost min(void);
 };
 
-constexpr auto __MAX_HOPS__ = std::numeric_limits<unsigned>::max();
+[[nodiscard]] bool operator<(const Cost &, const Cost &);
 
-constexpr auto __MIN_HOPS__ = static_cast<unsigned>(0);
+constexpr unsigned __MAX_HOPS__ = std::numeric_limits<unsigned>::max();
 
-using adjacent_t = std::pair<vertex_t, cost_t>;
+constexpr unsigned __MIN_HOPS__ = 0;
 
-using edge_t = std::tuple<vertex_t, vertex_t, cost_t>;
+using AdjacentVertex = std::pair<Vertex, Cost>;
 
-using route_t = std::pair<std::unordered_set<vertex_t>, cost_t>;
+using Edge = std::tuple<Vertex, Vertex, Cost>;
 
-const route_t __NO_ROUTE__ = {{}, Cost::max};
+using route_t = std::pair<std::unordered_set<Vertex>, Cost>;
+
+const route_t __NO_ROUTE__ = {{}, Cost::max()};
 
 class Graph final {
  public:
@@ -37,45 +44,42 @@ class Graph final {
 
   Graph(const unsigned);
 
-  [[nodiscard]] static auto from(const std::string &) noexcept
-      -> std::optional<Graph>;
+  [[nodiscard]] static std::optional<Graph> from(const std::string &) noexcept;
 
-  [[nodiscard]] auto size(void) const noexcept -> unsigned;
+  [[nodiscard]] unsigned size(void) const noexcept;
 
-  [[nodiscard]] auto to_string(void) const noexcept -> std::string;
+  [[nodiscard]] std::string Serialize(void) const noexcept;
 
-  [[nodiscard]] auto at(const vertex_t, const vertex_t) const -> cost_t;
+  [[nodiscard]] Cost at(const Vertex, const Vertex) const;
 
-  [[nodiscard]] auto at(const vertex_t) const -> std::list<adjacent_t>;
+  [[nodiscard]] std::list<AdjacentVertex> at(const Vertex) const;
 
-  [[nodiscard]] auto is_adjacent(const vertex_t, const vertex_t) const -> bool;
+  [[nodiscard]] bool is_adjacent(const Vertex, const Vertex) const;
 
-  [[nodiscard]] auto get_vertices(void) const noexcept -> std::set<vertex_t>;
+  [[nodiscard]] std::set<Vertex> get_vertices(void) const noexcept;
 
-  [[nodiscard]] auto get_edges(void) const noexcept -> std::vector<edge_t>;
+  [[nodiscard]] std::vector<Edge> get_edges(void) const noexcept;
 
-  auto add(const vertex_t) -> void;
+  void add(const Vertex);
 
-  auto add(const edge_t &) -> void;
+  void add(const Edge &);
 
  private:
-  std::unordered_map<vertex_t, std::list<adjacent_t>> adjacency_list;
-  std::set<vertex_t> vertices;
+  std::unordered_map<Vertex, std::list<AdjacentVertex>> adjacency_list;
+  std::set<Vertex> vertices;
 };
 
-[[nodiscard]] auto operator<<(std::ostream &, const Graph &) -> std::ostream &;
+[[nodiscard]] route_t BreadthFirstSearch(const Graph &, const Vertex,
+                                         const Vertex) noexcept;
 
-[[nodiscard]] auto breadth_first_search(const Graph &, const vertex_t,
-                                        const vertex_t) noexcept -> route_t;
+[[nodiscard]] route_t DepthFirstSearch(const Graph &, const Vertex,
+                                       const Vertex) noexcept;
 
-[[nodiscard]] auto depth_first_search(const Graph &, const vertex_t,
-                                      const vertex_t) noexcept -> route_t;
+[[nodiscard]] route_t Dijkstra(const Graph &, const Vertex,
+                               const Vertex) noexcept;
 
-[[nodiscard]] auto dijkstra(const Graph &, const vertex_t,
-                            const vertex_t) noexcept -> route_t;
+[[nodiscard]] std::vector<route_t> KShortestPath(const Graph &, const Vertex,
+                                                 const Vertex,
+                                                 const unsigned) noexcept;
 
-[[nodiscard]] auto k_shortest_path(const Graph &, const vertex_t,
-                                   const vertex_t, const unsigned) noexcept
-    -> std::vector<route_t>;
-
-[[nodiscard]] auto random_path(const Graph &) noexcept -> route_t;
+[[nodiscard]] route_t random_path(const Graph &) noexcept;
