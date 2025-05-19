@@ -14,7 +14,7 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "Don't build raylib examples")
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build raylib as a static library")
 
-set(COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -fPIC -DALLOWLOGS)
+set(COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -fPIC -DALLOWLOGS -g)
 
 set(DEPENDENCIES raylib nlohmann_json::nlohmann_json gtest gtest_main)
 
