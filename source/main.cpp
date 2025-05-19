@@ -4,6 +4,7 @@
 #include <iostream>
 #include <optional>
 #include <string>
+#include <unordered_map>
 
 #include "date.h"
 #include "json.h"
@@ -83,6 +84,11 @@ auto main(void) -> int {
 
   const auto requestCount = simulation.GetRequestCount();
 
+  const std::unordered_map<std::string, std::vector<double>> units = {{
+      {"fragmentation", fragmentationStates},
+      {"entropy", entropyStates},
+  }};
+
   std::string buffer{""};
 
   buffer.append(std::format("seed: {}\n", settings.seed));
@@ -98,16 +104,12 @@ auto main(void) -> int {
 
   buffer.append(std::format("fsus per link: {}\n", settings.bandwidth));
 
-  buffer.append(
-      std::format("mean fragmentation: {:.3f} ± {:.3f}\n",
-                  Mean(fragmentationStates.begin(), fragmentationStates.end()),
-                  StandardDeviation(fragmentationStates.begin(),
-                                    fragmentationStates.end())));
+  for (const auto &[key, value] : units) {
+    const auto unit = Unit::New(value.begin(), value.end());
 
-  buffer.append(std::format(
-      "mean entropy: {:.3f} ± {:.3f}\n",
-      Mean(entropyStates.begin(), entropyStates.end()),
-      StandardDeviation(entropyStates.begin(), entropyStates.end())));
+    buffer.append(
+        std::format("mean {}: {:.3f} ± {:.3f}\n", key, unit.mean, unit.stddev));
+  }
 
   const double load = settings.arrivalRate / settings.serviceRate;
 
