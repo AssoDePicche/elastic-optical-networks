@@ -1,3 +1,4 @@
 *.csv
+.gdb_history
 /build/
 /third_party/
