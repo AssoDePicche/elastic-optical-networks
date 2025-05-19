@@ -8,8 +8,8 @@
 
 #include "distribution.h"
 
-Spectrum::Spectrum(const unsigned size)
-    : resources(std::vector(size, FSU(false, 0u))) {}
+Spectrum::Spectrum(const unsigned FSUsPerLink)
+    : resources(std::vector(FSUsPerLink, FSU(false, 0u))) {}
 
 auto Spectrum::allocate(const Slice &slice) -> void {
   const auto &[start, end] = slice;
@@ -182,7 +182,7 @@ auto Spectrum::fragmentation(const unsigned size) const noexcept -> double {
   return (total - usable) / total;
 }
 
-auto Spectrum::to_string(void) const noexcept -> std::string {
+auto Spectrum::Serialize(void) const noexcept -> std::string {
   std::string buffer;
 
   std::for_each(resources.begin(), resources.end(),
@@ -409,9 +409,10 @@ std::optional<Slice> RandomFit(const Spectrum &spectrum, const unsigned FSUs) {
     return std::nullopt;
   }
 
-  std::random_device random_device;
+  static std::random_device random_device;
 
-  Uniform distribution{random_device(), 0, static_cast<double>(indexes.size())};
+  static Uniform distribution{random_device(), 0,
+                              static_cast<double>(indexes.size())};
 
   const auto index{static_cast<unsigned>(distribution.next())};
 
@@ -470,41 +471,21 @@ std::optional<Slice> WorstFit(const Spectrum &spectrum, const unsigned FSUs) {
   return Slice(start, start + FSUs - 1);
 }
 
-auto fragmentation_coefficient(const Spectrum &spectrum) -> double {
+double ExternalFragmentation::operator()(const Spectrum &spectrum) const {
   return 1.0 - (spectrum.largest_gap() / spectrum.size());
 }
 
-auto relative_fragmentation(const Spectrum &spectrum) -> double {
-  return spectrum.gaps() / spectrum.size();
-}
+EntropyBasedFragmentation::EntropyBasedFragmentation(const unsigned minFSUs)
+    : minFSUs{minFSUs} {}
 
-auto availability_ratio(const Spectrum &spectrum) -> double {
-  return static_cast<double>(spectrum.available()) /
-         static_cast<double>(spectrum.size());
-}
+double EntropyBasedFragmentation::operator()(const Spectrum &spectrum) const {
+  const auto partitions = spectrum.available_partitions(minFSUs).size();
 
-auto utilization_ratio(const Spectrum &spectrum) -> double {
-  return 1.0 - availability_ratio(spectrum);
-}
-
-auto shannon_entropy(const Spectrum &spectrum) -> double {
-  const auto sar = availability_ratio(spectrum);
-
-  const auto sur = utilization_ratio(spectrum);
-
-  const auto coefficient_of = [](double x) { return x * std::log2(x); };
-
-  if (sar == 0.0 || sur == 0.0) {
+  if (0u == partitions) {
     return 0.0;
   }
 
-  if (sar == 0.0 && sur != 0.0) {
-    return coefficient_of(sur);
-  }
+  const auto S = static_cast<double>(spectrum.size());
 
-  if (sar != 0.0 && sur == 0.0) {
-    return coefficient_of(sar);
-  }
-
-  return -(coefficient_of(sur) + coefficient_of(sar));
+  return (partitions / S) * std::log(S / partitions);
 }

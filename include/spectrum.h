@@ -1,11 +1,18 @@
 #pragma once
 
 #include <functional>
+#include <limits>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
-using FSU = std::pair<bool, unsigned>;
+struct FSU final {
+  bool allocated;
+  unsigned occupancy;
+
+  static constexpr auto max = std::numeric_limits<unsigned>::max();
+};
 
 using Slice = std::pair<unsigned, unsigned>;
 
@@ -39,7 +46,7 @@ class Spectrum final {
 
   [[nodiscard]] auto fragmentation(const unsigned) const noexcept -> double;
 
-  [[nodiscard]] auto to_string(void) const noexcept -> std::string;
+  [[nodiscard]] auto Serialize(void) const noexcept -> std::string;
 
   [[nodiscard]] auto at(const unsigned) const -> FSU;
 
@@ -64,14 +71,22 @@ class Spectrum final {
 using SpectrumAllocator =
     std::function<std::optional<Slice>(const Spectrum &, const unsigned)>;
 
-[[nodiscard]] auto fragmentation_coefficient(const Spectrum &) -> double;
+struct Fragmentation {
+  virtual ~Fragmentation() = default;
 
-[[nodiscard]] auto relative_fragmentation(const Spectrum &) -> double;
+  [[nodiscard]] virtual double operator()(const Spectrum &) const = 0;
+};
 
-[[nodiscard]] auto availability_ratio(const Spectrum &) -> double;
+using FragmentationStrategy = std::shared_ptr<Fragmentation>;
 
-[[nodiscard]] auto utilization_ratio(const Spectrum &) -> double;
+struct ExternalFragmentation : public Fragmentation {
+  [[nodiscard]] double operator()(const Spectrum &) const override;
+};
 
-using FragmentationMetric = std::function<double(const Spectrum &)>;
+struct EntropyBasedFragmentation : public Fragmentation {
+  unsigned minFSUs;
 
-[[nodiscard]] auto shannon_entropy(const Spectrum &) -> double;
+  EntropyBasedFragmentation(const unsigned);
+
+  [[nodiscard]] double operator()(const Spectrum &) const override;
+};
