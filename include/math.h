@@ -9,18 +9,25 @@ using PairingFunction = std::function<unsigned(unsigned, unsigned)>;
 
 [[nodiscard]] unsigned CantorPairingFunction(unsigned, unsigned);
 
-template <class Iterator>
-[[nodiscard]] double Mean(Iterator first, Iterator last) {
-  return std::accumulate(first, last, 0.0) / std::distance(first, last);
-}
+struct Unit final {
+  double mean;
+  double stddev;
+  double variance;
 
-template <class Iterator>
-[[nodiscard]] double StandardDeviation(Iterator first, Iterator last) {
-  const auto mean = Mean(first, last);
+  Unit(double, double, double);
 
-  const auto variance = std::accumulate(
-      first, last, 0.0,
-      [mean](double sum, double x) { return sum + (x - mean) * (x - mean); });
+  template <class Iterator>
+  [[nodiscard]] static Unit New(Iterator first, Iterator last) {
+    const auto mean =
+        std::accumulate(first, last, 0.0) / std::distance(first, last);
 
-  return std::sqrt(variance);
-}
+    const auto variance =
+        std::accumulate(first, last, 0.0, [&mean](double sum, double x) {
+          return sum + (x - mean) * (x - mean);
+        });
+
+    const auto stddev = std::sqrt(variance);
+
+    return Unit(mean, stddev, variance);
+  }
+};
