@@ -24,6 +24,8 @@ bool operator<(const Cost &lhs, const Cost &rhs) {
   return lhs.value < rhs.value;
 }
 
+Route Route::None(void) { return {{}, Cost::max()}; }
+
 Graph::Graph(const unsigned vertices) {
   for (const auto &vertex : std::views::iota(0u, vertices)) {
     add(vertex);
@@ -132,8 +134,8 @@ void Graph::add(const Edge &edge) {
   adjacency_list[source].emplace_back(destination, cost);
 }
 
-route_t BreadthFirstSearch(const Graph &graph, const Vertex source,
-                           const Vertex destination) noexcept {
+Route BreadthFirstSearch(const Graph &graph, const Vertex source,
+                         const Vertex destination) noexcept {
   assert(source != destination);
 
   std::unordered_map<Vertex, bool> visited;
@@ -189,8 +191,8 @@ route_t BreadthFirstSearch(const Graph &graph, const Vertex source,
   return {vertices, cost};
 }
 
-route_t DepthFirstSearch(const Graph &graph, const Vertex source,
-                         const Vertex destination) noexcept {
+Route DepthFirstSearch(const Graph &graph, const Vertex source,
+                       const Vertex destination) noexcept {
   assert(source != destination);
 
   std::unordered_map<Vertex, bool> visited;
@@ -242,14 +244,14 @@ route_t DepthFirstSearch(const Graph &graph, const Vertex source,
   }
 
   if (*vertices.begin() != source) {
-    return __NO_ROUTE__;
+    return Route::None();
   }
 
   return {vertices, cost};
 }
 
-route_t Dijkstra(const Graph &graph, const Vertex source,
-                 const Vertex destination) noexcept {
+Route Dijkstra(const Graph &graph, const Vertex source,
+               const Vertex destination) noexcept {
   assert(source != destination);
 
   std::unordered_map<int, Cost> costs;
@@ -330,24 +332,24 @@ route_t Dijkstra(const Graph &graph, const Vertex source,
   }
 
   if (*vertices.begin() != source) {
-    return __NO_ROUTE__;
+    return Route::None();
   }
 
   return {vertices, cost};
 }
 
-std::vector<route_t> KShortestPath(const Graph &graph, const Vertex source,
-                                   const Vertex destination,
-                                   const unsigned k) noexcept {
+std::vector<Route> KShortestPath(const Graph &graph, const Vertex source,
+                                 const Vertex destination,
+                                 const unsigned k) noexcept {
   assert(source != destination);
 
-  std::vector<route_t> kShortestPaths{};
+  std::vector<Route> kShortestPaths{};
 
   struct stub_t {
     Vertex vertex;
-    route_t path;
+    Route path;
 
-    stub_t(const Vertex vertex, const route_t &path)
+    stub_t(const Vertex vertex, const Route &path)
         : vertex{vertex}, path{path} {}
 
     auto operator>(const stub_t &binding) const -> bool {
@@ -386,7 +388,7 @@ std::vector<route_t> KShortestPath(const Graph &graph, const Vertex source,
   return kShortestPaths;
 }
 
-auto random_path(const Graph &graph) noexcept -> route_t {
+Route random_path(const Graph &graph) noexcept {
   static std::random_device random_device;
 
   static Uniform distribution{random_device(), 0,

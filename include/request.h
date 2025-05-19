@@ -9,14 +9,14 @@
 #include "spectrum.h"
 
 struct Request {
-  route_t route;
+  Route route;
   Slice slice;
   unsigned FSUs{};
   bool accepted;
 
   Request(void) = default;
 
-  Request(const route_t &, const unsigned);
+  Request(const Route &, const unsigned);
 };
 
 [[nodiscard]] unsigned from_modulation(double, unsigned, double);
@@ -25,7 +25,7 @@ struct Request {
 
 [[nodiscard]] unsigned from_terabits_transmission(const double);
 
-[[nodiscard]] std::unordered_set<unsigned> route_keys(const route_t &,
+[[nodiscard]] std::unordered_set<unsigned> route_keys(const Route &,
                                                       PairingFunction);
 
 using Hashmap = std::unordered_map<unsigned, Spectrum>;

@@ -5,7 +5,7 @@
 #include <ranges>
 #include <utility>
 
-Request::Request(const route_t &route, const unsigned FSUs)
+Request::Request(const Route &route, const unsigned FSUs)
     : route{route}, FSUs{FSUs} {}
 
 auto from_modulation(double bandwidth, unsigned spectralEfficiency,
@@ -53,7 +53,7 @@ auto from_terabits_transmission(const double distance) -> unsigned {
   return FSU::max;
 }
 
-std::unordered_set<unsigned> route_keys(const route_t &route,
+std::unordered_set<unsigned> route_keys(const Route &route,
                                         PairingFunction make_key) {
   const auto &[vertices, cost] = route;
 

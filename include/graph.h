@@ -34,9 +34,12 @@ using AdjacentVertex = std::pair<Vertex, Cost>;
 
 using Edge = std::tuple<Vertex, Vertex, Cost>;
 
-using route_t = std::pair<std::unordered_set<Vertex>, Cost>;
+struct Route final {
+  std::unordered_set<Vertex> vertices;
+  Cost cost;
 
-const route_t __NO_ROUTE__ = {{}, Cost::max()};
+  [[nodiscard]] static Route None(void);
+};
 
 class Graph final {
  public:
@@ -69,17 +72,17 @@ class Graph final {
   std::set<Vertex> vertices;
 };
 
-[[nodiscard]] route_t BreadthFirstSearch(const Graph &, const Vertex,
-                                         const Vertex) noexcept;
-
-[[nodiscard]] route_t DepthFirstSearch(const Graph &, const Vertex,
+[[nodiscard]] Route BreadthFirstSearch(const Graph &, const Vertex,
                                        const Vertex) noexcept;
 
-[[nodiscard]] route_t Dijkstra(const Graph &, const Vertex,
-                               const Vertex) noexcept;
+[[nodiscard]] Route DepthFirstSearch(const Graph &, const Vertex,
+                                     const Vertex) noexcept;
 
-[[nodiscard]] std::vector<route_t> KShortestPath(const Graph &, const Vertex,
-                                                 const Vertex,
-                                                 const unsigned) noexcept;
+[[nodiscard]] Route Dijkstra(const Graph &, const Vertex,
+                             const Vertex) noexcept;
 
-[[nodiscard]] route_t random_path(const Graph &) noexcept;
+[[nodiscard]] std::vector<Route> KShortestPath(const Graph &, const Vertex,
+                                               const Vertex,
+                                               const unsigned) noexcept;
+
+[[nodiscard]] Route random_path(const Graph &) noexcept;
