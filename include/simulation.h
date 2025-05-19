@@ -1,7 +1,7 @@
 #pragma once
 
-#include <map>
 #include <string>
+#include <vector>
 
 #include "distribution.h"
 #include "event_queue.h"
@@ -11,13 +11,13 @@
 
 struct Snapshot final {
   double time;
-  unsigned slots;
+  unsigned FSUs;
   bool accepted;
-  double fragmentation;
+  std::vector<double> fragmentation;
   double entropy;
   double blocking;
 
-  Snapshot(const Event<Request> &, double, double, double);
+  Snapshot(const Event<Request> &, std::vector<double>, double, double);
 
   [[nodiscard]] std::string Serialize(void) const;
 };
@@ -38,12 +38,16 @@ class Simulation final {
 
   double GetGradeOfService(void) const;
 
+  double GetEntropy(void) const;
+
+  std::vector<double> GetFragmentation(void) const;
+
  private:
   Settings &settings;
   EventQueue<Request> queue;
   Discrete distribution;
   double kToIgnore;
-  std::map<unsigned, Spectrum> hashmap;
+  Hashmap hashmap;
   std::vector<std::string> requestsKeys;
   bool ignoredFirst{false};
   unsigned requestCount{0u};
@@ -51,8 +55,4 @@ class Simulation final {
   unsigned activeRequests{0u};
   double time{0.0};
   std::vector<Snapshot> snapshots;
-
-  double network_fragmentation(void);
-
-  double entropy(void);
 };

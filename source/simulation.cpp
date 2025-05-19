@@ -9,23 +9,31 @@
 #include "logger.h"
 #include "request.h"
 
-Snapshot::Snapshot(const Event<Request> &event, double fragmentation,
-                   double entropy, double blocking)
+Snapshot::Snapshot(const Event<Request> &event,
+                   std::vector<double> fragmentation, double entropy,
+                   double blocking)
     : time{event.time},
-      slots{event.value.FSUs},
+      FSUs{event.value.FSUs},
       accepted{event.value.accepted},
       fragmentation{fragmentation},
       entropy{entropy},
       blocking{blocking} {}
 
 std::string Snapshot::Serialize(void) const {
-  const std::unordered_map<bool, std::string> map = {
+  static const std::unordered_map<bool, std::string> map = {
       {false, "False"},
       {true, "True"},
   };
 
-  return std::format("{},{},{},{},{},{}", time, slots, map.at(accepted),
-                     fragmentation, entropy, blocking);
+  std::string buffer = std::format("{},{},{},", time, FSUs, map.at(accepted));
+
+  for (const auto &value : fragmentation) {
+    buffer.append(std::format("{},", value));
+  }
+
+  buffer.append(std::format("{},{}", entropy, blocking));
+
+  return buffer;
 }
 
 Simulation::Simulation(Settings &settings)
@@ -33,7 +41,8 @@ Simulation::Simulation(Settings &settings)
       queue{settings.arrivalRate, settings.serviceRate, settings.seed},
       distribution{settings.seed, settings.probs},
       kToIgnore{0.1 * settings.timeUnits},
-      hashmap{make_hashmap(settings.graph, settings.bandwidth)},
+      hashmap{GetHashmap(settings.graph, settings.bandwidth,
+                         settings.pairingFunction)},
       requestsKeys{} {
   requestsKeys.reserve(settings.requests.size());
 
@@ -45,7 +54,7 @@ Simulation::Simulation(Settings &settings)
 
   ++firstRequest.counting;
 
-  queue.push(Request{random_path(settings.graph), firstRequest.resources}, time)
+  queue.push(Request{random_path(settings.graph), firstRequest.FSUs}, time)
       .of_type(Signal::ARRIVAL);
 
   ++requestCount;
@@ -82,12 +91,11 @@ void Simulation::Next(void) {
     INFO(std::format("Request for {} FSU(s) departing at {:.3f}",
                      event.value.FSUs, event.time));
 
-    const auto keys{route_keys(event.value.route)};
-
-    for (const auto &key : keys) {
+    for (const auto &key :
+         route_keys(event.value.route, settings.pairingFunction)) {
       hashmap[key].deallocate(event.value.slice);
 
-      INFO(hashmap[key].to_string());
+      INFO(hashmap[key].Serialize());
     }
 
     return;
@@ -112,7 +120,7 @@ void Simulation::Next(void) {
   event.value.accepted = false;
 
   if (activeRequests < settings.bandwidth &&
-      dispatch_request(event.value, hashmap, allocator)) {
+      Dispatch(event.value, hashmap, allocator, settings.pairingFunction)) {
     ++activeRequests;
 
     queue.push(event.value, time).of_type(Signal::DEPARTURE);
@@ -120,10 +128,9 @@ void Simulation::Next(void) {
     INFO(std::format("Accept request for {} FSU(s) at {:.3f}", event.value.FSUs,
                      time));
 
-    const auto keys{route_keys(event.value.route)};
-
-    for (const auto &key : keys) {
-      INFO(hashmap[key].to_string());
+    for (const auto &key :
+         route_keys(event.value.route, settings.pairingFunction)) {
+      INFO(hashmap[key].Serialize());
     }
 
     event.value.accepted = true;
@@ -132,7 +139,7 @@ void Simulation::Next(void) {
                      event.value.FSUs, event.time));
 
     for (auto &request : settings.requests) {
-      if (event.value.FSUs != request.second.resources) {
+      if (event.value.FSUs != request.second.FSUs) {
         continue;
       }
 
@@ -145,14 +152,13 @@ void Simulation::Next(void) {
   }
 
   snapshots.push_back(
-      Snapshot(event, network_fragmentation(), entropy(), GetGradeOfService()));
+      Snapshot(event, GetFragmentation(), GetEntropy(), GetGradeOfService()));
 
   auto &request = settings.requests[requestsKeys[distribution.next()]];
 
   ++request.counting;
 
-  queue
-      .push(Request{random_path(settings.graph), request.resources}, event.time)
+  queue.push(Request{random_path(settings.graph), request.FSUs}, event.time)
       .of_type(Signal::ARRIVAL);
 
   ++requestCount;
@@ -170,41 +176,39 @@ double Simulation::GetGradeOfService(void) const {
   return static_cast<double>(blockedCount) / static_cast<double>(requestCount);
 }
 
-double Simulation::network_fragmentation(void) {
-  auto fragmentation{0.0};
+std::vector<double> Simulation::GetFragmentation(void) const {
+  std::vector<double> fragmentation;
 
-  for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
-    const auto key = make_key(source, destination);
+  fragmentation.reserve(settings.graph.get_edges().size());
 
-    fragmentation += hashmap[key].fragmentation();
+  for (const auto &strategy : settings.fragmentationStrategies) {
+    auto sum = 0.0;
+
+    for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
+      const auto key = settings.pairingFunction(source, destination);
+
+      sum += strategy.second->operator()(hashmap.at(key));
+    }
+
+    fragmentation.emplace_back(sum / settings.graph.get_edges().size());
   }
 
-  return (fragmentation / settings.graph.get_edges().size());
+  return fragmentation;
 }
 
-double Simulation::entropy(void) {
-  auto free_slots = 0.0;
+double Simulation::GetEntropy(void) const {
+  auto metric =
+      settings.fragmentationStrategies.at("entropy_based_fragmentation");
 
-  auto occupied_slots = 0.0;
+  auto sum = 0.0;
 
   for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
-    const auto key = make_key(source, destination);
+    const auto key = settings.pairingFunction(source, destination);
 
-    const auto spectrum = hashmap[key];
+    const auto spectrum = hashmap.at(key);
 
-    free_slots += spectrum.available();
-
-    occupied_slots += spectrum.size() - spectrum.available();
+    sum += metric->operator()(spectrum);
   }
 
-  if (free_slots == 0.0 || occupied_slots == 0.0) {
-    return 0.0;
-  }
-
-  free_slots /= settings.bandwidth;
-
-  occupied_slots /= settings.bandwidth;
-
-  return -(occupied_slots * std::log2(occupied_slots) +
-           free_slots * std::log2(free_slots));
+  return sum;
 }

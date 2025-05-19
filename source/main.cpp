@@ -1,16 +1,15 @@
 #include <algorithm>
-#include <chrono>
-#include <ctime>
 #include <format>
 #include <fstream>
 #include <iostream>
 #include <optional>
 #include <string>
 
+#include "date.h"
 #include "json.h"
+#include "math.h"
 #include "settings.h"
 #include "simulation.h"
-#include "statistics.h"
 
 auto main(void) -> int {
   const std::string filename = "settings.json";
@@ -35,23 +34,24 @@ auto main(void) -> int {
   const auto snapshots = simulation.GetSnapshots();
 
   if (settings.exportDataset) {
-    std::string buffer{""};
+    std::string buffer{"time,fsus,accepted,"};
 
-    buffer.append("time, slots, accepted, fragmentation, entropy, blocking\n");
+    for (const auto &strategy : settings.fragmentationStrategies) {
+      buffer.append(std::format("{},", strategy.first));
+    }
+
+    buffer.append("entropy,blocking\n");
 
     std::for_each(snapshots.begin(), snapshots.end(),
                   [&buffer](const Snapshot &snapshot) {
                     buffer.append(std::format("{}\n", snapshot.Serialize()));
                   });
 
-    const auto time = std::time(nullptr);
+    const auto datetime = DateTime::now();
 
-    const auto localtime = std::localtime(&time);
-
-    const std::string filename =
-        std::format("{:02}-{:02}-{:04} {:02}h{:02}.csv", localtime->tm_mday,
-                    localtime->tm_mon + 1, localtime->tm_year + 1900,
-                    localtime->tm_hour, localtime->tm_min);
+    const std::string filename = std::format(
+        "{:02}_{:02}_{:04}_{:02}h{:02}.csv", datetime.day, datetime.month,
+        datetime.year, datetime.hour, datetime.minute);
 
     std::ofstream stream(filename);
 
@@ -69,10 +69,14 @@ auto main(void) -> int {
 
   std::vector<double> entropyStates;
 
-  for (const auto &snapshot : snapshots) {
-    fragmentationStates.push_back(snapshot.fragmentation);
+  entropyStates.reserve(snapshots.size());
 
-    entropyStates.push_back(snapshot.entropy);
+  for (const auto &snapshot : snapshots) {
+    fragmentationStates.insert(fragmentationStates.end(),
+                               snapshot.fragmentation.begin(),
+                               snapshot.fragmentation.end());
+
+    entropyStates.emplace_back(snapshot.entropy);
   }
 
   const auto time = simulation.GetTime();
@@ -92,14 +96,18 @@ auto main(void) -> int {
 
   buffer.append(std::format("slot width (GHz): {:.2f}\n", settings.slotWidth));
 
-  buffer.append(std::format("slots per link: {}\n", settings.bandwidth));
+  buffer.append(std::format("fsus per link: {}\n", settings.bandwidth));
 
-  buffer.append(std::format("mean fragmentation: {:.3f} ± {:.3f}\n",
-                            MEAN(fragmentationStates),
-                            STDDEV(fragmentationStates)));
+  buffer.append(
+      std::format("mean fragmentation: {:.3f} ± {:.3f}\n",
+                  Mean(fragmentationStates.begin(), fragmentationStates.end()),
+                  StandardDeviation(fragmentationStates.begin(),
+                                    fragmentationStates.end())));
 
-  buffer.append(std::format("mean entropy: {:.3f} ± {:.3f}\n",
-                            MEAN(entropyStates), STDDEV(entropyStates)));
+  buffer.append(std::format(
+      "mean entropy: {:.3f} ± {:.3f}\n",
+      Mean(entropyStates.begin(), entropyStates.end()),
+      StandardDeviation(entropyStates.begin(), entropyStates.end())));
 
   const double load = settings.arrivalRate / settings.serviceRate;
 
@@ -121,7 +129,7 @@ auto main(void) -> int {
 
     buffer.append(std::format(
         "requests for {} FSU(s)\nratio: {:.3f}\ngrade of service: {:.3f}\n",
-        request.second.resources, ratio, gos));
+        request.second.FSUs, ratio, gos));
   }
 
   std::cout << buffer << std::endl;
