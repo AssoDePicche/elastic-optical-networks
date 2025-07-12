@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -DALLOWLOGS -g)
 
-set(DEPENDENCIES nlohmann_json::nlohmann_json gtest gtest_main)
+set(DEPENDENCIES nlohmann_json gtest gtest_main)
 
 set(INCLUDE ${CMAKE_SOURCE_DIR}/include)
 
@@ -18,25 +18,9 @@ set(TEST ${CMAKE_SOURCE_DIR}/test)
 
 set(TESTS ${PROJECT_NAME}Test)
 
-set(THIRD_PARTY ${CMAKE_SOURCE_DIR}/third_party)
+add_subdirectory(vendor/json)
 
-cmake_policy(SET CMP0135 NEW)
-
-include(FetchContent)
-
-FetchContent_Declare(
-  json
-  URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
-  SOURCE_DIR ${THIRD_PARTY}/json
-)
-
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/heads/main.zip
-  SOURCE_DIR ${THIRD_PARTY}/googletest
-)
-
-FetchContent_MakeAvailable(json googletest)
+add_subdirectory(vendor/googletest)
 
 file(GLOB SOURCES ${SOURCE}/*.cpp)
 
