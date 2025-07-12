@@ -36,7 +36,7 @@ std::optional<nlohmann::json> Json::unwrap(
     const std::vector<std::string>& buffer, const nlohmann::json& current,
     size_t index) const {
   if (buffer.size() == index) {
-    return current;
+    return std::make_optional(current);
   }
 
   const auto& key = buffer[index];
