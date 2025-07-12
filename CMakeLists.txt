@@ -8,27 +8,25 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -DALLOWLOGS -g)
 
+set(APP_DIR ${CMAKE_SOURCE_DIR}/application)
+
+set(CORE_INCLUDE ${APP_DIR}/core/include)
+
+set(CORE_SOURCE ${APP_DIR}/core/source
+)
+set(TEST_DIR ${CMAKE_SOURCE_DIR}/test)
+
 set(DEPENDENCIES nlohmann_json gtest gtest_main)
-
-set(INCLUDE ${CMAKE_SOURCE_DIR}/include)
-
-set(SOURCE ${CMAKE_SOURCE_DIR}/source)
-
-set(TEST ${CMAKE_SOURCE_DIR}/test)
-
-set(TESTS ${PROJECT_NAME}Test)
 
 add_subdirectory(vendor/json)
 
 add_subdirectory(vendor/googletest)
 
-file(GLOB SOURCES ${SOURCE}/*.cpp)
+file(GLOB CORE_SOURCES ${CORE_SOURCE}/*.cpp)
 
-list(REMOVE_ITEM SOURCES ${SOURCE}/main.cpp)
+add_executable(${PROJECT_NAME} ${APP_DIR}/main.cpp ${CORE_SOURCES})
 
-add_executable(${PROJECT_NAME} ${SOURCE}/main.cpp ${SOURCES})
-
-target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE})
+target_include_directories(${PROJECT_NAME} PRIVATE ${CORE_INCLUDE})
 
 target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
@@ -36,14 +34,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${DEPENDENCIES})
 
 enable_testing()
 
-file(GLOB TEST_SOURCES ${TEST}/*.cpp)
+file(GLOB TEST_SOURCES ${TEST_DIR}/*.cpp)
 
-add_executable(${TESTS} ${TEST_SOURCES} ${SOURCES})
+add_executable(${PROJECT_NAME}Test ${TEST_SOURCES} ${CORE_SOURCES})
 
-target_include_directories(${TESTS} PRIVATE ${INCLUDE} ${SOURCE})
+target_include_directories(${PROJECT_NAME}Test PRIVATE ${CORE_INCLUDE} ${CORE_SOURCE})
 
-target_compile_options(${TESTS} PRIVATE ${COMPILE_OPTIONS})
+target_compile_options(${PROJECT_NAME}Test PRIVATE ${COMPILE_OPTIONS})
 
-target_link_libraries(${TESTS} PRIVATE ${DEPENDENCIES})
+target_link_libraries(${PROJECT_NAME}Test PRIVATE ${DEPENDENCIES})
 
-add_test(NAME ${TESTS} COMMAND ${TESTS} --gtest_color=1)
+add_test(NAME ${PROJECT_NAME}Test COMMAND ${PROJECT_NAME}Test --gtest_color=1)
