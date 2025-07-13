@@ -1,12 +1,8 @@
 #pragma once
 
-#include <algorithm>
 #include <cassert>
-#include <memory>
 #include <optional>
 #include <queue>
-#include <random>
-#include <vector>
 
 #include "distribution.h"
 
@@ -31,10 +27,6 @@ struct Event {
 template <typename T>
 class EventQueue {
  public:
-  EventQueue(const double arrival_rate, const double service_rate,
-             const Seed seed)
-      : arrival{seed, arrival_rate}, service{seed, service_rate} {}
-
   [[nodiscard]] auto push(const T &value, const double now) -> EventQueue<T> & {
     assert(!pushing);
 
@@ -54,10 +46,10 @@ class EventQueue {
 
     switch (signal) {
       case Signal::ARRIVAL:
-        now += arrival.next();
+        now += PseudoRandomNumberGenerator::Instance()->next("arrival");
         break;
       case Signal::DEPARTURE:
-        now += service.next();
+        now += PseudoRandomNumberGenerator::Instance()->next("service");
         break;
     }
 
@@ -66,7 +58,7 @@ class EventQueue {
     pushing = false;
   }
 
-  [[nodiscard]] auto top(void) const -> std::optional<Event<T>> {
+  [[nodiscard]] std::optional<Event<T>> top(void) const {
     if (empty()) {
       return std::nullopt;
     }
@@ -74,7 +66,7 @@ class EventQueue {
     return queue.top();
   }
 
-  [[nodiscard]] auto pop(void) -> std::optional<Event<T>> {
+  [[nodiscard]] std::optional<Event<T>> pop(void) {
     if (empty()) {
       return std::nullopt;
     }
@@ -86,14 +78,12 @@ class EventQueue {
     return event;
   }
 
-  [[nodiscard]] auto empty(void) const -> bool { return queue.empty(); }
+  [[nodiscard]] bool empty(void) const { return queue.empty(); }
 
-  [[nodiscard]] auto size(void) const -> std::size_t { return queue.size(); }
+  [[nodiscard]] size_t size(void) const { return queue.size(); }
 
  private:
   std::priority_queue<Event<T>> queue;
-  Exponential arrival;
-  Exponential service;
   double time;
   T to_push;
   bool pushing{false};

@@ -38,7 +38,6 @@ std::string Snapshot::Serialize(void) const {
 
 Simulation::Simulation(Settings &settings)
     : settings{settings},
-      queue{settings.arrivalRate, settings.serviceRate, settings.seed},
       distribution{settings.seed, settings.probs},
       kToIgnore{0.1 * settings.timeUnits},
       dispatcher{settings.graph, settings.keyGenerator, settings.FSUsPerLink},

@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 #include "date.h"
+#include "distribution.h"
 #include "json.h"
 #include "math.h"
 #include "settings.h"
@@ -19,6 +20,14 @@ auto main(void) -> int {
     const Json json(filename);
 
     Settings settings = Settings::From(json).value();
+
+    const auto prng = PseudoRandomNumberGenerator::Instance();
+
+    prng->set_seed(settings.seed);
+
+    prng->set_exponential("arrival", settings.arrivalRate);
+
+    prng->set_exponential("service", settings.serviceRate);
 
     Simulation simulation(settings);
 
