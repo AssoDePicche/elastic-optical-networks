@@ -4,7 +4,7 @@
 
 #include "request.h"
 
-auto Settings::From(const Json &json) -> std::optional<Settings> {
+std::optional<Settings> Settings::From(const Json &json) {
   static const std::unordered_map<std::string, SpectrumAllocator>
       spectrumAllocationStrategies{{"best-fit", BestFit},
                                    {"first-fit", FirstFit},

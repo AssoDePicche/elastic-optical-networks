@@ -46,5 +46,5 @@ struct Settings {
   unsigned minFSUsPerRequest;
   unsigned iterations;
 
-  [[nodiscard]] static auto From(const Json &) -> std::optional<Settings>;
+  [[nodiscard]] static std::optional<Settings> From(const Json &);
 };
