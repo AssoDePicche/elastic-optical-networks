@@ -42,6 +42,8 @@ class Simulation final {
 
   std::vector<double> GetFragmentation(void) const;
 
+  void Reset(void);
+
  private:
   Settings &settings;
   EventQueue<Request> queue;

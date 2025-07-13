@@ -190,6 +190,21 @@ double Simulation::GetGradeOfService(void) const {
   return static_cast<double>(blockedCount) / static_cast<double>(requestCount);
 }
 
+double Simulation::GetEntropy(void) const {
+  auto metric =
+      settings.fragmentationStrategies.at("entropy_based_fragmentation");
+
+  auto sum = 0.0;
+
+  for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
+    const auto key = settings.keyGenerator.generate(source, destination);
+
+    sum += (*metric)(dispatcher.GetCarriers().at(key));
+  }
+
+  return sum;
+}
+
 std::vector<double> Simulation::GetFragmentation(void) const {
   std::vector<double> fragmentation;
 
@@ -210,17 +225,40 @@ std::vector<double> Simulation::GetFragmentation(void) const {
   return fragmentation;
 }
 
-double Simulation::GetEntropy(void) const {
-  auto metric =
-      settings.fragmentationStrategies.at("entropy_based_fragmentation");
+void Simulation::Reset(void) {
+  ignoredFirst = false;
 
-  auto sum = 0.0;
+  requestCount = 0u;
 
-  for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
-    const auto key = settings.keyGenerator.generate(source, destination);
+  blockedCount = 0u;
 
-    sum += (*metric)(dispatcher.GetCarriers().at(key));
-  }
+  activeRequests = 0u;
 
-  return sum;
+  time = 0.0;
+
+  snapshots.clear();
+
+  requestsKeys.reserve(settings.requests.size());
+
+  std::transform(settings.requests.begin(), settings.requests.end(),
+                 std::back_inserter(requestsKeys),
+                 [](const auto &pair) { return pair.first; });
+
+  auto &firstRequest = settings.requests[requestsKeys[distribution.next()]];
+
+  ++firstRequest.counting;
+
+  auto routingStrategy = std::make_shared<RandomRouting>(settings.graph);
+
+  routingStrategy->SetDistribution(
+      std::make_shared<Uniform>(settings.seed, 0u, settings.graph.size()));
+
+  router.SetStrategy(routingStrategy);
+
+  queue
+      .push(Request{router.compute(NullVertex, NullVertex), firstRequest.FSUs},
+            time)
+      .of_type(Signal::ARRIVAL);
+
+  ++requestCount;
 }
