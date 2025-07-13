@@ -136,7 +136,22 @@ auto main(void) -> int {
           request.second.FSUs, ratio, gos));
     }
 
-    std::cout << buffer << std::endl;
+    const std::string report_filename = "report.txt";
+
+    std::ofstream report_stream(report_filename);
+
+    if (!report_stream.is_open()) {
+      throw std::runtime_error(
+          std::format("Failed to write {} file", report_filename));
+    }
+
+    report_stream << buffer;
+
+    report_stream.close();
+
+    std::cout << std::format("Simulation results wrote in {}\n",
+                             report_filename);
+
   } catch (const std::exception &exception) {
     std::cerr << exception.what() << std::endl;
   }
