@@ -40,6 +40,8 @@ auto Settings::From(const Json &json) -> std::optional<Settings> {
 
   settings.seed = json.Get<unsigned>("params.seed").value();
 
+  settings.iterations = json.Get<unsigned>("params.iterations").value();
+
   settings.spectrumWidth = json.Get<double>("params.spectrum-width").value();
 
   settings.slotWidth = json.Get<double>("params.slot-width").value();

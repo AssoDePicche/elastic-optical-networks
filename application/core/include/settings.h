@@ -44,6 +44,7 @@ struct Settings {
   bool exportDataset;
   bool enableLogging;
   unsigned minFSUsPerRequest;
+  unsigned iterations;
 
   [[nodiscard]] static auto From(const Json &) -> std::optional<Settings>;
 };
