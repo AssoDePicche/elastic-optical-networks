@@ -8,6 +8,7 @@
 
 #include "date.h"
 #include "distribution.h"
+#include "document.h"
 #include "json.h"
 #include "math.h"
 #include "settings.h"
@@ -103,67 +104,41 @@ auto main(void) -> int {
         {"entropy", entropyStates},
     }};
 
-    std::string buffer{""};
+    Document document;
 
-    buffer.append(std::format("seed: {}\n", settings.seed));
-
-    buffer.append(std::format("execution time (s): {}\n", execution_time));
-
-    buffer.append(std::format("simulated time: {:.3f}\n", time));
-
-    buffer.append(
-        std::format("spectrum width (GHz): {:.2f}\n", settings.spectrumWidth));
-
-    buffer.append(
-        std::format("slot width (GHz): {:.2f}\n", settings.slotWidth));
-
-    buffer.append(std::format("fsus per link: {}\n", settings.FSUsPerLink));
-
-    for (const auto &[key, value] : units) {
-      const auto unit = Unit::New(value.begin(), value.end());
-
-      buffer.append(std::format("mean {}: {:.3f} ± {:.3f}\n", key, unit.mean,
-                                unit.stddev));
-    }
+    document.append("seed: {}\n", settings.seed)
+        .append("execution time (s): {}\n", execution_time)
+        .append("simulated time: {:.3f}\n", time)
+        .append("spectrum width (GHz): {:.2f}\n", settings.spectrumWidth)
+        .append("slot width (GHz): {:.2f}\n", settings.slotWidth)
+        .append("fsus per link: {}\n", settings.FSUsPerLink);
 
     const double load = settings.arrivalRate / settings.serviceRate;
 
-    buffer.append(std::format("load (E): {:.3f}\n", load));
-
-    buffer.append(std::format("arrival rate: {:.3f}\n", settings.arrivalRate));
-
-    buffer.append(std::format("service rate: {:.3f}\n", settings.serviceRate));
-
-    buffer.append(std::format("grade of service: {:.3f}\n",
-                              simulation.GetGradeOfService()));
-
-    buffer.append(std::format("total requests: {}\n", requestCount));
+    document.append("load (E): {:.3f}\n", load)
+        .append("arrival rate: {:.3f}\n", settings.arrivalRate)
+        .append("service rate: {:.3f}\n", settings.serviceRate)
+        .append("grade of service: {:.3f}\n", simulation.GetGradeOfService())
+        .append("total requests: {}\n", requestCount);
 
     for (const auto &request : settings.requests) {
       const auto ratio = request.second.counting / simulation.GetRequestCount();
 
       const auto gos = request.second.blocking / simulation.GetRequestCount();
 
-      buffer.append(std::format(
-          "requests for {} FSU(s)\nratio: {:.3f}\ngrade of service: "
-          "{:.3f}\nnormalized load: {:.3f}\n",
-          request.second.FSUs, ratio, gos,
-          settings.arrivalRate * (static_cast<double>(request.second.FSUs) /
-                                  settings.FSUsPerLink)));
+      const auto normalized_load =
+          settings.arrivalRate *
+          (static_cast<double>(request.second.FSUs) / settings.FSUsPerLink);
+
+      document.append("requests for {} FSU(s)\n", request.second.FSUs)
+          .append("ratio: {:.3f}\n", ratio)
+          .append("grade of service: {:.3f}\n", gos)
+          .append("normalized load: {:.3f}\n", normalized_load);
     }
 
     const std::string report_filename = "report.txt";
 
-    std::ofstream report_stream(report_filename);
-
-    if (!report_stream.is_open()) {
-      throw std::runtime_error(
-          std::format("Failed to write {} file", report_filename));
-    }
-
-    report_stream << buffer;
-
-    report_stream.close();
+    document.write(report_filename);
 
     std::cout << std::format("Simulation results wrote in {}\n",
                              report_filename);
