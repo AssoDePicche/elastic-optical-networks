@@ -81,28 +81,9 @@ auto main(void) -> int {
       stream.close();
     }
 
-    std::vector<double> fragmentationStates;
-
-    std::vector<double> entropyStates;
-
-    entropyStates.reserve(snapshots.size());
-
-    for (const auto &snapshot : snapshots) {
-      fragmentationStates.insert(fragmentationStates.end(),
-                                 snapshot.fragmentation.begin(),
-                                 snapshot.fragmentation.end());
-
-      entropyStates.emplace_back(snapshot.entropy);
-    }
-
     const auto time = simulation.GetTime();
 
     const auto requestCount = simulation.GetRequestCount();
-
-    const std::unordered_map<std::string, std::vector<double>> units = {{
-        {"fragmentation", fragmentationStates},
-        {"entropy", entropyStates},
-    }};
 
     Document document;
 
