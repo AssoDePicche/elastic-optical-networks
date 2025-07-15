@@ -29,6 +29,8 @@ auto main(void) -> int {
 
     prng->set_exponential("service", settings.serviceRate);
 
+    prng->set_discrete("fsus", settings.probs);
+
     Simulation simulation(settings);
 
     const auto start = std::chrono::system_clock::now();

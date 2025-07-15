@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 
-#include "distribution.h"
 #include "event_queue.h"
 #include "request.h"
 #include "settings.h"
@@ -47,7 +46,6 @@ class Simulation final {
  private:
   Settings &settings;
   EventQueue<Request> queue;
-  Discrete distribution;
   double kToIgnore;
   Dispatcher dispatcher;
   std::vector<std::string> requestsKeys;
