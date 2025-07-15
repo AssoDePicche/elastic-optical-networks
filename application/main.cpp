@@ -143,8 +143,11 @@ auto main(void) -> int {
       const auto gos = request.second.blocking / simulation.GetRequestCount();
 
       buffer.append(std::format(
-          "requests for {} FSU(s)\nratio: {:.3f}\ngrade of service: {:.3f}\n",
-          request.second.FSUs, ratio, gos));
+          "requests for {} FSU(s)\nratio: {:.3f}\ngrade of service: "
+          "{:.3f}\nnormalized load: {:.3f}\n",
+          request.second.FSUs, ratio, gos,
+          settings.arrivalRate * (static_cast<double>(request.second.FSUs) /
+                                  settings.FSUsPerLink)));
     }
 
     const std::string report_filename = "report.txt";
