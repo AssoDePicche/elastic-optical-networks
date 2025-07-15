@@ -4,6 +4,7 @@
 #include <random>
 #include <stack>
 
+#include "distribution.h"
 #include "math.h"
 
 Route Route::None(void) { return {{}, Cost::max()}; }
@@ -217,22 +218,15 @@ Route Dijkstra::compute(const Vertex source, const Vertex destination) const {
 
 RandomRouting::RandomRouting(const Graph &graph) : RoutingStrategy{graph} {}
 
-void RandomRouting::SetDistribution(
-    std::shared_ptr<Distribution> distribution) {
-  this->distribution = distribution;
-}
-
 Route RandomRouting::compute(const Vertex, const Vertex) const {
-  if (!distribution) {
-    return Route::None();
-  }
-
   static Dijkstra dijkstra(graph);
 
   while (true) {
-    auto source = static_cast<Vertex>(distribution->next());
+    auto source = static_cast<Vertex>(
+        PseudoRandomNumberGenerator::Instance()->next("routing"));
 
-    auto destination = static_cast<Vertex>(distribution->next());
+    auto destination = static_cast<Vertex>(
+        PseudoRandomNumberGenerator::Instance()->next("routing"));
 
     if (source == destination) {
       continue;

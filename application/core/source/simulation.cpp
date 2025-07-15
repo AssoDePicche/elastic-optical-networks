@@ -52,12 +52,7 @@ Simulation::Simulation(Settings &settings)
 
   ++firstRequest.counting;
 
-  auto routingStrategy = std::make_shared<RandomRouting>(settings.graph);
-
-  routingStrategy->SetDistribution(
-      std::make_shared<Uniform>(settings.seed, 0u, settings.graph.size()));
-
-  router.SetStrategy(routingStrategy);
+  router.SetStrategy(std::make_shared<RandomRouting>(settings.graph));
 
   queue
       .push(Request{router.compute(NullVertex, NullVertex), firstRequest.FSUs},
@@ -251,12 +246,7 @@ void Simulation::Reset(void) {
 
   ++firstRequest.counting;
 
-  auto routingStrategy = std::make_shared<RandomRouting>(settings.graph);
-
-  routingStrategy->SetDistribution(
-      std::make_shared<Uniform>(settings.seed, 0u, settings.graph.size()));
-
-  router.SetStrategy(routingStrategy);
+  router.SetStrategy(std::make_shared<RandomRouting>(settings.graph));
 
   queue
       .push(Request{router.compute(NullVertex, NullVertex), firstRequest.FSUs},

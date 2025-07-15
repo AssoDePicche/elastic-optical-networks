@@ -31,6 +31,8 @@ auto main(void) -> int {
 
     prng->set_discrete("fsus", settings.probs);
 
+    prng->set_uniform("routing", 0, settings.graph.size());
+
     Simulation simulation(settings);
 
     const auto start = std::chrono::system_clock::now();

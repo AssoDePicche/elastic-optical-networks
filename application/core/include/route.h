@@ -3,10 +3,8 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
-#include "distribution.h"
 #include "graph.h"
 
 struct Route final {
@@ -53,12 +51,7 @@ class RandomRouting : public RoutingStrategy {
  public:
   RandomRouting(const Graph &);
 
-  void SetDistribution(std::shared_ptr<Distribution>);
-
   [[nodiscard]] Route compute(const Vertex, const Vertex) const override;
-
- private:
-  std::shared_ptr<Distribution> distribution;
 };
 
 class KShortestPath {
