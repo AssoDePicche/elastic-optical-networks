@@ -68,8 +68,6 @@ TEST(Spectrum, WorstFit) {
   ASSERT_EQ(maybe.value(), expected);
 }
 
-// .###...###
-
 TEST(Spectrum, ExternalFragmentation) {
   Spectrum spectrum(10);
 
@@ -80,6 +78,22 @@ TEST(Spectrum, ExternalFragmentation) {
   const double expected = 0.7;
 
   const auto absolute_error = 1;
+
+  std::unique_ptr<Fragmentation> fn = std::make_unique<ExternalFragmentation>();
+
+  EXPECT_NEAR(expected, fn->operator()(spectrum), absolute_error);
+}
+
+TEST(Spectrum, EntropyBasedFragmentation) {
+  Spectrum spectrum(10);
+
+  spectrum.allocate({1, 3});
+
+  spectrum.allocate({7, 9});
+
+  const double expected = 0.4644;
+
+  const auto absolute_error = .75;
 
   std::unique_ptr<Fragmentation> fn = std::make_unique<ExternalFragmentation>();
 
