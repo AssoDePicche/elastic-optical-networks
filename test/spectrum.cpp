@@ -81,7 +81,7 @@ TEST(Spectrum, ExternalFragmentation) {
 
   std::unique_ptr<Fragmentation> fn = std::make_unique<ExternalFragmentation>();
 
-  EXPECT_NEAR(expected, fn->operator()(spectrum), absolute_error);
+  EXPECT_NEAR(expected, (*fn)(spectrum), absolute_error);
 }
 
 TEST(Spectrum, EntropyBasedFragmentation) {
@@ -97,5 +97,19 @@ TEST(Spectrum, EntropyBasedFragmentation) {
 
   std::unique_ptr<Fragmentation> fn = std::make_unique<ExternalFragmentation>();
 
-  EXPECT_NEAR(expected, fn->operator()(spectrum), absolute_error);
+  EXPECT_NEAR(expected, (*fn)(spectrum), absolute_error);
+}
+
+TEST(Spectrum, AbsoluteFragmentation) {
+  Spectrum spectrum(10);
+
+  spectrum.allocate({1, 3});
+
+  spectrum.allocate({7, 9});
+
+  const double expected = 0.25;
+
+  const auto absolute_error = .15;
+
+  EXPECT_NEAR(expected, spectrum.fragmentation(), absolute_error);
 }
