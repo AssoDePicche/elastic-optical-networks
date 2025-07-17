@@ -192,10 +192,12 @@ double Simulation::GetEntropy(void) const {
 
   auto sum = 0.0;
 
+  const auto carriers = dispatcher.GetCarriers();
+
   for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
     const auto key = settings.keyGenerator.generate(source, destination);
 
-    sum += (*metric)(dispatcher.GetCarriers().at(key));
+    sum += (*metric)(carriers.at(key));
   }
 
   return sum;
