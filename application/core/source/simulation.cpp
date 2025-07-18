@@ -206,18 +206,22 @@ double Simulation::GetEntropy(void) const {
 std::vector<double> Simulation::GetFragmentation(void) const {
   std::vector<double> fragmentation;
 
-  fragmentation.reserve(settings.graph.get_edges().size());
+  const auto edges_size = settings.graph.get_edges().size();
 
-  for (const auto &strategy : settings.fragmentationStrategies) {
+  fragmentation.reserve(edges_size);
+
+  const auto carriers = dispatcher.GetCarriers();
+
+  for (const auto &[key, value] : settings.fragmentationStrategies) {
     auto sum = 0.0;
 
     for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
       const auto key = settings.keyGenerator.generate(source, destination);
 
-      sum += (*strategy.second)(dispatcher.GetCarriers().at(key));
+      sum += (*value)(carriers.at(key));
     }
 
-    fragmentation.emplace_back(sum / settings.graph.get_edges().size());
+    fragmentation.emplace_back(sum / edges_size);
   }
 
   return fragmentation;
