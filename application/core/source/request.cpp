@@ -8,33 +8,6 @@
 Request::Request(const Route &route, const unsigned FSUs)
     : route{route}, FSUs{FSUs} {}
 
-Request::Builder &Request::Builder::SetRoute(const Route &route) {
-  this->route = route;
-
-  return *this;
-}
-
-Request::Builder &Request::Builder::SetSlice(const Slice &slice) {
-  this->slice = slice;
-
-  return *this;
-}
-
-Request::Builder &Request::Builder::SetModulationStrategy(
-    ModulationStrategy strategy) {
-  this->strategy = strategy;
-
-  return *this;
-}
-
-Request::Builder &Request::Builder::SetFSUs(const unsigned FSUs) {
-  this->FSUs = FSUs;
-
-  return *this;
-}
-
-Request Request::Builder::Build(void) const { return Request(); }
-
 PassbandModulation::PassbandModulation(double slotWidth,
                                        unsigned spectralEfficiency)
     : slotWidth{slotWidth}, spectralEfficiency{spectralEfficiency} {}

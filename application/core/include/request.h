@@ -64,25 +64,6 @@ struct Request {
   Request(void) = default;
 
   Request(const Route &, const unsigned);
-
-  class Builder final {
-   public:
-    [[nodiscard]] Builder &SetRoute(const Route &);
-
-    [[nodiscard]] Builder &SetSlice(const Slice &);
-
-    [[nodiscard]] Builder &SetModulationStrategy(ModulationStrategy);
-
-    [[nodiscard]] Builder &SetFSUs(const unsigned);
-
-    [[nodiscard]] Request Build(void) const;
-
-   private:
-    Route route;
-    Slice slice;
-    unsigned FSUs;
-    ModulationStrategy strategy;
-  };
 };
 
 class KeyGenerator final {
