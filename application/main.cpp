@@ -14,7 +14,7 @@
 #include "settings.h"
 #include "simulation.h"
 
-auto main(void) -> int {
+int main(void) {
   try {
     const std::string filename = "resources/configuration/settings.json";
 
@@ -126,5 +126,9 @@ auto main(void) -> int {
 
   } catch (const std::exception &exception) {
     std::cerr << exception.what() << std::endl;
+
+    return 1;
   }
+
+  return 0;
 }
