@@ -157,16 +157,6 @@ auto Spectrum::smallest_partition(void) const noexcept -> unsigned {
   return (ptr == partitions.end()) ? 0 : *ptr;
 }
 
-auto Spectrum::fragmentation(void) const noexcept -> double {
-  const auto total = static_cast<double>(available());
-
-  if (total == 0.0) {
-    return 0.0;
-  }
-
-  return (total - largest_partition()) / total;
-}
-
 auto Spectrum::fragmentation(const unsigned size) const noexcept -> double {
   const auto total = static_cast<double>(available());
 
@@ -469,6 +459,16 @@ std::optional<Slice> WorstFit(const Spectrum &spectrum, const unsigned FSUs) {
   const auto start = static_cast<unsigned>(worst_index);
 
   return Slice(start, start + FSUs - 1);
+}
+
+double AbsoluteFragmentation::operator()(const Spectrum &spectrum) const {
+  const auto total = static_cast<double>(spectrum.available());
+
+  if (total == 0.0) {
+    return 0.0;
+  }
+
+  return (total - spectrum.largest_partition()) / total;
 }
 
 double ExternalFragmentation::operator()(const Spectrum &spectrum) const {

@@ -112,6 +112,7 @@ std::optional<Settings> Settings::From(const Json &json) {
   }
 
   settings.fragmentationStrategies = {
+      {"absolute_fragmentation", std::make_shared<AbsoluteFragmentation>()},
       {"external_fragmentation", std::make_shared<ExternalFragmentation>()},
       {"entropy_based_fragmentation",
        std::make_shared<EntropyBasedFragmentation>(settings.minFSUsPerRequest)},

@@ -56,7 +56,7 @@ auto main(void) -> int {
         buffer.append(std::format("{},", strategy.first));
       }
 
-      buffer.append("entropy,blocking\n");
+      buffer.append("blocking\n");
 
       std::for_each(snapshots.begin(), snapshots.end(),
                     [&buffer](const Snapshot &snapshot) {

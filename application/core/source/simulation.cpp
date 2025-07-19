@@ -10,13 +10,11 @@
 #include "request.h"
 
 Snapshot::Snapshot(const Event<Request> &event,
-                   std::vector<double> fragmentation, double entropy,
-                   double blocking)
+                   std::vector<double> fragmentation, double blocking)
     : time{event.time},
       FSUs{event.value.FSUs},
       accepted{event.value.accepted},
       fragmentation{fragmentation},
-      entropy{entropy},
       blocking{blocking} {}
 
 std::string Snapshot::Serialize(void) const {
@@ -31,7 +29,7 @@ std::string Snapshot::Serialize(void) const {
     buffer.append(std::format("{},", value));
   }
 
-  buffer.append(std::format("{},{}", entropy, blocking));
+  buffer.append(std::format("{}", blocking));
 
   return buffer;
 }
@@ -160,7 +158,7 @@ void Simulation::Next(void) {
   if (snapshots.empty() ||
       abs(snapshots.back().time - event.time) >= settings.samplingTime) {
     snapshots.push_back(
-        Snapshot(event, GetFragmentation(), GetEntropy(), GetGradeOfService()));
+        Snapshot(event, GetFragmentation(), GetGradeOfService()));
   }
 
   auto &request =
@@ -189,23 +187,6 @@ double Simulation::GetGradeOfService(void) const {
   return static_cast<double>(blockedCount) / static_cast<double>(requestCount);
 }
 
-double Simulation::GetEntropy(void) const {
-  auto metric =
-      settings.fragmentationStrategies.at("entropy_based_fragmentation");
-
-  auto sum = 0.0;
-
-  const auto carriers = dispatcher.GetCarriers();
-
-  for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
-    const auto key = settings.keyGenerator.generate(source, destination);
-
-    sum += (*metric)(carriers.at(key));
-  }
-
-  return sum;
-}
-
 std::vector<double> Simulation::GetFragmentation(void) const {
   std::vector<double> fragmentation;
 
@@ -216,7 +197,7 @@ std::vector<double> Simulation::GetFragmentation(void) const {
   const auto carriers = dispatcher.GetCarriers();
 
   for (const auto &[key, value] : settings.fragmentationStrategies) {
-    auto sum = 0.0;
+    double sum = 0.0;
 
     for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
       const auto key = settings.keyGenerator.generate(source, destination);
@@ -224,7 +205,7 @@ std::vector<double> Simulation::GetFragmentation(void) const {
       sum += (*value)(carriers.at(key));
     }
 
-    fragmentation.emplace_back(sum / edges_size);
+    fragmentation.emplace_back(sum / static_cast<double>(edges_size));
   }
 
   return fragmentation;

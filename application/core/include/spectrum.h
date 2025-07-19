@@ -42,8 +42,6 @@ class Spectrum final {
 
   [[nodiscard]] auto smallest_partition(void) const noexcept -> unsigned;
 
-  [[nodiscard]] auto fragmentation(void) const noexcept -> double;
-
   [[nodiscard]] auto fragmentation(const unsigned) const noexcept -> double;
 
   [[nodiscard]] auto Serialize(void) const noexcept -> std::string;
@@ -78,6 +76,10 @@ struct Fragmentation {
 };
 
 using FragmentationStrategy = std::shared_ptr<Fragmentation>;
+
+struct AbsoluteFragmentation : public Fragmentation {
+  [[nodiscard]] double operator()(const Spectrum &) const override;
+};
 
 struct ExternalFragmentation : public Fragmentation {
   [[nodiscard]] double operator()(const Spectrum &) const override;

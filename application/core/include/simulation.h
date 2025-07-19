@@ -13,10 +13,9 @@ struct Snapshot final {
   unsigned FSUs;
   bool accepted;
   std::vector<double> fragmentation;
-  double entropy;
   double blocking;
 
-  Snapshot(const Event<Request> &, std::vector<double>, double, double);
+  Snapshot(const Event<Request> &, std::vector<double>, double);
 
   [[nodiscard]] std::string Serialize(void) const;
 };
@@ -36,8 +35,6 @@ class Simulation final {
   double GetRequestCount(void) const;
 
   double GetGradeOfService(void) const;
-
-  double GetEntropy(void) const;
 
   std::vector<double> GetFragmentation(void) const;
 
