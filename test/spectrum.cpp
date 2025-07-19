@@ -111,5 +111,7 @@ TEST(Spectrum, AbsoluteFragmentation) {
 
   const auto absolute_error = .15;
 
-  EXPECT_NEAR(expected, spectrum.fragmentation(), absolute_error);
+  std::unique_ptr<Fragmentation> fn = std::make_unique<AbsoluteFragmentation>();
+
+  EXPECT_NEAR(expected, (*fn)(spectrum), absolute_error);
 }
