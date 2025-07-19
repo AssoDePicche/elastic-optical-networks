@@ -22,35 +22,34 @@ class Spectrum final {
 
   Spectrum(const unsigned);
 
-  auto allocate(const Slice &) -> void;
+  void allocate(const Slice &);
 
-  auto deallocate(const Slice &) -> void;
+  void deallocate(const Slice &);
 
-  [[nodiscard]] auto size(void) const noexcept -> unsigned;
+  [[nodiscard]] unsigned size(void) const noexcept;
 
-  [[nodiscard]] auto available(void) const noexcept -> unsigned;
+  [[nodiscard]] unsigned available(void) const noexcept;
 
-  [[nodiscard]] auto available_at(const Slice &) const noexcept -> bool;
+  [[nodiscard]] bool available_at(const Slice &) const noexcept;
 
-  [[nodiscard]] auto available_partitions(void) const noexcept
-      -> std::vector<unsigned>;
+  [[nodiscard]] std::vector<unsigned> available_partitions(void) const noexcept;
 
-  [[nodiscard]] auto available_partitions(const unsigned) const noexcept
-      -> std::vector<unsigned>;
+  [[nodiscard]] std::vector<unsigned> available_partitions(
+      const unsigned) const noexcept;
 
-  [[nodiscard]] auto largest_partition(void) const noexcept -> unsigned;
+  [[nodiscard]] unsigned largest_partition(void) const noexcept;
 
-  [[nodiscard]] auto smallest_partition(void) const noexcept -> unsigned;
+  [[nodiscard]] unsigned smallest_partition(void) const noexcept;
 
-  [[nodiscard]] auto fragmentation(const unsigned) const noexcept -> double;
+  [[nodiscard]] double fragmentation(const unsigned) const noexcept;
 
-  [[nodiscard]] auto Serialize(void) const noexcept -> std::string;
+  [[nodiscard]] std::string Serialize(void) const noexcept;
 
-  [[nodiscard]] auto at(const unsigned) const -> FSU;
+  [[nodiscard]] FSU at(const unsigned) const;
 
-  [[nodiscard]] auto gaps(void) const -> unsigned;
+  [[nodiscard]] unsigned gaps(void) const;
 
-  [[nodiscard]] auto largest_gap(void) const -> unsigned;
+  [[nodiscard]] unsigned largest_gap(void) const;
 
  private:
   std::vector<FSU> resources;

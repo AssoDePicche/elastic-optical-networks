@@ -11,7 +11,7 @@
 Spectrum::Spectrum(const unsigned FSUsPerLink)
     : resources(std::vector(FSUsPerLink, FSU(false, 0u))) {}
 
-auto Spectrum::allocate(const Slice &slice) -> void {
+void Spectrum::allocate(const Slice &slice) {
   const auto &[start, end] = slice;
 
   assert(end < size());
@@ -33,7 +33,7 @@ auto Spectrum::allocate(const Slice &slice) -> void {
   }
 }
 
-auto Spectrum::deallocate(const Slice &slice) -> void {
+void Spectrum::deallocate(const Slice &slice) {
   const auto &[start, end] = slice;
 
   assert(end < size());
@@ -53,11 +53,9 @@ auto Spectrum::deallocate(const Slice &slice) -> void {
   }
 }
 
-auto Spectrum::size(void) const noexcept -> unsigned {
-  return resources.size();
-}
+unsigned Spectrum::size(void) const noexcept { return resources.size(); }
 
-auto Spectrum::available(void) const noexcept -> unsigned {
+unsigned Spectrum::available(void) const noexcept {
   auto count = 0u;
 
   for (const auto &[allocated, occupancy] : resources) {
@@ -69,7 +67,7 @@ auto Spectrum::available(void) const noexcept -> unsigned {
   return count;
 }
 
-auto Spectrum::available_at(const Slice &slice) const noexcept -> bool {
+bool Spectrum::available_at(const Slice &slice) const noexcept {
   const auto &[start, end] = slice;
 
   auto i = resources.begin() + start;
@@ -89,8 +87,7 @@ auto Spectrum::available_at(const Slice &slice) const noexcept -> bool {
   return true;
 }
 
-auto Spectrum::available_partitions(void) const noexcept
-    -> std::vector<unsigned> {
+std::vector<unsigned> Spectrum::available_partitions(void) const noexcept {
   auto length{0};
 
   auto in_free_block{false};
@@ -128,8 +125,8 @@ auto Spectrum::available_partitions(void) const noexcept
   return partitions;
 }
 
-auto Spectrum::available_partitions(const unsigned size) const noexcept
-    -> std::vector<unsigned> {
+std::vector<unsigned> Spectrum::available_partitions(
+    const unsigned size) const noexcept {
   const auto partitions = available_partitions();
 
   std::vector<unsigned> suitable;
@@ -141,7 +138,7 @@ auto Spectrum::available_partitions(const unsigned size) const noexcept
   return suitable;
 }
 
-auto Spectrum::largest_partition(void) const noexcept -> unsigned {
+unsigned Spectrum::largest_partition(void) const noexcept {
   const auto partitions = available_partitions();
 
   const auto ptr = std::max_element(partitions.begin(), partitions.end());
@@ -149,7 +146,7 @@ auto Spectrum::largest_partition(void) const noexcept -> unsigned {
   return (ptr == partitions.end()) ? 0 : *ptr;
 }
 
-auto Spectrum::smallest_partition(void) const noexcept -> unsigned {
+unsigned Spectrum::smallest_partition(void) const noexcept {
   const auto partitions = available_partitions();
 
   const auto ptr = std::min_element(partitions.begin(), partitions.end());
@@ -157,22 +154,7 @@ auto Spectrum::smallest_partition(void) const noexcept -> unsigned {
   return (ptr == partitions.end()) ? 0 : *ptr;
 }
 
-auto Spectrum::fragmentation(const unsigned size) const noexcept -> double {
-  const auto total = static_cast<double>(available());
-
-  if (total == 0.0) {
-    return 0.0;
-  }
-
-  const auto partitions = available_partitions(size);
-
-  const auto usable =
-      std::accumulate(partitions.begin(), partitions.end(), 0.0);
-
-  return (total - usable) / total;
-}
-
-auto Spectrum::Serialize(void) const noexcept -> std::string {
+std::string Spectrum::Serialize(void) const noexcept {
   std::string buffer;
 
   std::for_each(resources.begin(), resources.end(),
@@ -185,13 +167,13 @@ auto Spectrum::Serialize(void) const noexcept -> std::string {
   return buffer;
 }
 
-auto Spectrum::at(const unsigned index) const -> FSU {
+FSU Spectrum::at(const unsigned index) const {
   assert(index < size());
 
   return resources.at(index);
 }
 
-auto Spectrum::gaps(void) const -> unsigned {
+unsigned Spectrum::gaps(void) const {
   auto gaps = 0u;
 
   auto in_gap = false;
@@ -217,7 +199,7 @@ auto Spectrum::gaps(void) const -> unsigned {
   return gaps;
 }
 
-auto Spectrum::largest_gap(void) const -> unsigned {
+unsigned Spectrum::largest_gap(void) const {
   auto largest = 0u;
 
   auto in_gap = false;
