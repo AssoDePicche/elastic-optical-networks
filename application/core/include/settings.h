@@ -45,6 +45,7 @@ struct Settings {
   bool enableLogging;
   unsigned minFSUsPerRequest;
   unsigned iterations;
+  unsigned samplingTime;
 
   [[nodiscard]] static std::optional<Settings> From(const Json &);
 };

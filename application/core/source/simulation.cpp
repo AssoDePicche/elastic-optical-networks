@@ -157,8 +157,11 @@ void Simulation::Next(void) {
     ++blockedCount;
   }
 
-  snapshots.push_back(
-      Snapshot(event, GetFragmentation(), GetEntropy(), GetGradeOfService()));
+  if (snapshots.empty() ||
+      abs(snapshots.back().time - event.time) >= settings.samplingTime) {
+    snapshots.push_back(
+        Snapshot(event, GetFragmentation(), GetEntropy(), GetGradeOfService()));
+  }
 
   auto &request =
       settings.requests

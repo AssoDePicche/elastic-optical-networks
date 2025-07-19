@@ -32,6 +32,8 @@ std::optional<Settings> Settings::From(const Json &json) {
 
   settings.ignoreFirst = json.Get<bool>("params.ignore-first").value();
 
+  settings.samplingTime = json.Get<unsigned>("params.sampling-time").value();
+
   settings.timeUnits = json.Get<double>("params.simulation-duration").value();
 
   settings.arrivalRate = json.Get<double>("params.arrival-rate").value();
