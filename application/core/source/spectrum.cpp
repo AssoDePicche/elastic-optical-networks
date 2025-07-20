@@ -17,8 +17,6 @@ Spectrum::Spectrum(const unsigned FSUsPerLink)
 void Spectrum::allocate(const Slice &slice) {
   const auto &[start, end] = slice;
 
-  assert(end < size());
-
   assert(available_at(slice));
 
   for (const auto index : std::ranges::views::iota(start, end + 1)) {
@@ -28,12 +26,49 @@ void Spectrum::allocate(const Slice &slice) {
 
     ++occupancy;
   }
+
+  auto iterator =
+      std::ranges::find_if(availableSlices, [&](const Slice &availableSlice) {
+        const auto [i, j] = availableSlice;
+
+        return i <= start && end <= j;
+      });
+
+  if (iterator == availableSlices.end()) {
+    return;
+  }
+
+  const auto &[iteratorStart, iteratorEnd] = *iterator;
+
+  if (start == iteratorStart && end == iteratorEnd) {
+    availableSlices.erase(iterator);
+
+    return;
+  }
+
+  if (start == iteratorStart) {
+    *iterator = Slice(end + 1, iteratorEnd);
+
+    return;
+  }
+
+  if (end == iteratorEnd) {
+    *iterator = Slice(iteratorStart, start - 1);
+
+    return;
+  }
+
+  const Slice before(iteratorStart, start - 1);
+
+  const Slice after(end + 1, iteratorEnd);
+
+  *iterator = before;
+
+  availableSlices.insert(iterator + 1, after);
 }
 
 void Spectrum::deallocate(const Slice &slice) {
   const auto &[start, end] = slice;
-
-  assert(end < size());
 
   assert(!available_at(slice));
 
@@ -42,14 +77,50 @@ void Spectrum::deallocate(const Slice &slice) {
 
     allocated = false;
   }
+
+  auto iterator = std::lower_bound(
+      availableSlices.begin(), availableSlices.end(), slice,
+      [](const Slice &a, const Slice &b) { return a.second < b.first; });
+
+  bool merged_previous = false;
+
+  if (iterator != availableSlices.begin()) {
+    auto &[iteratorStart, iteratorEnd] = *(iterator - 1);
+
+    if (iteratorEnd + 1 == start) {
+      iteratorEnd = end;
+
+      merged_previous = true;
+
+      iterator = iterator - 1;
+    }
+  }
+
+  auto &[iteratorStart, iteratorEnd] = *iterator;
+
+  if (iterator != availableSlices.end() && end + 1 == iteratorStart) {
+    if (merged_previous) {
+      iteratorStart = (iterator - 1)->first;
+
+      iterator = availableSlices.erase(iterator - 1);
+
+      return;
+    }
+
+    iteratorStart = start;
+  }
+
+  if (!merged_previous) {
+    availableSlices.insert(iterator, slice);
+  }
 }
 
 unsigned Spectrum::size(void) const noexcept { return resources.size(); }
 
 unsigned Spectrum::available(void) const noexcept {
-  auto count = 0u;
+  unsigned count = 0u;
 
-  for (const auto &[allocated, occupancy] : resources) {
+  for (const auto &[allocated, _] : resources) {
     if (!allocated) {
       ++count;
     }
@@ -61,21 +132,15 @@ unsigned Spectrum::available(void) const noexcept {
 bool Spectrum::available_at(const Slice &slice) const noexcept {
   const auto &[start, end] = slice;
 
-  auto i = resources.begin() + start;
+  const auto iterator =
+      std::find_if(availableSlices.begin(), availableSlices.end(),
+                   [&](const Slice &availableSlice) {
+                     const auto [availableStart, availableEnd] = availableSlice;
 
-  const auto j = resources.begin() + end + 1;
+                     return start + end <= availableStart + availableEnd;
+                   });
 
-  while (i != j) {
-    const auto &[allocated, occupancy] = *i;
-
-    if (allocated) {
-      return false;
-    }
-
-    ++i;
-  }
-
-  return true;
+  return iterator != availableSlices.end();
 }
 
 std::vector<unsigned> Spectrum::available_partitions(void) const noexcept {
