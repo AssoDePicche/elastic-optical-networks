@@ -247,48 +247,43 @@ std::optional<Slice> BestFit(const Spectrum &spectrum, const unsigned FSUs) {
     return std::nullopt;
   }
 
-  auto best_index{-1};
+  const auto size = spectrum.size();
 
-  auto min_block_size{std::numeric_limits<unsigned>::max()};
+  std::optional<unsigned> best_index;
 
-  auto current_block_size{0u};
+  unsigned min_block_size = std::numeric_limits<unsigned>::max();
 
-  auto current_start_index{0u};
+  unsigned current_start = 0;
 
-  for (auto index{0u}; index < spectrum.size(); ++index) {
-    const auto &[allocated, occupancy] = spectrum.at(index);
+  unsigned current_length = 0;
 
-    if (!allocated && current_block_size == 0u) {
-      current_start_index = index;
-    }
+  for (const auto index : std::views::iota(0u, size)) {
+    const auto &[allocated, _] = spectrum.at(index);
 
     if (!allocated) {
-      ++current_block_size;
+      if (current_length == 0) {
+        current_start = index;
+      }
 
-      continue;
+      ++current_length;
     }
 
-    if (current_block_size >= FSUs && current_block_size < min_block_size) {
-      min_block_size = current_block_size;
+    if (allocated || index == size - 1) {
+      if (FSUs <= current_length && current_length < min_block_size) {
+        best_index = current_start;
 
-      best_index = current_start_index;
+        min_block_size = current_length;
+      }
+
+      current_length = 0;
     }
-
-    current_block_size = 0u;
   }
 
-  if (current_block_size >= FSUs && current_block_size < min_block_size) {
-    min_block_size = current_block_size;
-
-    best_index = current_start_index;
-  }
-
-  if (best_index == -1) {
+  if (!best_index) {
     return std::nullopt;
   }
 
-  return Slice(static_cast<unsigned>(best_index),
-               static_cast<unsigned>(best_index) + FSUs - 1);
+  return Slice(*best_index, *best_index + FSUs - 1);
 }
 
 std::optional<Slice> FirstFit(const Spectrum &spectrum, const unsigned FSUs) {
