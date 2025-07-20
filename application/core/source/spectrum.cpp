@@ -41,8 +41,6 @@ void Spectrum::deallocate(const Slice &slice) {
     auto &[allocated, occupancy] = resources[index];
 
     allocated = false;
-
-    ++occupancy;
   }
 }
 
