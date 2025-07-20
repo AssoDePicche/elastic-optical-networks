@@ -388,49 +388,41 @@ std::optional<Slice> WorstFit(const Spectrum &spectrum, const unsigned FSUs) {
     return std::nullopt;
   }
 
-  auto max_block_size{0u};
+  std::optional<unsigned> worst_index;
 
-  auto worst_index{-1};
+  unsigned max_block_size = 0;
 
-  auto current_block_size{0u};
+  unsigned current_start = 0;
 
-  auto current_start_index{0u};
+  unsigned current_length = 0;
 
-  for (auto index{0u}; index < spectrum.size(); ++index) {
-    const auto &[allocated, occupancy] = spectrum.at(index);
+  for (const auto index : std::views::iota(0u, spectrum.size())) {
+    const auto &[allocated, _] = spectrum.at(index);
 
     if (!allocated) {
-      if (current_block_size == 0) {
-        current_start_index = index;
+      if (current_length == 0) {
+        current_start = index;
       }
 
-      ++current_block_size;
-
-      continue;
+      ++current_length;
     }
 
-    if (current_block_size >= FSUs && current_block_size > max_block_size) {
-      max_block_size = current_block_size;
+    if (allocated || index == spectrum.size() - 1) {
+      if (FSUs <= current_length && current_length > max_block_size) {
+        max_block_size = current_length;
 
-      worst_index = current_start_index;
+        worst_index = current_start;
+      }
+
+      current_length = 0;
     }
-
-    current_block_size = 0;
   }
 
-  if (current_block_size >= FSUs && current_block_size > max_block_size) {
-    max_block_size = current_block_size;
-
-    worst_index = current_start_index;
-  }
-
-  if (worst_index == -1) {
+  if (!worst_index) {
     return std::nullopt;
   }
 
-  const auto start = static_cast<unsigned>(worst_index);
-
-  return Slice(start, start + FSUs - 1);
+  return Slice(*worst_index, *worst_index + FSUs - 1);
 }
 
 double AbsoluteFragmentation::operator()(const Spectrum &spectrum) const {
