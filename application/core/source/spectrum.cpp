@@ -21,18 +21,12 @@ void Spectrum::allocate(const Slice &slice) {
 
   assert(available_at(slice));
 
-  auto i = resources.begin() + start;
-
-  const auto j = resources.begin() + end + 1;
-
-  while (i != j) {
-    auto &[allocated, occupancy] = *i;
+  for (const auto index : std::ranges::views::iota(start, end + 1)) {
+    auto &[allocated, occupancy] = resources[index];
 
     allocated = true;
 
     ++occupancy;
-
-    ++i;
   }
 }
 
@@ -43,16 +37,12 @@ void Spectrum::deallocate(const Slice &slice) {
 
   assert(!available_at(slice));
 
-  auto i = resources.begin() + start;
-
-  const auto j = resources.begin() + end + 1;
-
-  while (i != j) {
-    auto &[allocated, occupancy] = *i;
+  for (const auto index : std::ranges::views::iota(start, end + 1)) {
+    auto &[allocated, occupancy] = resources[index];
 
     allocated = false;
 
-    ++i;
+    ++occupancy;
   }
 }
 
