@@ -323,9 +323,12 @@ std::optional<Slice> LastFit(const Spectrum &spectrum, const unsigned FSUs) {
     return std::nullopt;
   }
 
-  auto count{0u};
+  unsigned count = 0;
 
-  for (auto index{static_cast<int>(spectrum.size()) - 1}; 0 <= index; --index) {
+  const auto range =
+      std::views::iota(0u, spectrum.size()) | std::views::reverse;
+
+  for (const auto index : range) {
     const auto &[allocated, occupancy] = spectrum.at(index);
 
     if (!allocated) {
