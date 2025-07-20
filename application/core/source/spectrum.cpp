@@ -5,11 +5,14 @@
 #include <limits>
 #include <numeric>
 #include <random>
+#include <ranges>
 
 #include "distribution.h"
 
 Spectrum::Spectrum(const unsigned FSUsPerLink)
-    : resources(std::vector(FSUsPerLink, FSU(false, 0u))) {}
+    : resources(std::vector(FSUsPerLink, FSU(false, 0u))) {
+  availableSlices.push_back({0, FSUsPerLink - 1});
+}
 
 void Spectrum::allocate(const Slice &slice) {
   const auto &[start, end] = slice;
@@ -295,30 +298,19 @@ std::optional<Slice> FirstFit(const Spectrum &spectrum, const unsigned FSUs) {
     return std::nullopt;
   }
 
-  const auto size = spectrum.size();
+  const auto candidates = std::views::iota(0u, spectrum.size() - FSUs + 1);
 
-  for (auto start{0u}; start < size; ++start) {
-    auto fit = true;
+  const auto is_available = [](const auto &FSU) { return !FSU.allocated; };
 
-    for (auto end{0u}; end < FSUs && (start + end) < size; ++end) {
-      const auto &[allocated, occupancy] = spectrum.at(start + end);
+  for (const auto index : candidates) {
+    const auto range = std::views::iota(0u, FSUs) |
+                       std::views::transform([&](const auto offset) {
+                         return spectrum.at(index + offset);
+                       });
 
-      if (allocated) {
-        fit = false;
-
-        break;
-      }
+    if (std::ranges::all_of(range, is_available)) {
+      return Slice(index, index + FSUs - 1);
     }
-
-    if (!fit) {
-      continue;
-    }
-
-    if (start + FSUs - 1 >= spectrum.size()) {
-      return std::nullopt;
-    }
-
-    return Slice(start, start + FSUs - 1);
   }
 
   return std::nullopt;

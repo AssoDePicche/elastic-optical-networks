@@ -51,6 +51,7 @@ class Spectrum final {
 
  private:
   std::vector<FSU> resources;
+  std::vector<Slice> availableSlices;
 };
 
 [[nodiscard]] std::optional<Slice> BestFit(const Spectrum &, const unsigned);
