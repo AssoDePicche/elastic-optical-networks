@@ -41,8 +41,6 @@ class Spectrum final {
 
   [[nodiscard]] unsigned smallest_partition(void) const noexcept;
 
-  [[nodiscard]] double fragmentation(const unsigned) const noexcept;
-
   [[nodiscard]] std::string Serialize(void) const noexcept;
 
   [[nodiscard]] FSU at(const unsigned) const;
