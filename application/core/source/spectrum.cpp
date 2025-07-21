@@ -225,32 +225,6 @@ FSU Spectrum::at(const unsigned index) const {
   return resources.at(index);
 }
 
-unsigned Spectrum::gaps(void) const {
-  auto gaps = 0u;
-
-  auto in_gap = false;
-
-  for (const auto &[allocated, occupancy] : resources) {
-    if (!allocated && in_gap) {
-      continue;
-    }
-
-    if (!allocated && !in_gap) {
-      in_gap = true;
-    }
-
-    if (allocated) {
-      in_gap = false;
-    }
-
-    if (in_gap) {
-      ++gaps;
-    }
-  }
-
-  return gaps;
-}
-
 std::optional<Slice> BestFit(const Spectrum &spectrum, const unsigned FSUs) {
   assert(FSUs <= spectrum.size());
 

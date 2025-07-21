@@ -45,8 +45,6 @@ class Spectrum final {
 
   [[nodiscard]] FSU at(const unsigned) const;
 
-  [[nodiscard]] unsigned gaps(void) const;
-
  private:
   std::vector<FSU> resources;
   std::vector<Slice> availableSlices;
