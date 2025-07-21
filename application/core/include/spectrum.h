@@ -47,8 +47,6 @@ class Spectrum final {
 
   [[nodiscard]] unsigned gaps(void) const;
 
-  [[nodiscard]] unsigned largest_gap(void) const;
-
  private:
   std::vector<FSU> resources;
   std::vector<Slice> availableSlices;

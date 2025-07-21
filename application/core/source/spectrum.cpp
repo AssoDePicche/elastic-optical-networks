@@ -251,44 +251,6 @@ unsigned Spectrum::gaps(void) const {
   return gaps;
 }
 
-unsigned Spectrum::largest_gap(void) const {
-  auto largest = 0u;
-
-  auto in_gap = false;
-
-  auto gap_size = 0u;
-
-  for (const auto &[allocated, occupancy] : resources) {
-    if (!allocated && in_gap) {
-      ++gap_size;
-
-      continue;
-    }
-
-    if (!allocated && !in_gap) {
-      largest = std::max(largest, gap_size);
-
-      gap_size = 0u;
-
-      in_gap = true;
-    }
-
-    if (allocated) {
-      largest = std::max(largest, gap_size);
-
-      gap_size = 0u;
-
-      in_gap = false;
-    }
-
-    if (in_gap) {
-      ++gap_size;
-    }
-  }
-
-  return largest;
-}
-
 std::optional<Slice> BestFit(const Spectrum &spectrum, const unsigned FSUs) {
   assert(FSUs <= spectrum.size());
 
@@ -486,7 +448,27 @@ double AbsoluteFragmentation::operator()(const Spectrum &spectrum) const {
 }
 
 double ExternalFragmentation::operator()(const Spectrum &spectrum) const {
-  return 1.0 - (static_cast<double>(spectrum.largest_gap()) / static_cast<double>(spectrum.size()));
+  if (!spectrum.available()) {
+    return 0;
+  }
+
+  const auto availableSlices = spectrum.available_slices();
+
+  const auto compare = [](const Slice& first, const Slice &second) {
+    const auto firstSliceSize = first.second - first.first + 1;
+
+    const auto secondSliceSize = second.second - second.first + 1;
+
+    return firstSliceSize > secondSliceSize;
+  };
+
+  const auto &[start, end] = *std::max_element(
+    availableSlices.begin(),
+    availableSlices.end(),
+    compare
+  );
+
+  return 1.0 - (static_cast<double>(end - start + 1) / static_cast<double>(spectrum.size()));
 }
 
 EntropyBasedFragmentation::EntropyBasedFragmentation(const unsigned minFSUs)
