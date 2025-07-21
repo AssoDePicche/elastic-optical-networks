@@ -111,6 +111,8 @@ Dispatcher::Dispatcher(Graph graph, KeyGenerator keyGenerator,
 
 bool Dispatcher::dispatch(Request &request,
                           const SpectrumAllocator &allocator) {
+  assert(request.FSUs <= spectrum.size());
+
   const auto keys = keyGenerator.generate(request.route);
 
   const auto first = *keys.begin();
@@ -121,8 +123,14 @@ bool Dispatcher::dispatch(Request &request,
     return false;
   }
 
-  std::for_each(keys.begin(), keys.end(),
-                [&](const auto key) { carriers[key].allocate(request.slice); });
+  std::for_each(
+    keys.begin(),
+    keys.end(),
+    [&](const auto key) {
+      assert(carriers[key].available_at(slice));
+
+      carriers[key].allocate(request.slice);
+  });
 
   return true;
 }
@@ -130,7 +138,14 @@ bool Dispatcher::dispatch(Request &request,
 Carriers Dispatcher::GetCarriers(void) const { return carriers; }
 
 void Dispatcher::release(Request &request) {
-  for (const auto &key : keyGenerator.generate(request.route)) {
-    carriers[key].deallocate(request.slice);
-  }
+  const auto keys = keyGenerator.generate(request.route);
+
+  std::for_each(
+    keys.begin(),
+    keys.end(),
+    [&](const auto key) {
+      assert(!carriers[key].available_at(slice));
+
+      carriers[key].deallocate(request.slice);
+  });
 }
