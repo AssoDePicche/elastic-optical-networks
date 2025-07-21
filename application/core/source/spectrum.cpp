@@ -143,6 +143,10 @@ bool Spectrum::available_at(const Slice &slice) const noexcept {
   return iterator != availableSlices.end();
 }
 
+std::vector<Slice> Spectrum::available_slices(void) const noexcept {
+  return availableSlices;
+}
+
 std::vector<unsigned> Spectrum::available_partitions(void) const noexcept {
   auto length{0};
 
@@ -198,14 +202,6 @@ unsigned Spectrum::largest_partition(void) const noexcept {
   const auto partitions = available_partitions();
 
   const auto ptr = std::max_element(partitions.begin(), partitions.end());
-
-  return (ptr == partitions.end()) ? 0 : *ptr;
-}
-
-unsigned Spectrum::smallest_partition(void) const noexcept {
-  const auto partitions = available_partitions();
-
-  const auto ptr = std::min_element(partitions.begin(), partitions.end());
 
   return (ptr == partitions.end()) ? 0 : *ptr;
 }
@@ -479,17 +475,16 @@ std::optional<Slice> WorstFit(const Spectrum &spectrum, const unsigned FSUs) {
 }
 
 double AbsoluteFragmentation::operator()(const Spectrum &spectrum) const {
-  const auto total = static_cast<double>(spectrum.available());
-
-  if (total == 0.0) {
+  if (!spectrum.available()) {
     return 0.0;
   }
+  const auto total = static_cast<double>(spectrum.available());
 
   return (total - spectrum.largest_partition()) / total;
 }
 
 double ExternalFragmentation::operator()(const Spectrum &spectrum) const {
-  return 1.0 - (spectrum.largest_gap() / spectrum.size());
+  return 1.0 - (static_cast<double>(spectrum.largest_gap()) / static_cast<double>(spectrum.size()));
 }
 
 EntropyBasedFragmentation::EntropyBasedFragmentation(const unsigned minFSUs)

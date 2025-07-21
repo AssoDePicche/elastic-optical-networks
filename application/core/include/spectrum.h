@@ -32,14 +32,14 @@ class Spectrum final {
 
   [[nodiscard]] bool available_at(const Slice &) const noexcept;
 
+  [[nodiscard]] std::vector<Slice> available_slices(void) const noexcept;
+
   [[nodiscard]] std::vector<unsigned> available_partitions(void) const noexcept;
 
   [[nodiscard]] std::vector<unsigned> available_partitions(
       const unsigned) const noexcept;
 
   [[nodiscard]] unsigned largest_partition(void) const noexcept;
-
-  [[nodiscard]] unsigned smallest_partition(void) const noexcept;
 
   [[nodiscard]] std::string Serialize(void) const noexcept;
 
