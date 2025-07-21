@@ -19,6 +19,18 @@ TEST(Spectrum, AvailableSlices) {
   ASSERT_EQ(spectrum.available_slices(), expected);
 }
 
+TEST(Spectrum, AvailableFSUs) {
+  Spectrum spectrum(10);
+
+  spectrum.allocate({0, 1});
+
+  spectrum.allocate({5, 7});
+
+  const auto expected = 5;
+
+  ASSERT_EQ(spectrum.available(), expected);
+}
+
 TEST(Spectrum, BestFit) {
   Spectrum spectrum(10);
 
