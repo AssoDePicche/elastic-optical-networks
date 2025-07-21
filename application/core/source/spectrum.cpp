@@ -369,24 +369,24 @@ std::optional<Slice> LastFit(const Spectrum &spectrum, const unsigned FSUs) {
     return std::nullopt;
   }
 
-  unsigned count = 0;
+  const auto availableSlices = spectrum.available_slices();
 
-  const auto range =
-      std::views::iota(0u, spectrum.size()) | std::views::reverse;
+  const auto iterator = std::find_if(
+    availableSlices.rbegin(),
+    availableSlices.rend(),
+    [=](const Slice &slice) {
+      const auto [start, end] = slice;
 
-  for (const auto index : range) {
-    const auto &[allocated, occupancy] = spectrum.at(index);
+      return start + FSUs - 1 <= end;
+  });
 
-    if (!allocated) {
-      ++count;
-    }
-
-    if (count == FSUs) {
-      return Slice(index, index + FSUs - 1);
-    }
+  if (iterator == availableSlices.rend()) {
+    return std::nullopt;
   }
 
-  return std::nullopt;
+  const auto& [start, _] = *iterator;
+
+  return Slice(start, start + FSUs - 1);
 }
 
 std::optional<Slice> RandomFit(const Spectrum &spectrum, const unsigned FSUs) {
