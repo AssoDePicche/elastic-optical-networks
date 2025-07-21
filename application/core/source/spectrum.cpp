@@ -496,13 +496,21 @@ EntropyBasedFragmentation::EntropyBasedFragmentation(const unsigned minFSUs)
     : minFSUs{minFSUs} {}
 
 double EntropyBasedFragmentation::operator()(const Spectrum &spectrum) const {
-  const auto partitions = spectrum.available_partitions(minFSUs).size();
-
-  if (0u == partitions) {
+  if (!spectrum.available()) {
     return 0.0;
   }
 
-  const auto S = static_cast<double>(spectrum.size());
+  const auto partitions = spectrum.available_partitions(minFSUs);
 
-  return (partitions / S) * std::log(S / partitions);
+  double entropy = 0.0;
+
+  for (const auto& partitionSize : partitions) {
+    const double p = static_cast<double>(partitionSize) / static_cast<double>(spectrum.available());
+
+    const double e = p * std::log(p);
+
+    entropy += e;
+  }
+
+  return -entropy;
 }
