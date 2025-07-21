@@ -190,22 +190,18 @@ double Simulation::GetGradeOfService(void) const {
 std::vector<double> Simulation::GetFragmentation(void) const {
   std::vector<double> fragmentation;
 
-  const auto edges_size = settings.graph.get_edges().size();
-
-  fragmentation.reserve(edges_size);
-
   const auto carriers = dispatcher.GetCarriers();
 
-  for (const auto &[key, value] : settings.fragmentationStrategies) {
+  for (const auto &[_, strategy] : settings.fragmentationStrategies) {
     double sum = 0.0;
 
     for (const auto &[source, destination, cost] : settings.graph.get_edges()) {
       const auto key = settings.keyGenerator.generate(source, destination);
 
-      sum += (*value)(carriers.at(key));
+      sum += (*strategy)(carriers.at(key));
     }
 
-    fragmentation.emplace_back(sum / static_cast<double>(edges_size));
+    fragmentation.push_back(sum);
   }
 
   return fragmentation;
