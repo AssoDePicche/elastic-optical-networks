@@ -1,7 +1,6 @@
 #include "spectrum.h"
 
 #include <algorithm>
-#include <cassert>
 #include <limits>
 #include <numeric>
 #include <random>
@@ -16,8 +15,6 @@ Spectrum::Spectrum(const unsigned FSUsPerLink)
 
 void Spectrum::allocate(const Slice &slice) {
   const auto &[start, end] = slice;
-
-  assert(available_at(slice));
 
   for (const auto index : std::ranges::views::iota(start, end + 1)) {
     auto &[allocated, occupancy] = resources[index];
@@ -69,8 +66,6 @@ void Spectrum::allocate(const Slice &slice) {
 
 void Spectrum::deallocate(const Slice &slice) {
   const auto &[start, end] = slice;
-
-  assert(!available_at(slice));
 
   for (const auto index : std::ranges::views::iota(start, end + 1)) {
     auto &[allocated, occupancy] = resources[index];
@@ -147,65 +142,6 @@ std::vector<Slice> Spectrum::available_slices(void) const noexcept {
   return availableSlices;
 }
 
-std::vector<unsigned> Spectrum::available_partitions(void) const noexcept {
-  auto length{0};
-
-  auto in_free_block{false};
-
-  std::vector<unsigned> partitions{};
-
-  for (const auto &[allocated, occupancy] : resources) {
-    if (allocated && in_free_block) {
-      in_free_block = false;
-
-      partitions.push_back(length);
-
-      continue;
-    }
-
-    if (allocated) {
-      continue;
-    }
-
-    if (in_free_block) {
-      ++length;
-
-      continue;
-    }
-
-    in_free_block = true;
-
-    length = 1;
-  }
-
-  if (in_free_block) {
-    partitions.push_back(length);
-  }
-
-  return partitions;
-}
-
-std::vector<unsigned> Spectrum::available_partitions(
-    const unsigned size) const noexcept {
-  const auto partitions = available_partitions();
-
-  std::vector<unsigned> suitable;
-
-  std::copy_if(partitions.begin(), partitions.end(),
-               std::back_inserter(suitable),
-               [&](const unsigned capacity) { return size <= capacity; });
-
-  return suitable;
-}
-
-unsigned Spectrum::largest_partition(void) const noexcept {
-  const auto partitions = available_partitions();
-
-  const auto ptr = std::max_element(partitions.begin(), partitions.end());
-
-  return (ptr == partitions.end()) ? 0 : *ptr;
-}
-
 std::string Spectrum::Serialize(void) const noexcept {
   std::string buffer;
 
@@ -220,18 +156,10 @@ std::string Spectrum::Serialize(void) const noexcept {
 }
 
 FSU Spectrum::at(const unsigned index) const {
-  assert(index < size());
-
   return resources.at(index);
 }
 
 std::optional<Slice> BestFit(const Spectrum &spectrum, const unsigned FSUs) {
-  assert(FSUs <= spectrum.size());
-
-  if (FSUs > spectrum.largest_partition()) {
-    return std::nullopt;
-  }
-
   const auto size = spectrum.size();
 
   std::optional<unsigned> best_index;
@@ -272,12 +200,6 @@ std::optional<Slice> BestFit(const Spectrum &spectrum, const unsigned FSUs) {
 }
 
 std::optional<Slice> FirstFit(const Spectrum &spectrum, const unsigned FSUs) {
-  assert(FSUs <= spectrum.size());
-
-  if (FSUs > spectrum.largest_partition()) {
-    return std::nullopt;
-  }
-
   const auto availableSlices = spectrum.available_slices();
 
   const auto iterator = std::find_if(
@@ -299,12 +221,6 @@ std::optional<Slice> FirstFit(const Spectrum &spectrum, const unsigned FSUs) {
 }
 
 std::optional<Slice> LastFit(const Spectrum &spectrum, const unsigned FSUs) {
-  assert(FSUs <= spectrum.size());
-
-  if (FSUs > spectrum.largest_partition()) {
-    return std::nullopt;
-  }
-
   const auto availableSlices = spectrum.available_slices();
 
   const auto iterator = std::find_if(
@@ -326,12 +242,6 @@ std::optional<Slice> LastFit(const Spectrum &spectrum, const unsigned FSUs) {
 }
 
 std::optional<Slice> RandomFit(const Spectrum &spectrum, const unsigned FSUs) {
-  assert(FSUs <= spectrum.size());
-
-  if (FSUs > spectrum.largest_partition()) {
-    return std::nullopt;
-  }
-
   std::vector<unsigned> indexes{};
 
   for (auto start{0u}; start < spectrum.size(); ++start) {
@@ -369,12 +279,6 @@ std::optional<Slice> RandomFit(const Spectrum &spectrum, const unsigned FSUs) {
 }
 
 std::optional<Slice> WorstFit(const Spectrum &spectrum, const unsigned FSUs) {
-  assert(FSUs <= spectrum.size());
-
-  if (FSUs > spectrum.largest_partition()) {
-    return std::nullopt;
-  }
-
   std::optional<unsigned> worst_index;
 
   unsigned max_block_size = 0;
@@ -414,11 +318,18 @@ std::optional<Slice> WorstFit(const Spectrum &spectrum, const unsigned FSUs) {
 
 double AbsoluteFragmentation::operator()(const Spectrum &spectrum) const {
   if (!spectrum.available()) {
-    return 0.0;
+    return .0f;
   }
-  const auto total = static_cast<double>(spectrum.available());
 
-  return (total - spectrum.largest_partition()) / total;
+  const auto buffer = spectrum.available_slices() |
+    std::views::transform([](const Slice& slice) {
+      return slice.second - slice.first + 1;
+    }
+  );
+
+  const auto max = *std::max_element(buffer.begin(), buffer.end());
+
+  return 1.f - max / static_cast<double>(spectrum.available());
 }
 
 double ExternalFragmentation::operator()(const Spectrum &spectrum) const {
@@ -426,23 +337,15 @@ double ExternalFragmentation::operator()(const Spectrum &spectrum) const {
     return 0;
   }
 
-  const auto availableSlices = spectrum.available_slices();
-
-  const auto compare = [](const Slice& first, const Slice &second) {
-    const auto firstSliceSize = first.second - first.first + 1;
-
-    const auto secondSliceSize = second.second - second.first + 1;
-
-    return firstSliceSize > secondSliceSize;
-  };
-
-  const auto &[start, end] = *std::max_element(
-    availableSlices.begin(),
-    availableSlices.end(),
-    compare
+  const auto buffer = spectrum.available_slices() |
+    std::views::transform([](const Slice& slice) {
+      return slice.second - slice.first + 1;
+    }
   );
 
-  return 1.0 - (static_cast<double>(end - start + 1) / static_cast<double>(spectrum.size()));
+  const auto max = *std::max_element(buffer.begin(), buffer.end());
+
+  return 1.f - max / static_cast<double>(spectrum.size());
 }
 
 EntropyBasedFragmentation::EntropyBasedFragmentation(const unsigned minFSUs)
@@ -450,20 +353,24 @@ EntropyBasedFragmentation::EntropyBasedFragmentation(const unsigned minFSUs)
 
 double EntropyBasedFragmentation::operator()(const Spectrum &spectrum) const {
   if (!spectrum.available()) {
-    return 0.0;
+    return 0;
   }
 
-  const auto partitions = spectrum.available_partitions(minFSUs);
+  const auto size = [](const Slice &slice) { return slice.second - slice.first + 1; };
 
-  double entropy = 0.0;
+  const auto fit = [&](const unsigned size) { return minFSUs <= size; };
 
-  for (const auto& partitionSize : partitions) {
-    const double p = static_cast<double>(partitionSize) / static_cast<double>(spectrum.available());
+  const auto freeFSUs = static_cast<double>(spectrum.size());
 
-    const double e = p * std::log(p);
+  const auto ratio = [&](const unsigned &size) { return static_cast<double>(size) / freeFSUs; };
 
-    entropy += e;
-  }
+  const auto shannon = [&](const double &ratio) { return ratio * std::log(ratio); };
 
-  return -entropy;
+  auto buffer = spectrum.available_slices() |
+    std::views::transform(size) |
+    std::views::filter(fit) |
+    std::views::transform(ratio) |
+    std::views::transform(shannon);
+
+  return -std::accumulate(buffer.begin(), buffer.end(), .0f);
 }
