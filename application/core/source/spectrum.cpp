@@ -342,22 +342,24 @@ std::optional<Slice> FirstFit(const Spectrum &spectrum, const unsigned FSUs) {
     return std::nullopt;
   }
 
-  const auto candidates = std::views::iota(0u, spectrum.size() - FSUs + 1);
+  const auto availableSlices = spectrum.available_slices();
 
-  const auto is_available = [](const auto &FSU) { return !FSU.allocated; };
+  const auto iterator = std::find_if(
+    availableSlices.begin(),
+    availableSlices.end(),
+    [=](const Slice &slice) {
+      const auto [start, end] = slice;
 
-  for (const auto index : candidates) {
-    const auto range = std::views::iota(0u, FSUs) |
-                       std::views::transform([&](const auto offset) {
-                         return spectrum.at(index + offset);
-                       });
+      return start + FSUs - 1 <= end;
+  });
 
-    if (std::ranges::all_of(range, is_available)) {
-      return Slice(index, index + FSUs - 1);
-    }
+  if (iterator == availableSlices.end()) {
+    return std::nullopt;
   }
 
-  return std::nullopt;
+  const auto& [start, _] = *iterator;
+
+  return Slice(start, start + FSUs - 1);
 }
 
 std::optional<Slice> LastFit(const Spectrum &spectrum, const unsigned FSUs) {
