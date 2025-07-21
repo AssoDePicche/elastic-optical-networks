@@ -118,15 +118,15 @@ void Spectrum::deallocate(const Slice &slice) {
 unsigned Spectrum::size(void) const noexcept { return resources.size(); }
 
 unsigned Spectrum::available(void) const noexcept {
-  unsigned count = 0u;
+  return std::accumulate(
+    availableSlices.begin(),
+    availableSlices.end(),
+    0,
+    [](const int sum, const Slice &slice) {
+      const auto [start, end] = slice;
 
-  for (const auto &[allocated, _] : resources) {
-    if (!allocated) {
-      ++count;
-    }
-  }
-
-  return count;
+      return sum + end - start + 1;
+  });
 }
 
 bool Spectrum::available_at(const Slice &slice) const noexcept {
