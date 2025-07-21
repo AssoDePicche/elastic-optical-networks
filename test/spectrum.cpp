@@ -2,8 +2,6 @@
 
 #include <gtest/gtest.h>
 
-#include <vector>
-
 TEST(Spectrum, BestFit) {
   Spectrum spectrum(10);
 
@@ -87,15 +85,15 @@ TEST(Spectrum, ExternalFragmentation) {
 TEST(Spectrum, EntropyBasedFragmentation) {
   Spectrum spectrum(10);
 
-  spectrum.allocate({1, 3});
+  spectrum.allocate({0, 2});
 
-  spectrum.allocate({7, 9});
+  spectrum.allocate({4, 5});
 
-  const double expected = 0.4644;
+  const double expected = 0.721928095;
 
-  const auto absolute_error = .75;
+  const auto absolute_error = .25;
 
-  std::unique_ptr<Fragmentation> fn = std::make_unique<ExternalFragmentation>();
+  std::unique_ptr<Fragmentation> fn = std::make_unique<EntropyBasedFragmentation>(1);
 
   EXPECT_NEAR(expected, (*fn)(spectrum), absolute_error);
 }
