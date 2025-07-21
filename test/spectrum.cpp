@@ -2,6 +2,23 @@
 
 #include <gtest/gtest.h>
 
+#include <vector>
+
+TEST(Spectrum, AvailableSlices) {
+  Spectrum spectrum(10);
+
+  spectrum.allocate({0, 1});
+
+  spectrum.allocate({5, 7});
+
+  std::vector<Slice> expected = {
+    {2, 4},
+    {8, 9},
+  };
+
+  ASSERT_EQ(spectrum.available_slices(), expected);
+}
+
 TEST(Spectrum, BestFit) {
   Spectrum spectrum(10);
 
