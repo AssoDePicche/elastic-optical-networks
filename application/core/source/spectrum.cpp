@@ -160,43 +160,31 @@ FSU Spectrum::at(const unsigned index) const {
 }
 
 std::optional<Slice> BestFit(const Spectrum &spectrum, const unsigned FSUs) {
-  const auto size = spectrum.size();
+  const auto size = [](const Slice& slice) { return slice.second - slice.first + 1; };
 
-  std::optional<unsigned> best_index;
+  const auto fit = [&](const unsigned size) { return FSUs <= size; };
 
-  unsigned min_block_size = std::numeric_limits<unsigned>::max();
+  const auto slices = spectrum.available_slices();
 
-  unsigned current_start = 0;
+  auto buffer = slices |
+    std::views::transform(size) |
+    std::views::filter(fit);
 
-  unsigned current_length = 0;
+  const auto iterator = std::min_element(buffer.begin(), buffer.end());
 
-  for (const auto index : std::views::iota(0u, size)) {
-    const auto &[allocated, _] = spectrum.at(index);
-
-    if (!allocated) {
-      if (current_length == 0) {
-        current_start = index;
-      }
-
-      ++current_length;
-    }
-
-    if (allocated || index == size - 1) {
-      if (FSUs <= current_length && current_length < min_block_size) {
-        best_index = current_start;
-
-        min_block_size = current_length;
-      }
-
-      current_length = 0;
-    }
-  }
-
-  if (!best_index) {
+  if (iterator == buffer.end()) {
     return std::nullopt;
   }
 
-  return Slice(*best_index, *best_index + FSUs - 1);
+  const auto min = *iterator;
+
+  const auto minSize = [&](const Slice& slice) {
+    return slice.second - slice.first + 1 == min;
+  };
+
+  const auto &[start, _] = *std::ranges::find_if(slices, minSize);
+
+  return Slice(start, start + FSUs - 1);
 }
 
 std::optional<Slice> FirstFit(const Spectrum &spectrum, const unsigned FSUs) {
@@ -279,41 +267,31 @@ std::optional<Slice> RandomFit(const Spectrum &spectrum, const unsigned FSUs) {
 }
 
 std::optional<Slice> WorstFit(const Spectrum &spectrum, const unsigned FSUs) {
-  std::optional<unsigned> worst_index;
+  const auto size = [](const Slice& slice) { return slice.second - slice.first + 1; };
 
-  unsigned max_block_size = 0;
+  const auto fit = [&](const unsigned size) { return FSUs <= size; };
 
-  unsigned current_start = 0;
+  const auto slices = spectrum.available_slices();
 
-  unsigned current_length = 0;
+  auto buffer = slices |
+    std::views::transform(size) |
+    std::views::filter(fit);
 
-  for (const auto index : std::views::iota(0u, spectrum.size())) {
-    const auto &[allocated, _] = spectrum.at(index);
+  const auto iterator = std::max_element(buffer.begin(), buffer.end());
 
-    if (!allocated) {
-      if (current_length == 0) {
-        current_start = index;
-      }
-
-      ++current_length;
-    }
-
-    if (allocated || index == spectrum.size() - 1) {
-      if (FSUs <= current_length && current_length > max_block_size) {
-        max_block_size = current_length;
-
-        worst_index = current_start;
-      }
-
-      current_length = 0;
-    }
-  }
-
-  if (!worst_index) {
+  if (iterator == buffer.end()) {
     return std::nullopt;
   }
 
-  return Slice(*worst_index, *worst_index + FSUs - 1);
+  const auto max = *iterator;
+
+  const auto maxSize = [&](const Slice& slice) {
+    return slice.second - slice.first + 1 == max;
+  };
+
+  const auto &[start, _] = *std::ranges::find_if(slices, maxSize);
+
+  return Slice(start, start + FSUs - 1);
 }
 
 double AbsoluteFragmentation::operator()(const Spectrum &spectrum) const {
