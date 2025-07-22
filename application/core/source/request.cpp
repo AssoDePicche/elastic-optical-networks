@@ -123,14 +123,18 @@ bool Dispatcher::dispatch(Request &request,
     return false;
   }
 
-  std::for_each(
-    keys.begin(),
-    keys.end(),
-    [&](const auto key) {
-      assert(carriers[key].available_at(slice));
+  for (const auto &key : keys) {
+    if (carriers[key].available() < request.FSUs ||
+        !carriers[key].available_at(slice)) {
+      return false;
+    }
+  }
 
-      carriers[key].allocate(request.slice);
-  });
+  const auto allocate = [&](const auto key) {
+    carriers[key].allocate(request.slice);
+  };
+
+  std::for_each(keys.begin(), keys.end(), allocate);
 
   return true;
 }
@@ -140,12 +144,9 @@ Carriers Dispatcher::GetCarriers(void) const { return carriers; }
 void Dispatcher::release(Request &request) {
   const auto keys = keyGenerator.generate(request.route);
 
-  std::for_each(
-    keys.begin(),
-    keys.end(),
-    [&](const auto key) {
-      assert(!carriers[key].available_at(slice));
+  std::for_each(keys.begin(), keys.end(), [&](const auto key) {
+    assert(!carriers[key].available_at(slice));
 
-      carriers[key].deallocate(request.slice);
+    carriers[key].deallocate(request.slice);
   });
 }
