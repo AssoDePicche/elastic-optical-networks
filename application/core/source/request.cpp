@@ -123,9 +123,11 @@ bool Dispatcher::dispatch(Request &request,
     return false;
   }
 
+  request.slice = slice.value();
+
   for (const auto &key : keys) {
     if (carriers[key].available() < request.FSUs ||
-        !carriers[key].available_at(slice)) {
+        !carriers[key].available_at(request.slice)) {
       return false;
     }
   }
