@@ -16,6 +16,8 @@ struct FSU final {
 
 using Slice = std::pair<unsigned, unsigned>;
 
+[[nodiscard]] unsigned size(const Slice &);
+
 class Spectrum final {
  public:
   Spectrum(void) = default;
@@ -40,7 +42,7 @@ class Spectrum final {
 
  private:
   std::vector<FSU> resources;
-  std::vector<Slice> availableSlices;
+  std::vector<Slice> slices;
 };
 
 [[nodiscard]] std::optional<Slice> BestFit(const Spectrum &, const unsigned);
