@@ -6,4 +6,4 @@ else
   echo "Cloning submodules" && git submodule update --init --recursive
 fi
 
-cmake -DCMAKE_BUILD_TYPE=Release -S . -B build && cmake --build build -j12
+cmake -DCMAKE_BUILD_TYPE=Release -S . -B build && cmake --build build -j$(fgrep 'processor' /proc/cpuinfo | wc -l)
