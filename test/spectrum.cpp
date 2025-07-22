@@ -12,8 +12,8 @@ TEST(Spectrum, AvailableSlices) {
   spectrum.allocate({5, 7});
 
   std::vector<Slice> expected = {
-    {2, 4},
-    {8, 9},
+      {2, 4},
+      {8, 9},
   };
 
   ASSERT_EQ(spectrum.available_slices(), expected);
@@ -79,6 +79,16 @@ TEST(Spectrum, LastFit) {
   ASSERT_EQ(maybe.value(), expected);
 }
 
+TEST(Spectrum, RandomFit) {
+  Spectrum spectrum(10);
+
+  spectrum.allocate({0, 1});
+
+  spectrum.allocate({5, 7});
+
+  ASSERT_TRUE(RandomFit(spectrum, 1).has_value());
+}
+
 TEST(Spectrum, WorstFit) {
   Spectrum spectrum(10);
 
@@ -122,7 +132,8 @@ TEST(Spectrum, EntropyBasedFragmentation) {
 
   const auto absolute_error = .25;
 
-  std::unique_ptr<Fragmentation> fn = std::make_unique<EntropyBasedFragmentation>(1);
+  std::unique_ptr<Fragmentation> fn =
+      std::make_unique<EntropyBasedFragmentation>(1);
 
   EXPECT_NEAR(expected, (*fn)(spectrum), absolute_error);
 }
