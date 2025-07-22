@@ -171,7 +171,7 @@ std::optional<Slice> BestFit(const Spectrum &spectrum, const unsigned FSUs) {
   const auto min = *iterator;
 
   const auto minSize = [&](const Slice &slice) {
-    return slice.second - slice.first + 1 == min;
+    return size(slice) == min;
   };
 
   const auto &[start, _] = *std::ranges::find_if(slices, minSize);
@@ -255,7 +255,7 @@ std::optional<Slice> WorstFit(const Spectrum &spectrum, const unsigned FSUs) {
   const auto max = *iterator;
 
   const auto maxSize = [&](const Slice &slice) {
-    return slice.second - slice.first + 1 == max;
+    return size(slice) == max;
   };
 
   const auto &[start, _] = *std::ranges::find_if(slices, maxSize);
@@ -268,10 +268,7 @@ double AbsoluteFragmentation::operator()(const Spectrum &spectrum) const {
     return .0f;
   }
 
-  const auto buffer = spectrum.available_slices() |
-                      std::views::transform([](const Slice &slice) {
-                        return slice.second - slice.first + 1;
-                      });
+  const auto buffer = spectrum.available_slices() | std::views::transform(size);
 
   const auto max = *std::max_element(buffer.begin(), buffer.end());
 
@@ -283,10 +280,7 @@ double ExternalFragmentation::operator()(const Spectrum &spectrum) const {
     return .0f;
   }
 
-  const auto buffer = spectrum.available_slices() |
-                      std::views::transform([](const Slice &slice) {
-                        return slice.second - slice.first + 1;
-                      });
+  const auto buffer = spectrum.available_slices() | std::views::transform(size);
 
   const auto max = *std::max_element(buffer.begin(), buffer.end());
 
