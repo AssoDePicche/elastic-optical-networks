@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 if [[ -e "./vendor/googletest/CMakeLists.txt" && -e "./vendor/json/CMakeLists.txt" ]]; then
   echo "Building..."
 else
