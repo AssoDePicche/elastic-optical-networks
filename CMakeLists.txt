@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -DALLOWLOGS -g)
+set(COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -DALLOWLOGS -pg)
 
 set(APP_DIR ${CMAKE_SOURCE_DIR}/application)
 
