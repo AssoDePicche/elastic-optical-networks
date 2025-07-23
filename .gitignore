@@ -1,5 +1,7 @@
 *.csv
-*.txt
-.gdb_history
+gprof.png
+gprof.txt
+report.txt
+gdb_history
 /build/
 /third_party/
