@@ -1,121 +1,66 @@
-# Elastic Optical Networks
+This repository contains an event-driven simulator for elastic optical networks to study the problem of routing, modulation, and spectrum allocation (RMSA), as well as quality of service metrics.
 
-This repository contains an elastic optical network simulator developed for personal studies, initially as part of the first undergraduate research program in which I participated during September of 2023 and August of 2024, under the supervision of Dr. Rodrigo Campos Bortoletto.
+> More detailed documentation is currently being written. Please wait. Consider visiting the [official page](https://assodepicche.github.io/elastic-optical-networks/) for this application.
+## Scope and Features
 
-The studies consisted mainly of machine learning algorithms applied to routing, modulation and spectrum assignment. The topologies adopted for analysis were Point-to-Point, Arpanet, Ipê, Germany 17, Abilene, JPN48, NSFNET and Pan-European.
+The scope of this project consists of analyzing network behavior in different configuration contexts, such as topology, traffic, routing policies, and resource allocation. Multiple topologies are available by default, however, it is possible to use any desired topology, as long as it follows the application standards.
 
-## Table of Contents
+The algorithms available are:
+- **Quality of Service:** Absolute Fragmentation, External Fragmentation and Entropy-based Fragmentation.
+- **Routing:** Breadth-first Search, Depth-first Search, Dijkstra's algorithm and K Shortest Paths.
+- **Spectrum Allocation:** Best fit, First fit, Last fit, Random fit and Worst fit.
 
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [Contact](#contact)
-- [License](#license)
+## Citation
 
-## Features
+If you use this application in your research, please cite:
 
-The algorithms available for route and spectrum allocation are:
+```bibtext
+@misc{rodrigues2025eon-simulator,
+  author       = {Samuel do Prado Rodrigues and Rodrigo Campos Bortoletto},
+  title        = {Elastic Optical Networks Simulator},
+  year         = {2025},
+  howpublished = {\url{https://github.com/samuel-rodrigues/your-repo-name}},
+  note         = {Accessed: \today},
+  orcid        = {Samuel do Prado Rodrigues: https://orcid.org/0009-0002-0169-5804, Rodrigo Campos Bortoletto: https://orcid.org/0000-0002-9570-5833}
+}
+```
 
-**Spectrum Allocation**
-- [Best fit](https://en.wikipedia.org/wiki/Best-fit_bin_packing#:~:text=The%20best%2Dfit%20algorithm%20uses,before%20placing%20the%20new%20item.)
-- [First fit](https://en.wikipedia.org/wiki/First-fit_bin_packing)
-- [Last fit](https://en.wikipedia.org/wiki/First-fit-decreasing_bin_packing)
-- Random fit
-- [Worst fit](https://www.geeksforgeeks.org/worst-fit-allocation-in-operating-systems/)
+## Building From Source
 
-**Routing**
-- [Breadth-first Search](https://en.wikipedia.org/wiki/Breadth-first_search)
-- [Depth-first Search](https://en.wikipedia.org/wiki/Depth-first_search)
-- [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm)
-
-## Installation
-
-1. Install dependencies
-
-Before cloning this repository, you must have installed all the dependencies for this project:
-
-- [CMake](https://cmake.org/download/)
-
-2. Clone the repository
+First install and configure all necessary dependencies, then clone this repository:
 
 ```bash
-git clone git@github.com:AssoDePicche/elastic-optical-networks.git
+git clone https://github.com/AssoDePicche/elastic-optical-networks.git --recursive && cd elastic-optical-networks
 ```
 
-3. Build
+After that, use the available scripts to perform the build, tests, and profiling.
 
 ```bash
-mkdir -p third_party && cmake -DCMAKE_BUILD_TYPE=Release -S . -B build && cmake --build build -j12
+./scripts/build.sh
 ```
 
-## Usage
+## Running
 
-Run the binary created in the [Installation section](#installation) with the arguments specified below. At the end of the simulation, in addition to the parameter information, the network grade of service (GoS) calculated using the [Erlang B formula](https://en.wikipedia.org/wiki/Erlang_(unit)), the proportion of request types (3-slot or 7-slot requests), the blocking probability (BP) per request type will be available and some other information.
-
-You must pass the following arguments for the simulation:
-- `--arrival-rate`: the call arrival rate per unit of time
-- `--bandwidth`: the number of resources available per link
-- `--seed`: the seed number for random processes
-- `--service-rate`: the service rate per unit of time
-- `--spectrum-allocator`: the [spectrum allocation algorithm](#features)
-- `--time-units`: the maximum time that should be simulated
-- `--topology`: the file with the number of nodes and the adjacency matrix of the network
-
-For example:
+Once the application has been built, you can run it. To modify the simulation parameters, edit the [settings.json](resources/configuration/settings.json) file.
 
 ```bash
-./build/source/App --time-units 100000 --seed 227953 --bandwidth 10 --service-rate 0.133 --arrival-rate 1 --topology topology.txt --spectrum-allocator first-fit
+./build/App
 ```
 
-With the topology.txt file as follows:
+When the simulation ends, it saves a .csv file with the simulation data and a report.txt file is created with the results.
 
-```txt
-2
-0 1
-1 0
-```
+## A Bit Of History
 
-Output:
-
-```txt
-Execution time: 44s
-Simulation time: 99999.888274
-Seed: 0
-Channels (C): 10
-Calls (n): 100202
-Arrival rate (λ): 1.000000
-Service rate (μ): 0.133000
-Traffic Intensity (ρ): 7.518797
-Grade of Service (ε): 0.100966
-Busy Channels (1-ε): 0.899034
-Occupancy ((1-ε)/C): 0.089903
-Type 1
-Ratio: 1.000000
-BP(ε): 0.100966
-```
-
-## Contributing
-
-There are many ways to contribute to this project:
-- You can contact me to suggest articles that might be useful in future resources.
-- You can (please) cite this project and related articles published during my research in your work.
-- You can contribute to the code through refactoring or implementation by following the steps below:
-
-1. Fork the repository.
-
-2. Create a new branch: `git checkout -b feature-name`.
-
-3. Make your changes.
-
-4. Push your branch: `git push origin feature-name`.
-
-5. Create a pull request.
-
-## Contact
-
-Samuel do Prado Rodrigues - samuelprado730@gmail.com
+In August 2023, I began my scientific initiation program under the guidance of [Dr. Rodrigo Campos Bortoletto](https://orcid.org/0000-0002-9570-5833) ([ORCID](https://orcid.org/0000-0002-9570-5833)) in the LABCOM³ research group for the study of Elastic Optical Networks. Since then, I have sought to contribute to the academic community through the development of this software.
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE), see [LICENSE](LICENSE) for more information.
+
+## Support This Project
+
+This application is developed and maintained by me, [Samuel do Prado Rodrigues](https://orcid.org/0009-0002-0169-5804) ([ORCID](https://orcid.org/0009-0002-0169-5804)) under the guidance of my research advisor, [Dr. Rodrigo Campos Bortoletto](https://orcid.org/0000-0002-9570-5833) ([ORCID](https://orcid.org/0000-0002-9570-5833)), to support academic research on Elastic Optical Networks. If you find it useful, please consider supporting our work through [GitHub Sponsors](https://github.com/sponsors/AssoDePicche)
+
+## Acknowledgments
+
+I would like to thank my research advisor for all his support and my colleagues at LABCOM³ for guiding me throughout my studies.
