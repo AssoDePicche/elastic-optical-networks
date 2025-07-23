@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -DALLOWLOGS -pg)
+set(COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -pg)
 
 set(APP_DIR ${CMAKE_SOURCE_DIR}/application)
 
@@ -32,6 +32,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${DEPENDENCIES})
 
+target_link_options(${PROJECT_NAME} PRIVATE -pg)
+
 enable_testing()
 
 file(GLOB TEST_SOURCES ${TEST_DIR}/*.cpp)
@@ -43,5 +45,7 @@ target_include_directories(${PROJECT_NAME}Test PRIVATE ${CORE_INCLUDE} ${CORE_SO
 target_compile_options(${PROJECT_NAME}Test PRIVATE ${COMPILE_OPTIONS})
 
 target_link_libraries(${PROJECT_NAME}Test PRIVATE ${DEPENDENCIES})
+
+target_link_options(${PROJECT_NAME}Test PRIVATE -pg)
 
 add_test(NAME ${PROJECT_NAME}Test COMMAND ${PROJECT_NAME}Test --gtest_color=1)
