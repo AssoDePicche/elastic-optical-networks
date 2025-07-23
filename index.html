@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content=
+"width=device-width, initial-scale=1">
+<title>Elastic Optical Networks Simulator</title>
+
+<style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.6;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    a {
+      color: #0366d6;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    footer {
+      margin-top: 60px;
+      font-size: 0.9em;
+      color: #777;
+      text-align: center;
+    }
+    pre {
+      background: #eee;
+      padding: 10px;
+      overflow-x: auto;
+    }
+</style>
+</head>
+<body>
+<header>
+<h1>Elastic Optical Networks Simulator</h1>
+<p>By Samuel do Prado Rodrigues and Rodrigo Campos Bortoletto</p>
+<p><a href=
+"https://github.com/AssoDePicche/elastic-optical-networks">GitHub
+Repository</a></p>
+</header>
+<section>
+<h2>About</h2>
+<p>This simulator models elastic optical networks with features
+designed to aid academic research worldwide. The software is open
+source, and contributions are welcomed. In the event that the
+simulator is utilized in an academic context, proper citation is
+required.</p>
+</section>
+<section>
+<h2>Citation</h2>
+<pre id="bibtex">
+@misc{rodrigues{{YEAR}}eon-simulator,
+  author       = {Samuel do Prado Rodrigues and Rodrigo Campos Bortoletto},
+  title        = {Elastic Optical Networks Simulator},
+  year         = {{YEAR}},
+  howpublished = {\url{https://github.com/AssoDePicche/elastic-optical-networks}},
+  note         = {Accessed: {{DATE}}}
+}
+    </pre></section>
+<footer id="footer">© {{YEAR}} Samuel do Prado Rodrigues and
+Rodrigo Campos Bortoletto</footer>
+<script>
+    const now = new Date();
+  
+    const year = now.getFullYear();
+
+    const date = now.toISOString().split('T')[0];
+
+    const bib = document.getElementById('bibtex');
+
+    bib.innerHTML = bib.innerHTML
+      .replace(/{{YEAR}}/g, year)
+      .replace('{{DATE}}', date);
+
+    const footer = document.getElementById('footer');
+
+    footer.innerHTML =`&copy; ${year} Samuel do Prado Rodrigues and Rodrigo Campos Bortolleto`;
+</script>
+</body>
+</html>
