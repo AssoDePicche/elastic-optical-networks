@@ -19,7 +19,7 @@ If you use this application in your research, please cite:
   author       = {Samuel do Prado Rodrigues and Rodrigo Campos Bortoletto},
   title        = {Elastic Optical Networks Simulator},
   year         = {2025},
-  howpublished = {\url{https://github.com/samuel-rodrigues/your-repo-name}},
+  howpublished = {\url{https://github.com/samuel-rodrigues/elastic-optical-networks}},
   note         = {Accessed: \today},
   orcid        = {Samuel do Prado Rodrigues: https://orcid.org/0009-0002-0169-5804, Rodrigo Campos Bortoletto: https://orcid.org/0000-0002-9570-5833}
 }
