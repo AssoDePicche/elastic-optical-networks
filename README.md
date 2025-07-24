@@ -1,4 +1,4 @@
-This repository contains an event-driven simulator for elastic optical networks to study the problem of routing, modulation, and spectrum allocation (RMSA), as well as quality of service metrics.
+This repository contains an event-driven simulator for elastic optical networks to study the problem of routing, modulation, and spectrum allocation (RMSA), as well as quality of service metrics. In the event that the simulator is utilized in an academic context, proper citation is required.
 
 > More detailed documentation is currently being written. Please wait. Consider visiting the [official page](https://assodepicche.github.io/elastic-optical-networks/) for this application.
 ## Scope and Features
@@ -30,7 +30,7 @@ If you use this application in your research, please cite:
 First install and configure all necessary dependencies, then clone this repository:
 
 ```bash
-git clone https://github.com/AssoDePicche/elastic-optical-networks.git --recursive && cd elastic-optical-networks
+git clone git@github.com:AssoDePicche/elastic-optical-networks.git --recursive
 ```
 
 After that, use the available scripts to perform the build, tests, and profiling.
@@ -51,7 +51,7 @@ When the simulation ends, it saves a .csv file with the simulation data and a re
 
 ## A Bit Of History
 
-In August 2023, I began my scientific initiation program under the guidance of [Dr. Rodrigo Campos Bortoletto](https://orcid.org/0000-0002-9570-5833) ([ORCID](https://orcid.org/0000-0002-9570-5833)) in the LABCOM³ research group for the study of Elastic Optical Networks. Since then, I have sought to contribute to the academic community through the development of this software.
+In August 2023, I began my scientific initiation program under the guidance of [Dr. Rodrigo Campos Bortoletto](https://orcid.org/0000-0002-9570-5833) ([ORCID](https://orcid.org/0000-0002-9570-5833)) in the [LABCOM³](http://dgp.cnpq.br/dgp/espelhogrupo/8697407606944374) research group for the study of Elastic Optical Networks. Since then, I have sought to contribute to the academic community through the development of this software.
 
 ## License
 
@@ -63,4 +63,4 @@ This application is developed and maintained by me, [Samuel do Prado Rodrigues](
 
 ## Acknowledgments
 
-I would like to thank my research advisor for all his support and my colleagues at LABCOM³ for guiding me throughout my studies.
+I would like to thank my research advisor for all his support and my colleagues at [LABCOM³](http://dgp.cnpq.br/dgp/espelhogrupo/8697407606944374) for guiding me throughout my studies.
