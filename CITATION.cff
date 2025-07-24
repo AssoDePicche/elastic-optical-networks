@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: >
+  If you use this simulator in your research, please cite it as below.
+title: "Elastic Optical Networks Simulator"
+authors:
+  - family-names: Rodrigues
+    given-names: Samuel do Prado
+    orcid: https://orcid.org/0009-0002-0169-5804
+  - family-names: Bortoletto
+    given-names: Rodrigo Campos
+    orcid: https://orcid.org/0000-0002-9570-5833
+date-released: 2025-07-23
+version: "v1.0.0-beta"
+doi: 10.5281/zenodo.16394144
+url: https://assodepicche.github.io/elastic-optical-networks/
+repository: https://github.com/AssoDePicche/elastic-optical-networks
+license: MIT
+type: software
+abstract: >
+  This simulator models Elastic Optical Networks (EONs) using a discrete event
+  simulation architecture, supporting customizable connection types, entropy-based
+  fragmentation analysis, and blocking probability tracking. Designed for research
+  and reproducibility in optical networking.
