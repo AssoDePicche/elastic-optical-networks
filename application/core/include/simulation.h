@@ -1,12 +1,48 @@
 #pragma once
 
+#include <optional>
+#include <queue>
 #include <string>
 #include <vector>
 
-#include "event_queue.h"
 #include "request.h"
 #include "settings.h"
 #include "spectrum.h"
+
+enum class EventType { Arrival, Departure };
+
+struct Event {
+  double time;
+  EventType signal;
+  Request value;
+
+  Event(void) = default;
+
+  Event(const double, const EventType &, const Request &);
+
+  [[nodiscard]] bool operator<(const Event &) const noexcept;
+};
+
+class EventQueue {
+ public:
+  [[nodiscard]] EventQueue &push(const Request &, const double);
+
+  void of_type(const EventType &);
+
+  [[nodiscard]] std::optional<Event> top(void) const;
+
+  [[nodiscard]] std::optional<Event> pop(void);
+
+  [[nodiscard]] bool empty(void) const;
+
+  [[nodiscard]] size_t size(void) const;
+
+ private:
+  std::priority_queue<Event> queue;
+  double time;
+  Request to_push;
+  bool pushing{false};
+};
 
 struct Snapshot final {
   double time;
@@ -15,7 +51,7 @@ struct Snapshot final {
   std::vector<double> fragmentation;
   double blocking;
 
-  Snapshot(const Event<Request> &, std::vector<double>, double);
+  Snapshot(const Event &, std::vector<double>, double);
 
   [[nodiscard]] std::string Serialize(void) const;
 };
@@ -42,7 +78,7 @@ class Simulation final {
 
  private:
   Settings &settings;
-  EventQueue<Request> queue;
+  EventQueue queue;
   double kToIgnore;
   Dispatcher dispatcher;
   std::vector<std::string> requestsKeys;
