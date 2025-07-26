@@ -1,7 +1,8 @@
+.gdb_history
 *.csv
+gmon.out
 gprof.png
 gprof.txt
 report.txt
-gdb_history
 /build/
 /third_party/
