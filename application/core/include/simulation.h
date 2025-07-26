@@ -25,27 +25,6 @@ struct Event {
   [[nodiscard]] bool operator<(const Event &) const noexcept;
 };
 
-class EventQueue {
- public:
-  [[nodiscard]] EventQueue &push(const Request &, const double);
-
-  void of_type(const EventType &);
-
-  [[nodiscard]] std::optional<Event> top(void) const;
-
-  [[nodiscard]] std::optional<Event> pop(void);
-
-  [[nodiscard]] bool empty(void) const;
-
-  [[nodiscard]] size_t size(void) const;
-
- private:
-  std::priority_queue<Event> queue;
-  double time;
-  Request to_push;
-  bool pushing{false};
-};
-
 struct Snapshot final {
   double time;
   unsigned FSUs;
@@ -60,7 +39,7 @@ struct Snapshot final {
 
 class Simulation final {
   Settings &settings;
-  EventQueue queue;
+  std::priority_queue<Event> queue;
   Logger _logger;
   double kToIgnore;
   Dispatcher dispatcher;
@@ -71,7 +50,7 @@ class Simulation final {
   unsigned requestCount{0u};
   unsigned blockedCount{0u};
   unsigned activeRequests{0u};
-  double time{0.0};
+  double time{.0f};
   std::vector<Snapshot> snapshots;
 
  public:

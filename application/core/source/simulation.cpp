@@ -15,61 +15,6 @@ bool Event::operator<(const Event &other) const noexcept {
   return time > other.time;
 }
 
-EventQueue &EventQueue::push(const Request &value, const double now) {
-  assert(!pushing);
-
-  pushing = true;
-
-  to_push = value;
-
-  time = now;
-
-  return *this;
-}
-
-void EventQueue::of_type(const EventType &type) {
-  assert(pushing);
-
-  auto now = time;
-
-  switch (type) {
-    case EventType::Arrival:
-      now += PseudoRandomNumberGenerator::Instance()->next("arrival");
-      break;
-    case EventType::Departure:
-      now += PseudoRandomNumberGenerator::Instance()->next("service");
-      break;
-  }
-
-  queue.push(Event(now, type, to_push));
-
-  pushing = false;
-}
-
-std::optional<Event> EventQueue::top(void) const {
-  if (empty()) {
-    return std::nullopt;
-  }
-
-  return queue.top();
-}
-
-std::optional<Event> EventQueue::pop(void) {
-  if (empty()) {
-    return std::nullopt;
-  }
-
-  const auto event{queue.top()};
-
-  queue.pop();
-
-  return event;
-}
-
-bool EventQueue::empty(void) const { return queue.empty(); }
-
-size_t EventQueue::size(void) const { return queue.size(); }
-
 Snapshot::Snapshot(const Event &event, std::vector<double> fragmentation,
                    double blocking)
     : time{event.time},
@@ -114,20 +59,21 @@ Simulation::Simulation(Settings &settings,
 
   router.SetStrategy(std::make_shared<RandomRouting>(settings.graph));
 
-  queue
-      .push(Request{router.compute(NullVertex, NullVertex), firstRequest.FSUs},
-            time)
-      .of_type(EventType::Arrival);
+  queue.push(Event(
+      time + prng->next("arrival"), EventType::Arrival,
+      Request(router.compute(NullVertex, NullVertex), firstRequest.FSUs)));
 
   ++requestCount;
 }
 
 bool Simulation::HasNext(void) const {
-  return queue.top().value().time <= settings.timeUnits;
+  return !queue.empty() && queue.top().time <= settings.timeUnits;
 }
 
 void Simulation::Next(void) {
-  auto event = queue.pop().value();
+  auto event = queue.top();
+
+  queue.pop();
 
   time = event.time;
 
@@ -193,7 +139,8 @@ void Simulation::Next(void) {
       dispatcher.dispatch(event.request, allocator)) {
     ++activeRequests;
 
-    queue.push(event.request, time).of_type(EventType::Departure);
+    queue.push(Event(time + prng->next("service"), EventType::Departure,
+                     event.request));
 
     _logger.log(Logger::Level::Info, "Accept request for {} FSU(s) at {:.3f}",
                 event.request.FSUs, time);
@@ -232,10 +179,9 @@ void Simulation::Next(void) {
 
   ++request.counting;
 
-  queue
-      .push(Request{router.compute(NullVertex, NullVertex), request.FSUs},
-            event.time)
-      .of_type(EventType::Arrival);
+  queue.push(
+      Event(time + prng->next("arrival"), EventType::Arrival,
+            Request(router.compute(NullVertex, NullVertex), request.FSUs)));
 
   ++requestCount;
 }
@@ -297,10 +243,9 @@ void Simulation::Reset(void) {
 
   router.SetStrategy(std::make_shared<RandomRouting>(settings.graph));
 
-  queue
-      .push(Request{router.compute(NullVertex, NullVertex), firstRequest.FSUs},
-            time)
-      .of_type(EventType::Arrival);
+  queue.push(Event(
+      time + prng->next("arrival"), EventType::Arrival,
+      Request(router.compute(NullVertex, NullVertex), firstRequest.FSUs)));
 
   ++requestCount;
 }
