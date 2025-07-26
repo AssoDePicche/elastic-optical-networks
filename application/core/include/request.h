@@ -1,14 +1,18 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 #include "graph.h"
-#include "math.h"
 #include "route.h"
 #include "spectrum.h"
+
+using PairingFunction = std::function<unsigned(unsigned, unsigned)>;
+
+[[nodiscard]] unsigned CantorPairingFunction(unsigned, unsigned);
 
 enum class ModulationOption {
   Passband,

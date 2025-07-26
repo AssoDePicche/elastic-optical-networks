@@ -8,7 +8,6 @@
 
 #include "graph.h"
 #include "json.h"
-#include "math.h"
 #include "prng.h"
 #include "request.h"
 #include "spectrum.h"
