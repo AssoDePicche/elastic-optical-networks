@@ -1,12 +1,8 @@
-#include "simulation.h"
+#include "kernel.h"
 
-#include <cassert>
 #include <format>
-#include <vector>
 
 #include "graph.h"
-#include "prng.h"
-#include "request.h"
 
 Event::Event(const double time, const EventType &type, const Request &request)
     : time{time}, type{type}, request{request} {}
@@ -40,37 +36,20 @@ std::string Snapshot::Serialize(void) const {
   return buffer;
 }
 
-Simulation::Simulation(Settings &settings,
-                       std::shared_ptr<PseudoRandomNumberGenerator> prng)
+Kernel::Kernel(Settings &settings)
     : settings{settings},
       _logger{settings.enableLogging},
       kToIgnore{0.1 * settings.timeUnits},
       dispatcher{settings.graph, settings.keyGenerator, settings.FSUsPerLink},
-      prng{prng},
       requestsKeys{} {
-  requestsKeys.reserve(settings.requests.size());
-
-  std::transform(settings.requests.begin(), settings.requests.end(),
-                 std::back_inserter(requestsKeys),
-                 [](const auto &pair) { return pair.first; });
-  auto &firstRequest = settings.requests[requestsKeys[prng->next("fsus")]];
-
-  ++firstRequest.counting;
-
-  router.SetStrategy(std::make_shared<RandomRouting>(settings.graph));
-
-  queue.push(Event(
-      time + prng->next("arrival"), EventType::Arrival,
-      Request(router.compute(NullVertex, NullVertex), firstRequest.FSUs)));
-
-  ++requestCount;
+  Reset();
 }
 
-bool Simulation::HasNext(void) const {
+bool Kernel::HasNext(void) const {
   return !queue.empty() && queue.top().time <= settings.timeUnits;
 }
 
-void Simulation::Next(void) {
+void Kernel::Next(void) {
   auto event = queue.top();
 
   queue.pop();
@@ -186,19 +165,24 @@ void Simulation::Next(void) {
   ++requestCount;
 }
 
-std::vector<Snapshot> Simulation::GetSnapshots(void) const { return snapshots; }
+std::shared_ptr<PseudoRandomNumberGenerator>
+Kernel::GetPseudoRandomNumberGenerator(void) const {
+  return prng;
+}
 
-double Simulation::GetTime(void) const { return time; }
+std::vector<Snapshot> Kernel::GetSnapshots(void) const { return snapshots; }
 
-double Simulation::GetRequestCount(void) const {
+double Kernel::GetTime(void) const { return time; }
+
+double Kernel::GetRequestCount(void) const {
   return static_cast<double>(requestCount);
 }
 
-double Simulation::GetGradeOfService(void) const {
+double Kernel::GetGradeOfService(void) const {
   return static_cast<double>(blockedCount) / static_cast<double>(requestCount);
 }
 
-std::vector<double> Simulation::GetFragmentation(void) const {
+std::vector<double> Kernel::GetFragmentation(void) const {
   std::vector<double> fragmentation;
 
   const auto carriers = dispatcher.GetCarriers();
@@ -218,7 +202,7 @@ std::vector<double> Simulation::GetFragmentation(void) const {
   return fragmentation;
 }
 
-void Simulation::Reset(void) {
+void Kernel::Reset(void) {
   ignoredFirst = false;
 
   requestCount = 0u;
@@ -227,15 +211,32 @@ void Simulation::Reset(void) {
 
   activeRequests = 0u;
 
-  time = 0.0;
+  time = .0f;
 
   snapshots.clear();
 
-  requestsKeys.reserve(settings.requests.size());
+  requestsKeys.clear();
 
   std::transform(settings.requests.begin(), settings.requests.end(),
-                 std::back_inserter(requestsKeys),
-                 [](const auto &pair) { return pair.first; });
+                 std::back_inserter(requestsKeys), [](auto &pair) {
+                   pair.second.blocking = 0;
+
+                   pair.second.counting = 0;
+
+                   return pair.first;
+                 });
+
+  prng = PseudoRandomNumberGenerator::Instance();
+
+  prng->random_seed();
+
+  prng->exponential("arrival", settings.arrivalRate);
+
+  prng->exponential("service", settings.serviceRate);
+
+  prng->discrete("fsus", settings.probs.begin(), settings.probs.end());
+
+  prng->uniform("routing", 0, settings.graph.size());
 
   auto &firstRequest = settings.requests[requestsKeys[prng->next("fsus")]];
 

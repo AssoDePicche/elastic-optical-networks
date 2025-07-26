@@ -39,40 +39,37 @@ PseudoRandomNumberGenerator::Instance(void) {
   return instance;
 }
 
-uint64_t PseudoRandomNumberGenerator::get_seed(void) const { return seed; }
+uint64_t PseudoRandomNumberGenerator::seed(void) const { return _seed; }
 
-void PseudoRandomNumberGenerator::set_seed(const uint64_t seed) {
-  this->generator.seed(seed);
+void PseudoRandomNumberGenerator::seed(const uint64_t seed) {
+  this->_generator.seed(seed);
 
-  this->seed = seed;
+  this->_seed = seed;
 }
 
-void PseudoRandomNumberGenerator::set_random_seed(void) {
-  set_seed(random_device());
-}
+void PseudoRandomNumberGenerator::random_seed(void) { seed(_random_device()); }
 
-void PseudoRandomNumberGenerator::set_exponential(const std::string key,
-                                                  const double mean) {
+void PseudoRandomNumberGenerator::exponential(const std::string key,
+                                              const double mean) {
   _distribution[key] = std::make_unique<Exponential>(mean);
 }
 
-void PseudoRandomNumberGenerator::set_poisson(const std::string key,
-                                              const double mean) {
+void PseudoRandomNumberGenerator::poisson(const std::string key,
+                                          const double mean) {
   _distribution[key] = std::make_unique<Poisson>(mean);
 }
 
-void PseudoRandomNumberGenerator::set_normal(const std::string key,
-                                             const double mean,
-                                             const double deviation) {
+void PseudoRandomNumberGenerator::normal(const std::string key,
+                                         const double mean,
+                                         const double deviation) {
   _distribution[key] = std::make_unique<Normal>(mean, deviation);
 }
 
-void PseudoRandomNumberGenerator::set_uniform(const std::string key,
-                                              const double min,
-                                              const double max) {
+void PseudoRandomNumberGenerator::uniform(const std::string key,
+                                          const double min, const double max) {
   _distribution[key] = std::make_unique<Uniform>(min, max);
 }
 
 double PseudoRandomNumberGenerator::next(const std::string key) {
-  return _distribution.at(key)->next(this->generator);
+  return _distribution.at(key)->next(_generator);
 }

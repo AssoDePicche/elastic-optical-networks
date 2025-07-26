@@ -230,7 +230,7 @@ std::optional<Slice> RandomFit(const Spectrum &spectrum, const unsigned FSUs) {
 
   auto prng = PseudoRandomNumberGenerator::Instance();
 
-  prng->set_uniform("random_fit", 0, buffer.size());
+  prng->uniform("random_fit", 0, buffer.size());
 
   const auto index = static_cast<unsigned>(prng->next("random_fit"));
 

@@ -60,31 +60,31 @@ class Uniform final : public Distribution {
 
 class PseudoRandomNumberGenerator final {
   std::unordered_map<std::string, std::unique_ptr<Distribution>> _distribution;
-  std::mt19937 generator;
-  std::random_device random_device;
-  uint64_t seed;
+  std::mt19937 _generator;
+  std::random_device _random_device;
+  uint64_t _seed;
 
  public:
   static std::shared_ptr<PseudoRandomNumberGenerator> Instance(void);
 
-  [[nodiscard]] uint64_t get_seed(void) const;
+  [[nodiscard]] uint64_t seed(void) const;
 
-  void set_seed(const uint64_t);
+  void seed(const uint64_t);
 
-  void set_random_seed(void);
+  void random_seed(void);
 
-  void set_exponential(const std::string, const double);
+  void exponential(const std::string, const double);
 
-  void set_poisson(const std::string, const double);
+  void poisson(const std::string, const double);
 
-  void set_normal(const std::string, const double, const double);
+  void normal(const std::string, const double, const double);
 
   template <typename Iterator>
-  void set_discrete(const std::string key, Iterator begin, Iterator end) {
+  void discrete(const std::string key, Iterator begin, Iterator end) {
     _distribution[key] = std::make_unique<Discrete>(begin, end);
   }
 
-  void set_uniform(const std::string, const double, const double);
+  void uniform(const std::string, const double, const double);
 
   [[nodiscard]] double next(const std::string);
 };

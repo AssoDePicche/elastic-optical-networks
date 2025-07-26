@@ -37,7 +37,7 @@ struct Snapshot final {
   [[nodiscard]] std::string Serialize(void) const;
 };
 
-class Simulation final {
+class Kernel final {
   Settings &settings;
   std::priority_queue<Event> queue;
   Logger _logger;
@@ -54,21 +54,24 @@ class Simulation final {
   std::vector<Snapshot> snapshots;
 
  public:
-  Simulation(Settings &, std::shared_ptr<PseudoRandomNumberGenerator>);
+  Kernel(Settings &);
 
   bool HasNext(void) const;
 
   void Next(void);
 
-  std::vector<Snapshot> GetSnapshots(void) const;
+  [[nodiscard]] std::shared_ptr<PseudoRandomNumberGenerator>
+  GetPseudoRandomNumberGenerator(void) const;
 
-  double GetTime(void) const;
+  [[nodiscard]] std::vector<Snapshot> GetSnapshots(void) const;
 
-  double GetRequestCount(void) const;
+  [[nodiscard]] double GetTime(void) const;
 
-  double GetGradeOfService(void) const;
+  [[nodiscard]] double GetRequestCount(void) const;
 
-  std::vector<double> GetFragmentation(void) const;
+  [[nodiscard]] double GetGradeOfService(void) const;
+
+  [[nodiscard]] std::vector<double> GetFragmentation(void) const;
 
   void Reset(void);
 };

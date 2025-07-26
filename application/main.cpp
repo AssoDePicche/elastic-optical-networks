@@ -1,46 +1,31 @@
 #include <algorithm>
-#include <exception>
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <ranges>
+#include <stacktrace>
 #include <string>
-#include <unordered_map>
 
 #include "date.h"
 #include "document.h"
 #include "json.h"
-#include "math.h"
-#include "prng.h"
+#include "kernel.h"
 #include "settings.h"
-#include "simulation.h"
 
 int main(void) {
   try {
-    const std::string filename = "resources/configuration/settings.json";
-
-    const Json json(filename);
+    const Json json("resources/configuration/settings.json");
 
     Settings settings = Settings::From(json).value();
 
-    const auto prng = PseudoRandomNumberGenerator::Instance();
+    Kernel kernel(settings);
 
-    prng->set_random_seed();
-
-    prng->set_exponential("arrival", settings.arrivalRate);
-
-    prng->set_exponential("service", settings.serviceRate);
-
-    prng->set_discrete("fsus", settings.probs.begin(), settings.probs.end());
-
-    prng->set_uniform("routing", 0, settings.graph.size());
-
-    Simulation simulation(settings, prng);
-
-    for (auto iteration = 1u; iteration <= settings.iterations; ++iteration) {
+    for (const auto iteration :
+         std::ranges::views::iota(1u, settings.iterations + 1u)) {
       const auto start = std::chrono::system_clock::now();
 
-      while (simulation.HasNext()) {
-        simulation.Next();
+      while (kernel.HasNext()) {
+        kernel.Next();
       }
 
       const auto end = std::chrono::system_clock::now();
@@ -48,7 +33,7 @@ int main(void) {
       const auto execution_time =
           std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
 
-      const auto snapshots = simulation.GetSnapshots();
+      const auto snapshots = kernel.GetSnapshots();
 
       if (settings.exportDataset) {
         std::string buffer{"time,fsus,accepted,"};
@@ -84,14 +69,14 @@ int main(void) {
         stream.close();
       }
 
-      const auto time = simulation.GetTime();
+      const auto time = kernel.GetTime();
 
-      const auto requestCount = simulation.GetRequestCount();
+      const auto requestCount = kernel.GetRequestCount();
 
       Document document;
 
       document.append("iteration: {}\n", iteration)
-          .append("seed: {}\n", prng->get_seed())
+          .append("seed: {}\n", kernel.GetPseudoRandomNumberGenerator()->seed())
           .append("execution time (s): {}\n", execution_time)
           .append("simulated time: {:.3f}\n", time)
           .append("spectrum width (GHz): {:.2f}\n", settings.spectrumWidth)
@@ -103,14 +88,13 @@ int main(void) {
       document.append("load (E): {:.3f}\n", load)
           .append("arrival rate: {:.3f}\n", settings.arrivalRate)
           .append("service rate: {:.3f}\n", settings.serviceRate)
-          .append("grade of service: {:.3f}\n", simulation.GetGradeOfService())
+          .append("grade of service: {:.3f}\n", kernel.GetGradeOfService())
           .append("total requests: {}\n", requestCount);
 
       for (const auto &request : settings.requests) {
-        const auto ratio =
-            request.second.counting / simulation.GetRequestCount();
+        const auto ratio = request.second.counting / kernel.GetRequestCount();
 
-        const auto gos = request.second.blocking / simulation.GetRequestCount();
+        const auto gos = request.second.blocking / kernel.GetRequestCount();
 
         const auto normalized_load =
             settings.arrivalRate *
@@ -130,18 +114,10 @@ int main(void) {
       std::cout << std::format("Simulation results wrote in {}\n",
                                report_filename);
 
-      simulation.Reset();
-
-      prng->set_random_seed();
-
-      for (auto &request : settings.requests) {
-        request.second.blocking = 0;
-
-        request.second.counting = 0;
-      }
+      kernel.Reset();
     }
   } catch (const std::exception &exception) {
-    std::cerr << exception.what() << std::endl;
+    std::cerr << "Exception thrown: " << exception.what() << std::endl;
 
     return 1;
   }
