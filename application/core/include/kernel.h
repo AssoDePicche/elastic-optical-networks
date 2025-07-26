@@ -39,19 +39,19 @@ struct Snapshot final {
 
 class Kernel final {
   Settings &settings;
-  std::priority_queue<Event> queue;
-  Logger _logger;
-  double kToIgnore;
   Dispatcher dispatcher;
-  std::shared_ptr<PseudoRandomNumberGenerator> prng;
-  std::vector<std::string> requestsKeys;
   Router router;
-  bool ignoredFirst{false};
-  unsigned requestCount{0u};
-  unsigned blockedCount{0u};
-  unsigned activeRequests{0u};
-  double time{.0f};
+  std::priority_queue<Event> queue;
   std::vector<Snapshot> snapshots;
+  std::vector<std::string> requestsKeys;
+  double kToIgnore;
+  double time;
+  unsigned requestCount;
+  unsigned blockedCount;
+  unsigned activeRequests;
+  bool ignoredFirst;
+  std::shared_ptr<Logger> logger;
+  std::shared_ptr<PseudoRandomNumberGenerator> prng;
 
  public:
   Kernel(Settings &);

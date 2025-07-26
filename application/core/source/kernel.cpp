@@ -38,10 +38,10 @@ std::string Snapshot::Serialize(void) const {
 
 Kernel::Kernel(Settings &settings)
     : settings{settings},
-      _logger{settings.enableLogging},
-      kToIgnore{0.1 * settings.timeUnits},
       dispatcher{settings.graph, settings.keyGenerator, settings.FSUsPerLink},
-      requestsKeys{} {
+      kToIgnore{0.1 * settings.timeUnits} {
+  logger = std::make_shared<Logger>(settings.enableLogging);
+
   Reset();
 }
 
@@ -69,13 +69,13 @@ void Kernel::Next(void) {
       request.second.counting = 0u;
     }
 
-    _logger.log(Logger::Level::Info, "Discard first {:.3f} time units", time);
+    logger->log(Logger::Level::Info, "Discard first {:.3f} time units", time);
   }
 
   if (event.type == EventType::Departure) {
     --activeRequests;
 
-    _logger.log(Logger::Level::Info,
+    logger->log(Logger::Level::Info,
                 "Request for {} FSU(s) departing at {:.3f}", event.request.FSUs,
                 event.time);
 
@@ -83,7 +83,7 @@ void Kernel::Next(void) {
 
     for (const auto &key :
          settings.keyGenerator.generate(event.request.route)) {
-      _logger.log(Logger::Level::Info,
+      logger->log(Logger::Level::Info,
                   dispatcher.GetCarriers().at(key).Serialize());
     }
 
@@ -121,18 +121,18 @@ void Kernel::Next(void) {
     queue.push(Event(time + prng->next("service"), EventType::Departure,
                      event.request));
 
-    _logger.log(Logger::Level::Info, "Accept request for {} FSU(s) at {:.3f}",
+    logger->log(Logger::Level::Info, "Accept request for {} FSU(s) at {:.3f}",
                 event.request.FSUs, time);
 
     for (const auto &key :
          settings.keyGenerator.generate(event.request.route)) {
-      _logger.log(Logger::Level::Info,
+      logger->log(Logger::Level::Info,
                   dispatcher.GetCarriers().at(key).Serialize());
     }
 
     event.request.accepted = true;
   } else {
-    _logger.log(Logger::Level::Info, "Blocking request for {} FSU(s) at {:.3f}",
+    logger->log(Logger::Level::Info, "Blocking request for {} FSU(s) at {:.3f}",
                 event.request.FSUs, event.time);
 
     for (auto &request : settings.requests) {
