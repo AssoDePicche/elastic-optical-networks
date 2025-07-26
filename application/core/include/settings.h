@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <optional>
+#include <random>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -33,7 +34,6 @@ struct Settings {
   std::vector<double> probs;
   KeyGenerator keyGenerator;
   ModulationOption modulationOption;
-  uint64_t seed;
   double arrivalRate;
   double serviceRate;
   double timeUnits;

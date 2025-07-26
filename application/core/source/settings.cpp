@@ -40,8 +40,6 @@ std::optional<Settings> Settings::From(const Json &json) {
 
   settings.serviceRate = json.Get<double>("params.service-rate").value();
 
-  settings.seed = json.Get<unsigned>("params.seed").value();
-
   settings.iterations = json.Get<unsigned>("params.iterations").value();
 
   settings.spectrumWidth = json.Get<double>("params.spectrum-width").value();
