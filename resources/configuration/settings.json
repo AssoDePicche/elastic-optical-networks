@@ -41,7 +41,6 @@
     "iterations": 1,
     "sampling-time": 0,
     "service-rate": 0.133138064,
-    "seed": 0,
     "modulation": "passband",
     "pairing-function": "cantor",
     "requests": [
