@@ -7,10 +7,10 @@
 #include <unordered_map>
 
 #include "date.h"
-#include "distribution.h"
 #include "document.h"
 #include "json.h"
 #include "math.h"
+#include "prng.h"
 #include "settings.h"
 #include "simulation.h"
 
@@ -22,11 +22,9 @@ int main(void) {
 
     Settings settings = Settings::From(json).value();
 
-    std::random_device random_device;
-
     const auto prng = PseudoRandomNumberGenerator::Instance();
 
-    prng->set_seed(random_device());
+    prng->set_random_seed();
 
     prng->set_exponential("arrival", settings.arrivalRate);
 
@@ -134,7 +132,7 @@ int main(void) {
 
       simulation.Reset();
 
-      prng->set_seed(random_device());
+      prng->set_random_seed();
 
       for (auto &request : settings.requests) {
         request.second.blocking = 0;

@@ -6,8 +6,6 @@
 #include <ranges>
 #include <sstream>
 
-#include "distribution.h"
-
 Cost::Cost(double value) : value{value} {}
 
 Cost Cost::max(void) { return Cost(std::numeric_limits<double>::max()); }

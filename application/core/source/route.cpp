@@ -4,8 +4,8 @@
 #include <random>
 #include <stack>
 
-#include "distribution.h"
 #include "math.h"
+#include "prng.h"
 
 Route Route::None(void) { return {{}, Cost::max()}; }
 

@@ -6,7 +6,7 @@
 #include <random>
 #include <ranges>
 
-#include "distribution.h"
+#include "prng.h"
 
 unsigned size(const Slice &slice) { return slice.second - slice.first + 1; }
 
