@@ -34,7 +34,7 @@ int main(void) {
 
     prng->set_uniform("routing", 0, settings.graph.size());
 
-    Simulation simulation(settings);
+    Simulation simulation(settings, prng);
 
     for (auto iteration = 1u; iteration <= settings.iterations; ++iteration) {
       const auto start = std::chrono::system_clock::now();

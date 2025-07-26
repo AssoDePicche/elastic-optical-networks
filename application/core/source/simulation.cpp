@@ -95,20 +95,20 @@ std::string Snapshot::Serialize(void) const {
   return buffer;
 }
 
-Simulation::Simulation(Settings &settings)
+Simulation::Simulation(Settings &settings,
+                       std::shared_ptr<PseudoRandomNumberGenerator> prng)
     : settings{settings},
       _logger{settings.enableLogging},
       kToIgnore{0.1 * settings.timeUnits},
       dispatcher{settings.graph, settings.keyGenerator, settings.FSUsPerLink},
+      prng{prng},
       requestsKeys{} {
   requestsKeys.reserve(settings.requests.size());
 
   std::transform(settings.requests.begin(), settings.requests.end(),
                  std::back_inserter(requestsKeys),
                  [](const auto &pair) { return pair.first; });
-  auto &firstRequest =
-      settings.requests
-          [requestsKeys[PseudoRandomNumberGenerator::Instance()->next("fsus")]];
+  auto &firstRequest = settings.requests[requestsKeys[prng->next("fsus")]];
 
   ++firstRequest.counting;
 
@@ -228,9 +228,7 @@ void Simulation::Next(void) {
         Snapshot(event, GetFragmentation(), GetGradeOfService()));
   }
 
-  auto &request =
-      settings.requests
-          [requestsKeys[PseudoRandomNumberGenerator::Instance()->next("fsus")]];
+  auto &request = settings.requests[requestsKeys[prng->next("fsus")]];
 
   ++request.counting;
 
@@ -293,9 +291,7 @@ void Simulation::Reset(void) {
                  std::back_inserter(requestsKeys),
                  [](const auto &pair) { return pair.first; });
 
-  auto &firstRequest =
-      settings.requests
-          [requestsKeys[PseudoRandomNumberGenerator::Instance()->next("fsus")]];
+  auto &firstRequest = settings.requests[requestsKeys[prng->next("fsus")]];
 
   ++firstRequest.counting;
 

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "logger.h"
+#include "prng.h"
 #include "request.h"
 #include "settings.h"
 #include "spectrum.h"
@@ -58,8 +59,23 @@ struct Snapshot final {
 };
 
 class Simulation final {
+  Settings &settings;
+  EventQueue queue;
+  Logger _logger;
+  double kToIgnore;
+  Dispatcher dispatcher;
+  std::shared_ptr<PseudoRandomNumberGenerator> prng;
+  std::vector<std::string> requestsKeys;
+  Router router;
+  bool ignoredFirst{false};
+  unsigned requestCount{0u};
+  unsigned blockedCount{0u};
+  unsigned activeRequests{0u};
+  double time{0.0};
+  std::vector<Snapshot> snapshots;
+
  public:
-  Simulation(Settings &);
+  Simulation(Settings &, std::shared_ptr<PseudoRandomNumberGenerator>);
 
   bool HasNext(void) const;
 
@@ -76,19 +92,4 @@ class Simulation final {
   std::vector<double> GetFragmentation(void) const;
 
   void Reset(void);
-
- private:
-  Settings &settings;
-  EventQueue queue;
-  Logger _logger;
-  double kToIgnore;
-  Dispatcher dispatcher;
-  std::vector<std::string> requestsKeys;
-  Router router;
-  bool ignoredFirst{false};
-  unsigned requestCount{0u};
-  unsigned blockedCount{0u};
-  unsigned activeRequests{0u};
-  double time{0.0};
-  std::vector<Snapshot> snapshots;
 };
