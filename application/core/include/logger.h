@@ -1,40 +1,38 @@
 #pragma once
 
-#ifdef ALLOWLOGS
-
-#include <cstring>
 #include <format>
 #include <iostream>
+#include <unordered_map>
 
-#define __FILENAME__ \
-  (std::strrchr(__FILE__, '/') ? std::strrchr(__FILE__, '/') + 1 : __FILE__)
+class Logger final {
+ public:
+  enum class Level {
+    Debug,
+    Error,
+    Info,
+    Warning,
+  };
 
-#define LOG(LEVEL, STR)                                               \
-  do {                                                                \
-    std::clog << std::format("[{}] {}@{}: {}\n", LEVEL, __FILENAME__, \
-                             __func__, STR);                          \
-  } while (0)
+  Logger(const bool enableLogging) : _enableLogging{enableLogging} {}
 
-#define ERROR(STR)    \
-  do {                \
-    LOG("ERROR", STR) \
-  } while (0);
+  template <typename... Args>
+  void log(Level level, const std::string &format, Args &&...args) {
+    if (!_enableLogging) {
+      return;
+    }
 
-#define INFO(STR)     \
-  do {                \
-    LOG("INFO", STR); \
-  } while (0);
+    std::clog << std::format(
+        "[{}] {}\n", _buffer.at(level),
+        std::vformat(format.c_str(), std::make_format_args(args...)));
+  }
 
-#define WARNING(STR)  \
-  do {                \
-    LOG("WARN", STR); \
-  } while (0);
-#else
+ private:
+  std::unordered_map<Level, std::string> _buffer = {
+      {Level::Debug, "DEBUG"},
+      {Level::Error, "ERROR"},
+      {Level::Info, "INFO"},
+      {Level::Warning, "WARNING"},
+  };
 
-#define ERROR(STR) (void)(STR)
-
-#define INFO(STR) (void)(STR)
-
-#define WARNING(STR) (void)(STR)
-
-#endif
+  bool _enableLogging;
+};

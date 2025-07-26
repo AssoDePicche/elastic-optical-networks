@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "logger.h"
 #include "request.h"
 #include "settings.h"
 #include "spectrum.h"
@@ -13,8 +14,8 @@ enum class EventType { Arrival, Departure };
 
 struct Event {
   double time;
-  EventType signal;
-  Request value;
+  EventType type;
+  Request request;
 
   Event(void) = default;
 
@@ -79,6 +80,7 @@ class Simulation final {
  private:
   Settings &settings;
   EventQueue queue;
+  Logger _logger;
   double kToIgnore;
   Dispatcher dispatcher;
   std::vector<std::string> requestsKeys;

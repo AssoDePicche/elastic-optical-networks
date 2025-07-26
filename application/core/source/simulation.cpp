@@ -6,11 +6,10 @@
 
 #include "distribution.h"
 #include "graph.h"
-#include "logger.h"
 #include "request.h"
 
-Event::Event(const double time, const EventType &signal, const Request &value)
-    : time{time}, signal{signal}, value{value} {}
+Event::Event(const double time, const EventType &type, const Request &request)
+    : time{time}, type{type}, request{request} {}
 
 bool Event::operator<(const Event &other) const noexcept {
   return time > other.time;
@@ -28,12 +27,12 @@ EventQueue &EventQueue::push(const Request &value, const double now) {
   return *this;
 }
 
-void EventQueue::of_type(const EventType &signal) {
+void EventQueue::of_type(const EventType &type) {
   assert(pushing);
 
   auto now = time;
 
-  switch (signal) {
+  switch (type) {
     case EventType::Arrival:
       now += PseudoRandomNumberGenerator::Instance()->next("arrival");
       break;
@@ -42,7 +41,7 @@ void EventQueue::of_type(const EventType &signal) {
       break;
   }
 
-  queue.push(Event(now, signal, to_push));
+  queue.push(Event(now, type, to_push));
 
   pushing = false;
 }
@@ -74,8 +73,8 @@ size_t EventQueue::size(void) const { return queue.size(); }
 Snapshot::Snapshot(const Event &event, std::vector<double> fragmentation,
                    double blocking)
     : time{event.time},
-      FSUs{event.value.FSUs},
-      accepted{event.value.accepted},
+      FSUs{event.request.FSUs},
+      accepted{event.request.accepted},
       fragmentation{fragmentation},
       blocking{blocking} {}
 
@@ -98,6 +97,7 @@ std::string Snapshot::Serialize(void) const {
 
 Simulation::Simulation(Settings &settings)
     : settings{settings},
+      _logger{settings.enableLogging},
       kToIgnore{0.1 * settings.timeUnits},
       dispatcher{settings.graph, settings.keyGenerator, settings.FSUsPerLink},
       requestsKeys{} {
@@ -144,19 +144,22 @@ void Simulation::Next(void) {
       request.second.counting = 0u;
     }
 
-    INFO(std::format("Discard first {:.3f} time units", time));
+    _logger.log(Logger::Level::Info, "Discard first {:.3f} time units", time);
   }
 
-  if (event.signal == EventType::Departure) {
+  if (event.type == EventType::Departure) {
     --activeRequests;
 
-    INFO(std::format("Request for {} FSU(s) departing at {:.3f}",
-                     event.value.FSUs, event.time));
+    _logger.log(Logger::Level::Info,
+                "Request for {} FSU(s) departing at {:.3f}", event.request.FSUs,
+                event.time);
 
-    dispatcher.release(event.value);
+    dispatcher.release(event.request);
 
-    for (const auto &key : settings.keyGenerator.generate(event.value.route)) {
-      INFO(dispatcher.GetCarriers().at(key).Serialize());
+    for (const auto &key :
+         settings.keyGenerator.generate(event.request.route)) {
+      _logger.log(Logger::Level::Info,
+                  dispatcher.GetCarriers().at(key).Serialize());
     }
 
     return;
@@ -174,9 +177,9 @@ void Simulation::Next(void) {
 
     const auto FSUs = settings.modulationOption == ModulationOption::Passband
                           ? strategy->compute(requestType.second.bandwidth)
-                          : strategy->compute(event.value.route.cost.value);
+                          : strategy->compute(event.request.route.cost.value);
 
-    if (FSUs == event.value.FSUs) {
+    if (FSUs == event.request.FSUs) {
       allocator = *requestType.second.allocator.target<std::optional<Slice> (*)(
           const Spectrum &, unsigned int)>();
 
@@ -184,28 +187,30 @@ void Simulation::Next(void) {
     }
   }
 
-  event.value.accepted = false;
+  event.request.accepted = false;
 
   if (activeRequests < settings.FSUsPerLink &&
-      dispatcher.dispatch(event.value, allocator)) {
+      dispatcher.dispatch(event.request, allocator)) {
     ++activeRequests;
 
-    queue.push(event.value, time).of_type(EventType::Departure);
+    queue.push(event.request, time).of_type(EventType::Departure);
 
-    INFO(std::format("Accept request for {} FSU(s) at {:.3f}", event.value.FSUs,
-                     time));
+    _logger.log(Logger::Level::Info, "Accept request for {} FSU(s) at {:.3f}",
+                event.request.FSUs, time);
 
-    for (const auto &key : settings.keyGenerator.generate(event.value.route)) {
-      INFO(dispatcher.GetCarriers().at(key).Serialize());
+    for (const auto &key :
+         settings.keyGenerator.generate(event.request.route)) {
+      _logger.log(Logger::Level::Info,
+                  dispatcher.GetCarriers().at(key).Serialize());
     }
 
-    event.value.accepted = true;
+    event.request.accepted = true;
   } else {
-    INFO(std::format("Blocking request for {} FSU(s) at {:.3f}",
-                     event.value.FSUs, event.time));
+    _logger.log(Logger::Level::Info, "Blocking request for {} FSU(s) at {:.3f}",
+                event.request.FSUs, event.time);
 
     for (auto &request : settings.requests) {
-      if (event.value.FSUs != request.second.FSUs) {
+      if (event.request.FSUs != request.second.FSUs) {
         continue;
       }
 
