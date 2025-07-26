@@ -33,7 +33,7 @@ struct Settings {
   std::vector<double> probs;
   KeyGenerator keyGenerator;
   ModulationOption modulationOption;
-  Seed seed;
+  uint64_t seed;
   double arrivalRate;
   double serviceRate;
   double timeUnits;

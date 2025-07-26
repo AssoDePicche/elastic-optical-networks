@@ -1,26 +1,22 @@
 #pragma once
 
-#include <initializer_list>
 #include <memory>
 #include <random>
 #include <string>
 #include <unordered_map>
-#include <vector>
-
-using Seed = long long unsigned;
 
 class Distribution {
  public:
-  Distribution(const Seed);
+  Distribution(const uint64_t);
 
   [[nodiscard]] virtual double next(void) = 0;
 
-  [[nodiscard]] Seed get_seed(void) const;
+  [[nodiscard]] uint64_t get_seed(void) const;
 
-  void set_seed(const Seed);
+  void set_seed(const uint64_t);
 
  private:
-  Seed seed;
+  uint64_t seed;
 
  protected:
   std::mt19937 generator;
@@ -28,7 +24,7 @@ class Distribution {
 
 class Exponential final : public Distribution {
  public:
-  Exponential(const Seed, const double);
+  Exponential(const uint64_t, const double);
 
   [[nodiscard]] double next(void) override;
 
@@ -38,7 +34,7 @@ class Exponential final : public Distribution {
 
 class Poisson final : public Distribution {
  public:
-  Poisson(const Seed, const double);
+  Poisson(const uint64_t, const double);
 
   [[nodiscard]] double next(void) override;
 
@@ -48,7 +44,7 @@ class Poisson final : public Distribution {
 
 class Normal final : public Distribution {
  public:
-  Normal(const Seed, const double, const double);
+  Normal(const uint64_t, const double, const double);
 
   [[nodiscard]] double next(void) override;
 
@@ -58,7 +54,9 @@ class Normal final : public Distribution {
 
 class Discrete final : public Distribution {
  public:
-  Discrete(const Seed, const std::vector<double> &);
+  template <typename Iterator>
+  Discrete(const uint64_t seed, Iterator begin, Iterator end)
+      : Distribution(seed), distribution{begin, end} {}
 
   [[nodiscard]] double next(void) override;
 
@@ -68,7 +66,7 @@ class Discrete final : public Distribution {
 
 class Uniform final : public Distribution {
  public:
-  Uniform(const Seed, const double, const double);
+  Uniform(const uint64_t, const double, const double);
 
   [[nodiscard]] double next(void) override;
 
@@ -80,9 +78,9 @@ class PseudoRandomNumberGenerator final {
  public:
   static std::shared_ptr<PseudoRandomNumberGenerator> Instance(void);
 
-  [[nodiscard]] Seed get_seed(void) const;
+  [[nodiscard]] uint64_t get_seed(void) const;
 
-  void set_seed(const Seed);
+  void set_seed(const uint64_t);
 
   void set_exponential(const std::string, const double);
 
@@ -90,7 +88,10 @@ class PseudoRandomNumberGenerator final {
 
   void set_normal(const std::string, const double, const double);
 
-  void set_discrete(const std::string, const std::vector<double> &);
+  template <typename Iterator>
+  void set_discrete(const std::string key, Iterator begin, Iterator end) {
+    distribution[key] = std::make_unique<Discrete>(seed, begin, end);
+  }
 
   void set_uniform(const std::string, const double, const double);
 
@@ -98,5 +99,5 @@ class PseudoRandomNumberGenerator final {
 
  private:
   std::unordered_map<std::string, std::shared_ptr<Distribution>> distribution;
-  Seed seed;
+  uint64_t seed;
 };

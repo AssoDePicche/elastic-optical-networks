@@ -30,7 +30,7 @@ int main(void) {
 
     prng->set_exponential("service", settings.serviceRate);
 
-    prng->set_discrete("fsus", settings.probs);
+    prng->set_discrete("fsus", settings.probs.begin(), settings.probs.end());
 
     prng->set_uniform("routing", 0, settings.graph.size());
 
