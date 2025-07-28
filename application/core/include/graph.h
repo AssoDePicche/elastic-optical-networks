@@ -32,6 +32,9 @@ using AdjacentVertex = std::pair<Vertex, Cost>;
 using Edge = std::tuple<Vertex, Vertex, Cost>;
 
 class Graph final {
+  std::unordered_map<Vertex, std::list<AdjacentVertex>> adjacency_list;
+  std::set<Vertex> vertices;
+
  public:
   Graph(void) = default;
 
@@ -54,8 +57,4 @@ class Graph final {
   void add(const Vertex);
 
   void add(const Edge &);
-
- private:
-  std::unordered_map<Vertex, std::list<AdjacentVertex>> adjacency_list;
-  std::set<Vertex> vertices;
 };
