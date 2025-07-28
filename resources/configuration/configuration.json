@@ -1,6 +1,27 @@
 {
   "enable-logging": true,
   "export-dataset": true,
+  "params": {
+    "arrival-rate": 1,
+    "ignore-first": false,
+    "iterations": 1,
+    "sampling-time": 0,
+    "service-rate": 0.133138064,
+    "modulation": "passband",
+    "pairing-function": "cantor",
+    "requests": [
+      {
+        "type": "low-demand",
+        "bandwidth": 12.5,
+        "modulation": "BPSK",
+        "allocator": "first-fit"
+      }
+    ],
+    "simulation-duration": 1000000,
+    "slot-width": 12.5,
+    "spectrum-width": 125,
+    "topology": "resources/graph/point-to-point.txt"
+  },
   "modulation": [
     {
       "type": "BPSK",
@@ -34,26 +55,5 @@
       "type": "256-QAM",
       "bits-per-symbol": 8
     }
-  ],
-  "params": {
-    "arrival-rate": 1,
-    "ignore-first": false,
-    "iterations": 1,
-    "sampling-time": 0,
-    "service-rate": 0.133138064,
-    "modulation": "passband",
-    "pairing-function": "cantor",
-    "requests": [
-      {
-        "type": "low-demand",
-        "bandwidth": 12.5,
-        "modulation": "BPSK",
-        "allocator": "first-fit"
-      }
-    ],
-    "simulation-duration": 1000000,
-    "slot-width": 12.5,
-    "spectrum-width": 125,
-    "topology": "resources/graph/point-to-point.txt"
-  }
+  ]
 }
