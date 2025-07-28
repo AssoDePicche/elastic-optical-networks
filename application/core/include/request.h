@@ -21,6 +21,18 @@ struct RequestType final {
   unsigned counting;
 };
 
+struct Request final {
+  RequestType type;
+  Route route;
+  Slice slice;
+  unsigned FSUs{};
+  bool accepted;
+
+  Request(void) = default;
+
+  Request(const Route &, const unsigned);
+};
+
 using PairingFunction = std::function<unsigned(unsigned, unsigned)>;
 
 [[nodiscard]] unsigned CantorPairingFunction(unsigned, unsigned);
@@ -68,17 +80,6 @@ class ModulationStrategyFactory final {
 
  private:
   ModulationOption option;
-};
-
-struct Request {
-  Route route;
-  Slice slice;
-  unsigned FSUs{};
-  bool accepted;
-
-  Request(void) = default;
-
-  Request(const Route &, const unsigned);
 };
 
 class KeyGenerator final {
