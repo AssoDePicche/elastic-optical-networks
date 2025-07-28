@@ -4,10 +4,10 @@
 #include <string>
 #include <vector>
 
+#include "configuration.h"
 #include "logger.h"
 #include "prng.h"
 #include "request.h"
-#include "settings.h"
 #include "spectrum.h"
 
 enum class EventType { Arrival, Departure };
@@ -37,7 +37,7 @@ struct Snapshot final {
 };
 
 class Kernel final {
-  Settings &settings;
+  Configuration &configuration;
   Dispatcher dispatcher;
   Router router;
   std::priority_queue<Event> queue;
@@ -53,7 +53,7 @@ class Kernel final {
   std::shared_ptr<PseudoRandomNumberGenerator> prng;
 
  public:
-  Kernel(Settings &);
+  Kernel(Configuration &);
 
   bool HasNext(void) const;
 

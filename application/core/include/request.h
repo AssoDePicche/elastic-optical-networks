@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -9,6 +10,16 @@
 #include "graph.h"
 #include "route.h"
 #include "spectrum.h"
+
+struct RequestType {
+  std::string type;
+  std::string modulation;
+  SpectrumAllocator allocator;
+  double bandwidth;
+  unsigned blocking;
+  unsigned FSUs;
+  unsigned counting;
+};
 
 using PairingFunction = std::function<unsigned(unsigned, unsigned)>;
 

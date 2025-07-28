@@ -6,22 +6,22 @@
 #include <stacktrace>
 #include <string>
 
+#include "configuration.h"
 #include "date.h"
 #include "document.h"
 #include "json.h"
 #include "kernel.h"
-#include "settings.h"
 
 int main(void) {
   try {
-    const Json json("resources/configuration/settings.json");
+    const Json json("resources/configuration/configuration.json");
 
-    Settings settings = Settings::From(json).value();
+    Configuration configuration = Configuration::From(json).value();
 
-    Kernel kernel(settings);
+    Kernel kernel(configuration);
 
     for (const auto iteration :
-         std::ranges::views::iota(1u, settings.iterations + 1u)) {
+         std::ranges::views::iota(1u, configuration.iterations + 1u)) {
       const auto start = std::chrono::system_clock::now();
 
       while (kernel.HasNext()) {
@@ -35,10 +35,10 @@ int main(void) {
 
       const auto snapshots = kernel.GetSnapshots();
 
-      if (settings.exportDataset) {
+      if (configuration.exportDataset) {
         std::string buffer{"time,fsus,accepted,"};
 
-        for (const auto &strategy : settings.fragmentationStrategies) {
+        for (const auto &strategy : configuration.fragmentationStrategies) {
           buffer.append(std::format("{},", strategy.first));
         }
 
@@ -79,26 +79,26 @@ int main(void) {
           .append("seed: {}\n", kernel.GetPseudoRandomNumberGenerator()->seed())
           .append("execution time (s): {}\n", execution_time)
           .append("simulated time: {:.3f}\n", time)
-          .append("spectrum width (GHz): {:.2f}\n", settings.spectrumWidth)
-          .append("slot width (GHz): {:.2f}\n", settings.slotWidth)
-          .append("fsus per link: {}\n", settings.FSUsPerLink);
+          .append("spectrum width (GHz): {:.2f}\n", configuration.spectrumWidth)
+          .append("slot width (GHz): {:.2f}\n", configuration.slotWidth)
+          .append("fsus per link: {}\n", configuration.FSUsPerLink);
 
-      const double load = settings.arrivalRate / settings.serviceRate;
+      const double load = configuration.arrivalRate / configuration.serviceRate;
 
       document.append("load (E): {:.3f}\n", load)
-          .append("arrival rate: {:.3f}\n", settings.arrivalRate)
-          .append("service rate: {:.3f}\n", settings.serviceRate)
+          .append("arrival rate: {:.3f}\n", configuration.arrivalRate)
+          .append("service rate: {:.3f}\n", configuration.serviceRate)
           .append("grade of service: {:.3f}\n", kernel.GetGradeOfService())
           .append("total requests: {}\n", requestCount);
 
-      for (const auto &request : settings.requests) {
+      for (const auto &request : configuration.requests) {
         const auto ratio = request.second.counting / kernel.GetRequestCount();
 
         const auto gos = request.second.blocking / kernel.GetRequestCount();
 
-        const auto normalized_load =
-            settings.arrivalRate *
-            (static_cast<double>(request.second.FSUs) / settings.FSUsPerLink);
+        const auto normalized_load = configuration.arrivalRate *
+                                     (static_cast<double>(request.second.FSUs) /
+                                      configuration.FSUsPerLink);
 
         document.append("requests for {} FSU(s)\n", request.second.FSUs)
             .append("ratio: {:.3f}\n", ratio)

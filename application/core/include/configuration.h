@@ -12,19 +12,8 @@
 #include "request.h"
 #include "spectrum.h"
 
-struct RequestType {
-  std::string type;
-  std::string modulation;
-  SpectrumAllocator allocator;
-  double bandwidth;
-  unsigned blocking;
-  unsigned FSUs;
-  unsigned counting;
-};
-
-struct Settings {
+struct Configuration final {
   Graph graph;
-  SpectrumAllocator spectrumAllocator;
   std::unordered_map<std::string, FragmentationStrategy>
       fragmentationStrategies;
   std::unordered_map<std::string, RequestType> requests;
@@ -45,5 +34,5 @@ struct Settings {
   unsigned iterations;
   unsigned samplingTime;
 
-  [[nodiscard]] static std::optional<Settings> From(const Json &);
+  [[nodiscard]] static std::optional<Configuration> From(const Json &);
 };
