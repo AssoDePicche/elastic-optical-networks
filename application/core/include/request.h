@@ -11,7 +11,7 @@
 #include "route.h"
 #include "spectrum.h"
 
-struct RequestType {
+struct RequestType final {
   std::string type;
   std::string modulation;
   SpectrumAllocator allocator;

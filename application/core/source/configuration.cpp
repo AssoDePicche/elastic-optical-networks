@@ -120,10 +120,11 @@ std::optional<Configuration> Configuration::From(const Json &json) {
            configuration.minFSUsPerRequest)},
   };
 
-  const auto probs = std::vector<double>(configuration.requests.size(),
-                                         1.0f / configuration.requests.size());
+  configuration.probs = {};
 
-  configuration.probs = probs;
+  for (const auto &row : requests.value()) {
+    configuration.probs.push_back(row["ratio"]);
+  }
 
   const auto graph =
       Graph::from(json.Get<std::string>("params.topology").value());
