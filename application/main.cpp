@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <chrono>
+#include <ctime>
 #include <format>
 #include <fstream>
 #include <iostream>
@@ -7,7 +9,6 @@
 #include <string>
 
 #include "configuration.h"
-#include "date.h"
 #include "document.h"
 #include "json.h"
 #include "kernel.h"
@@ -35,6 +36,20 @@ int main(void) {
 
       const auto snapshots = kernel.GetSnapshots();
 
+      const auto time = std::time(nullptr);
+
+      const auto localtime = std::localtime(&time);
+
+      const auto DAY = localtime->tm_mday;
+
+      const auto MONTH = localtime->tm_mon + 1;
+
+      const auto YEAR = localtime->tm_year + 1900;
+
+      const auto HOUR = localtime->tm_hour;
+
+      const auto MINUTE = localtime->tm_min;
+
       if (configuration.exportDataset) {
         std::string buffer{"time,fsus,accepted,"};
 
@@ -50,12 +65,9 @@ int main(void) {
               buffer.append(std::format("{}\n", snapshot.Serialize()));
             });
 
-        const auto datetime = DateTime::now();
-
         const std::string filename = std::format(
             "resources/temp/{}_iteration_{:02}_{:02}_{:04}_{:02}h{:02}.csv",
-            iteration, datetime.day, datetime.month, datetime.year,
-            datetime.hour, datetime.minute);
+            iteration, DAY, MONTH, YEAR, HOUR, MINUTE);
 
         std::ofstream stream(filename);
 
@@ -69,7 +81,7 @@ int main(void) {
         stream.close();
       }
 
-      const auto time = kernel.GetTime();
+      const auto kernel_time = kernel.GetTime();
 
       const auto requestCount = kernel.GetRequestCount();
 
@@ -78,7 +90,7 @@ int main(void) {
       document.append("iteration: {}\n", iteration)
           .append("seed: {}\n", kernel.GetPseudoRandomNumberGenerator()->seed())
           .append("execution time (s): {}\n", execution_time)
-          .append("simulated time: {:.3f}\n", time)
+          .append("simulated time: {:.3f}\n", kernel_time)
           .append("spectrum width (GHz): {:.2f}\n", configuration.spectrumWidth)
           .append("slot width (GHz): {:.2f}\n", configuration.slotWidth)
           .append("fsus per link: {}\n", configuration.FSUsPerLink);
@@ -106,8 +118,10 @@ int main(void) {
             .append("normalized load: {:.3f}\n", normalized_load);
       }
 
-      const std::string report_filename =
-          std::format("resources/temp/{}_iteration_report.txt", iteration);
+      const std::string report_filename = std::format(
+          "resources/temp/"
+          "{}_iteration_{:02}_{:02}_{:04}_{:02}h{:02}_report.txt",
+          iteration, DAY, MONTH, YEAR, HOUR, MINUTE);
 
       document.write(report_filename);
 
