@@ -105,7 +105,7 @@ void Kernel::Next(void) {
     const auto FSUs =
         configuration.modulationOption == ModulationOption::Passband
             ? strategy->compute(requestType.second.bandwidth)
-            : strategy->compute(event.request.route.cost.value);
+            : strategy->compute(event.request.route.second.value);
 
     if (FSUs == event.request.FSUs) {
       allocator = *requestType.second.allocator.target<std::optional<Slice> (*)(
@@ -161,9 +161,9 @@ void Kernel::Next(void) {
 
   ++request.counting;
 
-  queue.push(
-      Event(time + prng->next("arrival"), EventType::Arrival,
-            Request(router.compute(NullVertex, NullVertex), request.FSUs)));
+  queue.push(Event(
+      time + prng->next("arrival"), EventType::Arrival,
+      Request(router.compute(NullVertex, NullVertex).value(), request.FSUs)));
 
   ++requestCount;
 }
@@ -249,9 +249,9 @@ void Kernel::Reset(void) {
 
   router.SetStrategy(std::make_shared<RandomRouting>(configuration.graph));
 
-  queue.push(Event(
-      time + prng->next("arrival"), EventType::Arrival,
-      Request(router.compute(NullVertex, NullVertex), firstRequest.FSUs)));
+  queue.push(Event(time + prng->next("arrival"), EventType::Arrival,
+                   Request(router.compute(NullVertex, NullVertex).value(),
+                           firstRequest.FSUs)));
 
   ++requestCount;
 }

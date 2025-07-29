@@ -7,15 +7,13 @@
 #include "prng.h"
 #include "request.h"
 
-Route Route::None(void) { return {{}, Cost::max()}; }
-
 RoutingStrategy::RoutingStrategy(const Graph &graph) : graph{graph} {}
 
 BreadthFirstSearch::BreadthFirstSearch(const Graph &graph)
     : RoutingStrategy(graph) {}
 
-Route BreadthFirstSearch::compute(const Vertex source,
-                                  const Vertex destination) const {
+std::optional<Route> BreadthFirstSearch::compute(
+    const Vertex source, const Vertex destination) const {
   std::unordered_map<Vertex, bool> visited;
 
   std::unordered_map<int, int> predecessors;
@@ -63,17 +61,17 @@ Route BreadthFirstSearch::compute(const Vertex source,
   }
 
   if (*vertices.begin() != source) {
-    return Route::None();
+    return std::nullopt;
   }
 
-  return {vertices, cost};
+  return std::make_pair(vertices, cost);
 }
 
 DepthFirstSearch::DepthFirstSearch(const Graph &graph)
     : RoutingStrategy{graph} {}
 
-Route DepthFirstSearch::compute(const Vertex source,
-                                const Vertex destination) const {
+std::optional<Route> DepthFirstSearch::compute(const Vertex source,
+                                               const Vertex destination) const {
   std::unordered_map<Vertex, bool> visited;
 
   std::unordered_map<int, int> predecessors;
@@ -123,15 +121,16 @@ Route DepthFirstSearch::compute(const Vertex source,
   }
 
   if (*vertices.begin() != source) {
-    return Route::None();
+    return std::nullopt;
   }
 
-  return {vertices, cost};
+  return std::make_pair(vertices, cost);
 }
 
 Dijkstra::Dijkstra(const Graph &graph) : RoutingStrategy{graph} {}
 
-Route Dijkstra::compute(const Vertex source, const Vertex destination) const {
+std::optional<Route> Dijkstra::compute(const Vertex source,
+                                       const Vertex destination) const {
   std::unordered_map<int, Cost> costs;
 
   std::unordered_map<int, int> predecessors;
@@ -210,15 +209,15 @@ Route Dijkstra::compute(const Vertex source, const Vertex destination) const {
   }
 
   if (*vertices.begin() != source) {
-    return Route::None();
+    return std::nullopt;
   }
 
-  return {vertices, cost};
+  return std::make_pair(vertices, cost);
 }
 
 RandomRouting::RandomRouting(const Graph &graph) : RoutingStrategy{graph} {}
 
-Route RandomRouting::compute(const Vertex, const Vertex) const {
+std::optional<Route> RandomRouting::compute(const Vertex, const Vertex) const {
   static Dijkstra dijkstra(graph);
 
   while (true) {
@@ -232,10 +231,10 @@ Route RandomRouting::compute(const Vertex, const Vertex) const {
       continue;
     }
 
-    const auto &[vertices, cost] = dijkstra.compute(source, destination);
+    const auto route = dijkstra.compute(source, destination);
 
-    if (!vertices.empty()) {
-      return {vertices, cost};
+    if (route.has_value()) {
+      return route;
     }
   }
 }
@@ -254,7 +253,7 @@ std::vector<Route> KShortestPath::compute(const Vertex source,
     stub_t(const Vertex vertex, const Route &path)
         : vertex{vertex}, path{path} {}
 
-    auto operator>(const stub_t &binding) const -> bool {
+    bool operator>(const stub_t &binding) const {
       const auto &[vertices, cost] = path;
 
       const auto &[other_vertices, other_cost] = binding.path;
@@ -294,9 +293,10 @@ void Router::SetStrategy(std::shared_ptr<RoutingStrategy> strategy) {
   this->strategy = strategy;
 }
 
-Route Router::compute(const Vertex source, const Vertex destination) {
+std::optional<Route> Router::compute(const Vertex source,
+                                     const Vertex destination) {
   if (!strategy) {
-    return Route::None();
+    return std::nullopt;
   }
 
   const auto key = CantorPairingFunction(source, destination);
@@ -309,7 +309,11 @@ Route Router::compute(const Vertex source, const Vertex destination) {
 
   const auto route = strategy->compute(source, destination);
 
-  cache[key] = route;
+  if (!route.has_value()) {
+    return std::nullopt;
+  }
+
+  cache[key] = route.value();
 
   return route;
 }
