@@ -15,21 +15,21 @@
 struct Configuration final {
   Graph graph;
   KeyGenerator keyGenerator;
-  ModulationOption modulationOption;
+  ModulationStrategyFactory::Option modulationOption;
   std::unordered_map<std::string, FragmentationStrategy>
       fragmentationStrategies;
   std::unordered_map<std::string, RequestType> requests;
-  std::unordered_map<std::string, unsigned> modulations;
+  std::unordered_map<std::string, uint64_t> modulations;
   std::vector<double> probs;
   double arrivalRate;
   double serviceRate;
   double timeUnits;
   double spectrumWidth;
   double slotWidth;
-  unsigned FSUsPerLink;
-  unsigned minFSUsPerRequest;
-  unsigned iterations;
-  unsigned samplingTime;
+  uint64_t FSUsPerLink;
+  uint64_t minFSUsPerRequest;
+  uint64_t iterations;
+  uint64_t samplingTime;
   bool ignoreFirst;
   bool exportDataset;
   bool enableLogging;

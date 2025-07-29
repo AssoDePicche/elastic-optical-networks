@@ -9,28 +9,28 @@
 
 struct FSU final {
   bool allocated;
-  unsigned occupancy;
+  uint64_t occupancy;
 
-  static constexpr auto max = std::numeric_limits<unsigned>::max();
+  static constexpr auto max = std::numeric_limits<uint64_t>::max();
 };
 
-using Slice = std::pair<unsigned, unsigned>;
+using Slice = std::pair<uint64_t, uint64_t>;
 
-[[nodiscard]] unsigned size(const Slice &);
+[[nodiscard]] uint64_t size(const Slice &);
 
 class Spectrum final {
  public:
   Spectrum(void) = default;
 
-  Spectrum(const unsigned);
+  Spectrum(const uint64_t);
 
   void allocate(const Slice &);
 
   void deallocate(const Slice &);
 
-  [[nodiscard]] unsigned size(void) const noexcept;
+  [[nodiscard]] uint64_t size(void) const noexcept;
 
-  [[nodiscard]] unsigned available(void) const noexcept;
+  [[nodiscard]] uint64_t available(void) const noexcept;
 
   [[nodiscard]] bool available_at(const Slice &) const noexcept;
 
@@ -38,25 +38,25 @@ class Spectrum final {
 
   [[nodiscard]] std::string Serialize(void) const noexcept;
 
-  [[nodiscard]] FSU at(const unsigned) const;
+  [[nodiscard]] FSU at(const uint64_t) const;
 
  private:
   std::vector<FSU> resources;
   std::vector<Slice> slices;
 };
 
-[[nodiscard]] std::optional<Slice> BestFit(const Spectrum &, const unsigned);
+[[nodiscard]] std::optional<Slice> BestFit(const Spectrum &, const uint64_t);
 
-[[nodiscard]] std::optional<Slice> FirstFit(const Spectrum &, const unsigned);
+[[nodiscard]] std::optional<Slice> FirstFit(const Spectrum &, const uint64_t);
 
-[[nodiscard]] std::optional<Slice> LastFit(const Spectrum &, const unsigned);
+[[nodiscard]] std::optional<Slice> LastFit(const Spectrum &, const uint64_t);
 
-[[nodiscard]] std::optional<Slice> RandomFit(const Spectrum &, const unsigned);
+[[nodiscard]] std::optional<Slice> RandomFit(const Spectrum &, const uint64_t);
 
-[[nodiscard]] std::optional<Slice> WorstFit(const Spectrum &, const unsigned);
+[[nodiscard]] std::optional<Slice> WorstFit(const Spectrum &, const uint64_t);
 
 using SpectrumAllocator =
-    std::function<std::optional<Slice>(const Spectrum &, const unsigned)>;
+    std::function<std::optional<Slice>(const Spectrum &, const uint64_t)>;
 
 struct Fragmentation {
   virtual ~Fragmentation() = default;
@@ -75,9 +75,9 @@ struct ExternalFragmentation : public Fragmentation {
 };
 
 struct EntropyBasedFragmentation : public Fragmentation {
-  unsigned minFSUs;
+  uint64_t minFSUs;
 
-  EntropyBasedFragmentation(const unsigned);
+  EntropyBasedFragmentation(const uint64_t);
 
   [[nodiscard]] double operator()(const Spectrum &) const override;
 };

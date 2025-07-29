@@ -14,11 +14,12 @@ std::optional<Configuration> Configuration::From(const Json &json) {
           {"cantor", CantorPairingFunction},
       };
 
-  static const std::unordered_map<std::string, ModulationOption>
+  static const std::unordered_map<std::string,
+                                  ModulationStrategyFactory::Option>
       modulationOptions{
-          {"passband", ModulationOption::Passband},
-          {"gigabits", ModulationOption::Gigabits},
-          {"terabits", ModulationOption::Terabits},
+          {"passband", ModulationStrategyFactory::Option::Passband},
+          {"gigabits", ModulationStrategyFactory::Option::Gigabits},
+          {"terabits", ModulationStrategyFactory::Option::Terabits},
       };
 
   Configuration configuration;
@@ -30,7 +31,7 @@ std::optional<Configuration> Configuration::From(const Json &json) {
   configuration.ignoreFirst = json.Get<bool>("params.ignore-first").value();
 
   configuration.samplingTime =
-      json.Get<unsigned>("params.sampling-time").value();
+      json.Get<uint64_t>("params.sampling-time").value();
 
   configuration.timeUnits =
       json.Get<double>("params.simulation-duration").value();
@@ -39,7 +40,7 @@ std::optional<Configuration> Configuration::From(const Json &json) {
 
   configuration.serviceRate = json.Get<double>("params.service-rate").value();
 
-  configuration.iterations = json.Get<unsigned>("params.iterations").value();
+  configuration.iterations = json.Get<uint64_t>("params.iterations").value();
 
   configuration.spectrumWidth =
       json.Get<double>("params.spectrum-width").value();
@@ -85,18 +86,19 @@ std::optional<Configuration> Configuration::From(const Json &json) {
   }
 
   for (auto &request : configuration.requests) {
-    const ModulationStrategyFactory factory(configuration.modulationOption);
+    const ModulationStrategyFactory factory;
 
     const auto spectralEfficiency =
         configuration.modulations.at(request.second.modulation);
 
     const auto strategy =
-        factory.From(configuration.slotWidth, spectralEfficiency);
+        factory.From(configuration.modulationOption, configuration.slotWidth,
+                     spectralEfficiency);
 
-    request.second.FSUs =
-        configuration.modulationOption == ModulationOption::Passband
-            ? strategy->compute(request.second.bandwidth)
-            : strategy->compute(Cost::max().value);
+    request.second.FSUs = configuration.modulationOption ==
+                                  ModulationStrategyFactory::Option::Passband
+                              ? strategy->compute(request.second.bandwidth)
+                              : strategy->compute(Cost::max().value);
 
     request.second.counting = 0u;
 

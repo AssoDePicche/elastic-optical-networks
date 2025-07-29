@@ -94,22 +94,24 @@ void Kernel::Next(void) {
   SpectrumAllocator allocator;
 
   for (auto &requestType : configuration.requests) {
-    const ModulationStrategyFactory factory(configuration.modulationOption);
+    const ModulationStrategyFactory factory;
 
     const auto spectralEfficiency =
         configuration.modulations.at(requestType.second.modulation);
 
     const auto strategy =
-        factory.From(configuration.slotWidth, spectralEfficiency);
+        factory.From(configuration.modulationOption, configuration.slotWidth,
+                     spectralEfficiency);
 
-    const auto FSUs =
-        configuration.modulationOption == ModulationOption::Passband
-            ? strategy->compute(requestType.second.bandwidth)
-            : strategy->compute(event.request.route.second.value);
+    const auto FSUs = configuration.modulationOption ==
+                              ModulationStrategyFactory::Option::Passband
+                          ? strategy->compute(requestType.second.bandwidth)
+                          : strategy->compute(event.request.route.second.value);
 
     if (FSUs == event.request.FSUs) {
-      allocator = *requestType.second.allocator.target<std::optional<Slice> (*)(
-          const Spectrum &, unsigned int)>();
+      allocator =
+          *requestType.second.allocator
+               .target<std::optional<Slice> (*)(const Spectrum &, uint64_t)>();
 
       break;
     }

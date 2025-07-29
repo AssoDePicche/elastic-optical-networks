@@ -5,19 +5,23 @@
 #include <ranges>
 #include <utility>
 
-Request::Request(const Route &route, const unsigned FSUs)
+Request::Request(const Route &route, const uint64_t FSUs)
     : route{route}, FSUs{FSUs} {}
 
+uint64_t CantorPairingFunction(uint64_t x, uint64_t y) {
+  return ((x + y) * (x + y + 1) / 2) + y;
+}
+
 PassbandModulation::PassbandModulation(double slotWidth,
-                                       unsigned spectralEfficiency)
+                                       uint64_t spectralEfficiency)
     : slotWidth{slotWidth}, spectralEfficiency{spectralEfficiency} {}
 
-unsigned PassbandModulation::compute(const double bandwidth) const {
+uint64_t PassbandModulation::compute(const double bandwidth) const {
   return bandwidth / (spectralEfficiency * slotWidth);
 }
 
-unsigned GigabitsTransmission::compute(const double distance) const {
-  constexpr std::array<std::pair<double, unsigned>, 7> thresholds = {{
+uint64_t GigabitsTransmission::compute(const double distance) const {
+  constexpr std::array<std::pair<double, uint64_t>, 7> thresholds = {{
       {160.0, 5u},
       {880.0, 6u},
       {2480.0, 7u},
@@ -36,8 +40,8 @@ unsigned GigabitsTransmission::compute(const double distance) const {
   return FSU::max;
 }
 
-unsigned TerabitsTransmission::compute(const double distance) const {
-  constexpr std::array<std::pair<double, unsigned>, 7> thresholds = {{
+uint64_t TerabitsTransmission::compute(const double distance) const {
+  constexpr std::array<std::pair<double, uint64_t>, 7> thresholds = {{
       {400.0, 14u},
       {800.0, 15u},
       {1600.0, 17u},
@@ -56,18 +60,15 @@ unsigned TerabitsTransmission::compute(const double distance) const {
   return FSU::max;
 }
 
-ModulationStrategyFactory::ModulationStrategyFactory(ModulationOption option)
-    : option{option} {}
-
 ModulationStrategy ModulationStrategyFactory::From(
-    double slotWidth, unsigned spectralEfficiency) const {
+    Option option, double slotWidth, uint64_t spectralEfficiency) const {
   switch (option) {
-    case ModulationOption::Passband:
+    case Option::Passband:
       return std::make_shared<PassbandModulation>(slotWidth,
                                                   spectralEfficiency);
-    case ModulationOption::Gigabits:
+    case Option::Gigabits:
       return std::make_shared<GigabitsTransmission>();
-    case ModulationOption::Terabits:
+    case Option::Terabits:
       return std::make_shared<TerabitsTransmission>();
   }
 
@@ -76,17 +77,17 @@ ModulationStrategy ModulationStrategyFactory::From(
 
 KeyGenerator::KeyGenerator(PairingFunction function) : function{function} {}
 
-unsigned KeyGenerator::generate(const Vertex source,
+uint64_t KeyGenerator::generate(const Vertex source,
                                 const Vertex destination) const {
   return function(source, destination);
 }
 
-std::unordered_set<unsigned> KeyGenerator::generate(const Route &route) const {
+std::unordered_set<uint64_t> KeyGenerator::generate(const Route &route) const {
   const auto &[vertices, cost] = route;
 
   assert(!vertices.empty());
 
-  std::unordered_set<unsigned> keys;
+  std::unordered_set<uint64_t> keys;
 
   for (const auto &index : std::views::iota(1u, vertices.size())) {
     const auto x = *std::next(vertices.begin(), index - 1);
@@ -100,7 +101,7 @@ std::unordered_set<unsigned> KeyGenerator::generate(const Route &route) const {
 }
 
 Dispatcher::Dispatcher(Graph graph, KeyGenerator keyGenerator,
-                       unsigned FSUsPerLink)
+                       uint64_t FSUsPerLink)
     : keyGenerator{keyGenerator}, FSUsPerLink{FSUsPerLink} {
   for (const auto &[source, destination, cost] : graph.get_edges()) {
     const auto key = keyGenerator.generate(source, destination);

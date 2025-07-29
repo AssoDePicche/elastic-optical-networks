@@ -26,7 +26,7 @@ struct Event {
 
 struct Snapshot final {
   double time;
-  unsigned FSUs;
+  uint64_t FSUs;
   bool accepted;
   std::vector<double> fragmentation;
   double blocking;
@@ -45,9 +45,9 @@ class Kernel final {
   std::vector<std::string> requestsKeys;
   double kToIgnore;
   double time;
-  unsigned requestCount;
-  unsigned blockedCount;
-  unsigned activeRequests;
+  uint64_t requestCount;
+  uint64_t blockedCount;
+  uint64_t activeRequests;
   bool ignoredFirst;
   std::shared_ptr<Logger> logger;
   std::shared_ptr<PseudoRandomNumberGenerator> prng;

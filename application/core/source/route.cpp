@@ -147,7 +147,7 @@ std::optional<Route> Dijkstra::compute(const Vertex source,
 
     predecessors[vertex] = -1;
 
-    edge_hops[vertex] = std::numeric_limits<unsigned>::max();
+    edge_hops[vertex] = static_cast<long long int>(NullVertex);
   }
 
   costs[source] = Cost::min();
@@ -243,7 +243,7 @@ KShortestPath::KShortestPath(const Graph &graph) : graph{graph} {}
 
 std::vector<Route> KShortestPath::compute(const Vertex source,
                                           Vertex destination,
-                                          const unsigned k) const {
+                                          const uint64_t k) const {
   std::vector<Route> kShortestPaths{};
 
   struct stub_t {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <limits>
 #include <list>
 #include <optional>
@@ -9,9 +10,9 @@
 #include <utility>
 #include <vector>
 
-using Vertex = unsigned;
+using Vertex = uint64_t;
 
-constexpr Vertex NullVertex = std::numeric_limits<unsigned>::max();
+constexpr Vertex NullVertex = std::numeric_limits<uint64_t>::max();
 
 struct Cost {
   double value;
@@ -38,11 +39,11 @@ class Graph final {
  public:
   Graph(void) = default;
 
-  Graph(const unsigned);
+  Graph(const uint64_t);
 
   [[nodiscard]] static std::optional<Graph> from(const std::string &) noexcept;
 
-  [[nodiscard]] unsigned size(void) const noexcept;
+  [[nodiscard]] uint64_t size(void) const noexcept;
 
   [[nodiscard]] Cost at(const Vertex, const Vertex) const;
 

@@ -16,7 +16,7 @@ bool operator<(const Cost &lhs, const Cost &rhs) {
   return lhs.value < rhs.value;
 }
 
-Graph::Graph(const unsigned vertices) {
+Graph::Graph(const uint64_t vertices) {
   for (const auto &vertex : std::views::iota(0u, vertices)) {
     add(vertex);
   }
@@ -33,7 +33,7 @@ std::optional<Graph> Graph::from(const std::string &filename) noexcept {
 
   std::getline(file, line);
 
-  const auto size{static_cast<unsigned>(atoi(line.c_str()))};
+  const auto size{static_cast<uint64_t>(atoi(line.c_str()))};
 
   Graph graph{size};
 
@@ -60,7 +60,7 @@ std::optional<Graph> Graph::from(const std::string &filename) noexcept {
   return graph;
 }
 
-unsigned Graph::size(void) const noexcept { return vertices.size(); }
+uint64_t Graph::size(void) const noexcept { return vertices.size(); }
 
 Cost Graph::at(const Vertex source, const Vertex destination) const {
   for (const auto &[vertex, cost] : adjacency_list.at(source)) {

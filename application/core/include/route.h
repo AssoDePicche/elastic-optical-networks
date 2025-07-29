@@ -60,7 +60,7 @@ class KShortestPath {
   KShortestPath(const Graph &);
 
   [[nodiscard]] std::vector<Route> compute(const Vertex, const Vertex,
-                                           const unsigned) const;
+                                           const uint64_t) const;
 
  private:
   const Graph &graph;
@@ -73,6 +73,6 @@ class Router final {
   [[nodiscard]] std::optional<Route> compute(const Vertex, const Vertex);
 
  private:
-  std::unordered_map<unsigned, Route> cache;
+  std::unordered_map<uint64_t, Route> cache;
   std::shared_ptr<RoutingStrategy> strategy;
 };

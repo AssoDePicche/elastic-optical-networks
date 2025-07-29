@@ -16,100 +16,92 @@ struct RequestType final {
   std::string modulation;
   SpectrumAllocator allocator;
   double bandwidth;
-  unsigned blocking;
-  unsigned FSUs;
-  unsigned counting;
+  uint64_t blocking;
+  uint64_t FSUs;
+  uint64_t counting;
 };
 
 struct Request final {
   RequestType type;
   Route route;
   Slice slice;
-  unsigned FSUs{};
+  uint64_t FSUs{};
   bool accepted;
 
   Request(void) = default;
 
-  Request(const Route &, const unsigned);
+  Request(const Route &, const uint64_t);
 };
 
-using PairingFunction = std::function<unsigned(unsigned, unsigned)>;
+using PairingFunction = std::function<uint64_t(uint64_t, uint64_t)>;
 
-[[nodiscard]] unsigned CantorPairingFunction(unsigned, unsigned);
-
-enum class ModulationOption {
-  Passband,
-  Gigabits,
-  Terabits,
-};
+[[nodiscard]] uint64_t CantorPairingFunction(uint64_t, uint64_t);
 
 struct Modulation {
   virtual ~Modulation() = default;
 
-  [[nodiscard]] virtual unsigned compute(const double) const = 0;
+  [[nodiscard]] virtual uint64_t compute(const double) const = 0;
 };
 
 class PassbandModulation : public Modulation {
- public:
-  PassbandModulation(double, unsigned);
-
-  [[nodiscard]] unsigned compute(const double) const override;
-
- private:
   double slotWidth;
-  unsigned spectralEfficiency;
+  uint64_t spectralEfficiency;
+
+ public:
+  PassbandModulation(double, uint64_t);
+
+  [[nodiscard]] uint64_t compute(const double) const override;
 };
 
 struct DistanceAdaptativeModulation : public Modulation {};
 
 class GigabitsTransmission : public DistanceAdaptativeModulation {
-  [[nodiscard]] unsigned compute(const double) const override;
+  [[nodiscard]] uint64_t compute(const double) const override;
 };
 
 class TerabitsTransmission : public DistanceAdaptativeModulation {
-  [[nodiscard]] unsigned compute(const double) const override;
+  [[nodiscard]] uint64_t compute(const double) const override;
 };
 
 using ModulationStrategy = std::shared_ptr<Modulation>;
 
 class ModulationStrategyFactory final {
  public:
-  ModulationStrategyFactory(ModulationOption);
+  enum class Option {
+    Passband,
+    Gigabits,
+    Terabits,
+  };
 
-  [[nodiscard]] ModulationStrategy From(double, unsigned) const;
-
- private:
-  ModulationOption option;
+  [[nodiscard]] ModulationStrategy From(Option, double, uint64_t) const;
 };
 
 class KeyGenerator final {
+  PairingFunction function;
+
  public:
   KeyGenerator(void) = default;
 
   KeyGenerator(PairingFunction);
 
-  [[nodiscard]] unsigned generate(const Vertex, const Vertex) const;
+  [[nodiscard]] uint64_t generate(const Vertex, const Vertex) const;
 
-  [[nodiscard]] std::unordered_set<unsigned> generate(const Route &) const;
-
- private:
-  PairingFunction function;
+  [[nodiscard]] std::unordered_set<uint64_t> generate(const Route &) const;
 };
 
-using Carriers = std::unordered_map<unsigned, Spectrum>;
+using Carriers = std::unordered_map<uint64_t, Spectrum>;
 
 class Dispatcher final {
+  KeyGenerator keyGenerator;
+  Carriers carriers;
+  uint64_t FSUsPerLink;
+
  public:
-  Dispatcher(Graph, KeyGenerator, unsigned);
+  Dispatcher(Graph, KeyGenerator, uint64_t);
 
   [[nodiscard]] bool dispatch(Request &, const SpectrumAllocator &);
 
   [[nodiscard]] Carriers GetCarriers(void) const;
 
   void release(Request &);
-
- private:
-  KeyGenerator keyGenerator;
-  Carriers carriers;
-  unsigned FSUsPerLink;
 };
