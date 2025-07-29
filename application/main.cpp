@@ -50,37 +50,6 @@ int main(void) {
 
       const auto MINUTE = localtime->tm_min;
 
-      if (configuration.exportDataset) {
-        std::string buffer{"time,fsus,accepted,"};
-
-        for (const auto &strategy : configuration.fragmentationStrategies) {
-          buffer.append(std::format("{},", strategy.first));
-        }
-
-        buffer.append("blocking\n");
-
-        std::for_each(
-            snapshots.begin(), snapshots.end(),
-            [&buffer](const Snapshot &snapshot) {
-              buffer.append(std::format("{}\n", snapshot.Serialize()));
-            });
-
-        const std::string filename = std::format(
-            "resources/temp/{}_iteration_{:02}_{:02}_{:04}_{:02}h{:02}.csv",
-            iteration, DAY, MONTH, YEAR, HOUR, MINUTE);
-
-        std::ofstream stream(filename);
-
-        if (!stream.is_open()) {
-          throw std::runtime_error(
-              std::format("Failed to write {} file", filename));
-        }
-
-        stream << buffer;
-
-        stream.close();
-      }
-
       const auto kernel_time = kernel.GetTime();
 
       const auto requestCount = kernel.GetRequestCount();
@@ -118,10 +87,9 @@ int main(void) {
             .append("normalized load: {:.3f}\n", normalized_load);
       }
 
-      const std::string report_filename = std::format(
-          "resources/temp/"
-          "{}_iteration_{:02}_{:02}_{:04}_{:02}h{:02}_report.txt",
-          iteration, DAY, MONTH, YEAR, HOUR, MINUTE);
+      const auto report_filename =
+          std::format("resources/temp/{}_{:02}_{:02}_{:04}_{:02}h{:02}.txt",
+                      iteration, DAY, MONTH, YEAR, HOUR, MINUTE);
 
       document.write(report_filename);
 
@@ -129,6 +97,40 @@ int main(void) {
                                report_filename);
 
       kernel.Reset();
+
+      if (!configuration.exportDataset) {
+        continue;
+      }
+
+      std::string buffer{"time,fsus,accepted,"};
+
+      for (const auto &strategy : configuration.fragmentationStrategies) {
+        buffer.append(std::format("{},", strategy.first));
+      }
+
+      buffer.append("blocking\n");
+
+      std::for_each(snapshots.begin(), snapshots.end(),
+                    [&buffer](const Snapshot &snapshot) {
+                      buffer.append(std::format("{}\n", snapshot.Serialize()));
+                    });
+
+      const std::string filename =
+          std::format("resources/temp/{}_{:02}_{:02}_{:04}_{:02}h{:02}.csv",
+                      iteration, DAY, MONTH, YEAR, HOUR, MINUTE);
+
+      std::ofstream stream(filename);
+
+      if (!stream.is_open()) {
+        throw std::runtime_error(
+            std::format("Failed to write {} file", filename));
+      }
+
+      stream << buffer;
+
+      stream.close();
+
+      std::cout << std::format("Simulation data wrote in {}\n", filename);
     }
   } catch (const std::exception &exception) {
     std::cerr << "Exception thrown: " << exception.what() << std::endl;
