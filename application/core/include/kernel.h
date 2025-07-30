@@ -37,7 +37,6 @@ struct Snapshot final {
 };
 
 class Kernel final {
-  Configuration &configuration;
   Dispatcher dispatcher;
   Router router;
   std::priority_queue<Event> queue;
@@ -49,11 +48,12 @@ class Kernel final {
   uint64_t blockedCount;
   uint64_t activeRequests;
   bool ignoredFirst;
+  std::shared_ptr<Configuration> configuration;
   std::shared_ptr<Logger> logger;
   std::shared_ptr<PseudoRandomNumberGenerator> prng;
 
  public:
-  Kernel(Configuration &);
+  Kernel(std::shared_ptr<Configuration>);
 
   bool HasNext(void) const;
 

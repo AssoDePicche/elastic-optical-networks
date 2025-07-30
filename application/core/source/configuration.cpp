@@ -1,7 +1,8 @@
 
 #include "configuration.h"
 
-std::optional<Configuration> Configuration::From(const Json &json) {
+std::optional<std::shared_ptr<Configuration>> Configuration::From(
+    const Json &json) {
   static const std::unordered_map<std::string, SpectrumAllocator>
       spectrumAllocationStrategies{{"best-fit", BestFit},
                                    {"first-fit", FirstFit},
@@ -22,38 +23,38 @@ std::optional<Configuration> Configuration::From(const Json &json) {
           {"terabits", ModulationStrategyFactory::Option::Terabits},
       };
 
-  Configuration configuration;
+  auto configuration = std::make_shared<Configuration>();
 
-  configuration.enableLogging = json.Get<bool>("enable-logging").value();
+  configuration->enableLogging = json.Get<bool>("enable-logging").value();
 
-  configuration.exportDataset = json.Get<bool>("export-dataset").value();
+  configuration->exportDataset = json.Get<bool>("export-dataset").value();
 
-  configuration.ignoreFirst = json.Get<bool>("params.ignore-first").value();
+  configuration->ignoreFirst = json.Get<bool>("params.ignore-first").value();
 
-  configuration.samplingTime =
+  configuration->samplingTime =
       json.Get<uint64_t>("params.sampling-time").value();
 
-  configuration.timeUnits =
+  configuration->timeUnits =
       json.Get<double>("params.simulation-duration").value();
 
-  configuration.arrivalRate = json.Get<double>("params.arrival-rate").value();
+  configuration->arrivalRate = json.Get<double>("params.arrival-rate").value();
 
-  configuration.serviceRate = json.Get<double>("params.service-rate").value();
+  configuration->serviceRate = json.Get<double>("params.service-rate").value();
 
-  configuration.iterations = json.Get<uint64_t>("params.iterations").value();
+  configuration->iterations = json.Get<uint64_t>("params.iterations").value();
 
-  configuration.spectrumWidth =
+  configuration->spectrumWidth =
       json.Get<double>("params.spectrum-width").value();
 
-  configuration.slotWidth = json.Get<double>("params.slot-width").value();
+  configuration->slotWidth = json.Get<double>("params.slot-width").value();
 
-  configuration.FSUsPerLink =
-      configuration.spectrumWidth / configuration.slotWidth;
+  configuration->FSUsPerLink =
+      configuration->spectrumWidth / configuration->slotWidth;
 
-  configuration.keyGenerator = KeyGenerator(pairingFunctionStrategies.at(
+  configuration->keyGenerator = KeyGenerator(pairingFunctionStrategies.at(
       json.Get<std::string>("params.pairing-function").value_or("cantor")));
 
-  configuration.modulationOption = modulationOptions.at(
+  configuration->modulationOption = modulationOptions.at(
       json.Get<std::string>("params.modulation").value_or("passband"));
 
   const auto requests =
@@ -76,26 +77,26 @@ std::optional<Configuration> Configuration::From(const Json &json) {
 
     request.counting = 0u;
 
-    configuration.requests[request.type] = request;
+    configuration->requests[request.type] = request;
   }
 
   const auto modulations = json.Get<std::vector<nlohmann::json>>("modulation");
 
   for (const auto &row : modulations.value()) {
-    configuration.modulations[row["type"]] = row["bits-per-symbol"];
+    configuration->modulations[row["type"]] = row["bits-per-symbol"];
   }
 
-  for (auto &request : configuration.requests) {
+  for (auto &request : configuration->requests) {
     const ModulationStrategyFactory factory;
 
     const auto spectralEfficiency =
-        configuration.modulations.at(request.second.modulation);
+        configuration->modulations.at(request.second.modulation);
 
     const auto strategy =
-        factory.From(configuration.modulationOption, configuration.slotWidth,
+        factory.From(configuration->modulationOption, configuration->slotWidth,
                      spectralEfficiency);
 
-    request.second.FSUs = configuration.modulationOption ==
+    request.second.FSUs = configuration->modulationOption ==
                                   ModulationStrategyFactory::Option::Passband
                               ? strategy->compute(request.second.bandwidth)
                               : strategy->compute(Cost::max().value);
@@ -105,27 +106,27 @@ std::optional<Configuration> Configuration::From(const Json &json) {
     request.second.blocking = 0u;
   }
 
-  configuration.minFSUsPerRequest =
-      (*configuration.requests.begin()).second.FSUs;
+  configuration->minFSUsPerRequest =
+      (*configuration->requests.begin()).second.FSUs;
 
-  for (const auto &request : configuration.requests) {
-    if (request.second.FSUs < configuration.minFSUsPerRequest) {
-      configuration.minFSUsPerRequest = request.second.FSUs;
+  for (const auto &request : configuration->requests) {
+    if (request.second.FSUs < configuration->minFSUsPerRequest) {
+      configuration->minFSUsPerRequest = request.second.FSUs;
     }
   }
 
-  configuration.fragmentationStrategies = {
+  configuration->fragmentationStrategies = {
       {"absolute_fragmentation", std::make_shared<AbsoluteFragmentation>()},
       {"external_fragmentation", std::make_shared<ExternalFragmentation>()},
       {"entropy_based_fragmentation",
        std::make_shared<EntropyBasedFragmentation>(
-           configuration.minFSUsPerRequest)},
+           configuration->minFSUsPerRequest)},
   };
 
-  configuration.probs = {};
+  configuration->probs = {};
 
   for (const auto &row : requests.value()) {
-    configuration.probs.push_back(row["ratio"]);
+    configuration->probs.push_back(row["ratio"]);
   }
 
   const auto graph =
@@ -135,7 +136,7 @@ std::optional<Configuration> Configuration::From(const Json &json) {
     return std::nullopt;
   }
 
-  configuration.graph = graph.value();
+  configuration->graph = graph.value();
 
   return configuration;
 }

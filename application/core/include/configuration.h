@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -34,5 +35,6 @@ struct Configuration final {
   bool exportDataset;
   bool enableLogging;
 
-  [[nodiscard]] static std::optional<Configuration> From(const Json &);
+  [[nodiscard]] static std::optional<std::shared_ptr<Configuration>> From(
+      const Json &);
 };

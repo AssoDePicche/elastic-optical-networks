@@ -36,18 +36,18 @@ std::string Snapshot::Serialize(void) const {
   return buffer;
 }
 
-Kernel::Kernel(Configuration &configuration)
-    : configuration{configuration},
-      dispatcher{configuration.graph, configuration.keyGenerator,
-                 configuration.FSUsPerLink},
-      kToIgnore{0.1 * configuration.timeUnits} {
-  logger = std::make_shared<Logger>(configuration.enableLogging);
+Kernel::Kernel(std::shared_ptr<Configuration> configuration)
+    : dispatcher{configuration->graph, configuration->keyGenerator,
+                 configuration->FSUsPerLink},
+      kToIgnore{0.1 * configuration->timeUnits},
+      configuration{configuration} {
+  logger = std::make_shared<Logger>(configuration->enableLogging);
 
   Reset();
 }
 
 bool Kernel::HasNext(void) const {
-  return !queue.empty() && queue.top().time <= configuration.timeUnits;
+  return !queue.empty() && queue.top().time <= configuration->timeUnits;
 }
 
 void Kernel::Next(void) {
@@ -57,14 +57,14 @@ void Kernel::Next(void) {
 
   time = event.time;
 
-  if (configuration.ignoreFirst && time > kToIgnore && !ignoredFirst) {
+  if (configuration->ignoreFirst && time > kToIgnore && !ignoredFirst) {
     ignoredFirst = true;
 
     requestCount = 0u;
 
     blockedCount = 0u;
 
-    for (auto &request : configuration.requests) {
+    for (auto &request : configuration->requests) {
       request.second.blocking = 0u;
 
       request.second.counting = 0u;
@@ -83,7 +83,7 @@ void Kernel::Next(void) {
     dispatcher.release(event.request);
 
     for (const auto &key :
-         configuration.keyGenerator.generate(event.request.route)) {
+         configuration->keyGenerator.generate(event.request.route)) {
       logger->log(Logger::Level::Info,
                   dispatcher.GetCarriers().at(key).Serialize());
     }
@@ -93,17 +93,17 @@ void Kernel::Next(void) {
 
   SpectrumAllocator allocator;
 
-  for (auto &requestType : configuration.requests) {
+  for (auto &requestType : configuration->requests) {
     const ModulationStrategyFactory factory;
 
     const auto spectralEfficiency =
-        configuration.modulations.at(requestType.second.modulation);
+        configuration->modulations.at(requestType.second.modulation);
 
     const auto strategy =
-        factory.From(configuration.modulationOption, configuration.slotWidth,
+        factory.From(configuration->modulationOption, configuration->slotWidth,
                      spectralEfficiency);
 
-    const auto FSUs = configuration.modulationOption ==
+    const auto FSUs = configuration->modulationOption ==
                               ModulationStrategyFactory::Option::Passband
                           ? strategy->compute(requestType.second.bandwidth)
                           : strategy->compute(event.request.route.second.value);
@@ -119,7 +119,7 @@ void Kernel::Next(void) {
 
   event.request.accepted = false;
 
-  if (activeRequests < configuration.FSUsPerLink &&
+  if (activeRequests < configuration->FSUsPerLink &&
       dispatcher.dispatch(event.request, allocator)) {
     ++activeRequests;
 
@@ -130,7 +130,7 @@ void Kernel::Next(void) {
                 event.request.FSUs, time);
 
     for (const auto &key :
-         configuration.keyGenerator.generate(event.request.route)) {
+         configuration->keyGenerator.generate(event.request.route)) {
       logger->log(Logger::Level::Info,
                   dispatcher.GetCarriers().at(key).Serialize());
     }
@@ -140,7 +140,7 @@ void Kernel::Next(void) {
     logger->log(Logger::Level::Info, "Blocking request for {} FSU(s) at {:.3f}",
                 event.request.FSUs, event.time);
 
-    for (auto &request : configuration.requests) {
+    for (auto &request : configuration->requests) {
       if (event.request.FSUs != request.second.FSUs) {
         continue;
       }
@@ -154,12 +154,12 @@ void Kernel::Next(void) {
   }
 
   if (snapshots.empty() ||
-      abs(snapshots.back().time - event.time) >= configuration.samplingTime) {
+      abs(snapshots.back().time - event.time) >= configuration->samplingTime) {
     snapshots.push_back(
         Snapshot(event, GetFragmentation(), GetGradeOfService()));
   }
 
-  auto &request = configuration.requests[requestsKeys[prng->next("fsus")]];
+  auto &request = configuration->requests[requestsKeys[prng->next("fsus")]];
 
   ++request.counting;
 
@@ -192,12 +192,13 @@ std::vector<double> Kernel::GetFragmentation(void) const {
 
   const auto carriers = dispatcher.GetCarriers();
 
-  for (const auto &[_, strategy] : configuration.fragmentationStrategies) {
+  for (const auto &[_, strategy] : configuration->fragmentationStrategies) {
     double sum = 0.0;
 
     for (const auto &[source, destination, cost] :
-         configuration.graph.get_edges()) {
-      const auto key = configuration.keyGenerator.generate(source, destination);
+         configuration->graph.get_edges()) {
+      const auto key =
+          configuration->keyGenerator.generate(source, destination);
 
       sum += (*strategy)(carriers.at(key));
     }
@@ -223,7 +224,7 @@ void Kernel::Reset(void) {
 
   requestsKeys.clear();
 
-  std::transform(configuration.requests.begin(), configuration.requests.end(),
+  std::transform(configuration->requests.begin(), configuration->requests.end(),
                  std::back_inserter(requestsKeys), [](auto &pair) {
                    pair.second.blocking = 0;
 
@@ -236,20 +237,21 @@ void Kernel::Reset(void) {
 
   prng->random_seed();
 
-  prng->exponential("arrival", configuration.arrivalRate);
+  prng->exponential("arrival", configuration->arrivalRate);
 
-  prng->exponential("service", configuration.serviceRate);
+  prng->exponential("service", configuration->serviceRate);
 
-  prng->discrete("fsus", configuration.probs.begin(),
-                 configuration.probs.end());
+  prng->discrete("fsus", configuration->probs.begin(),
+                 configuration->probs.end());
 
-  prng->uniform("routing", 0, configuration.graph.size());
+  prng->uniform("routing", 0, configuration->graph.size());
 
-  auto &firstRequest = configuration.requests[requestsKeys[prng->next("fsus")]];
+  auto &firstRequest =
+      configuration->requests[requestsKeys[prng->next("fsus")]];
 
   ++firstRequest.counting;
 
-  router.SetStrategy(std::make_shared<RandomRouting>(configuration.graph));
+  router.SetStrategy(std::make_shared<RandomRouting>(configuration->graph));
 
   queue.push(Event(time + prng->next("arrival"), EventType::Arrival,
                    Request(router.compute(NullVertex, NullVertex).value(),
