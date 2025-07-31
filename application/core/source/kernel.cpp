@@ -36,6 +36,23 @@ std::string Snapshot::Serialize(void) const {
   return buffer;
 }
 
+void Kernel::ScheduleNextArrival(void) {
+  auto &request = configuration->requests[requestsKeys[prng->next("fsus")]];
+
+  ++request.counting;
+
+  queue.push(Event(
+      time + prng->next("arrival"), EventType::Arrival,
+      Request(router.compute(NullVertex, NullVertex).value(), request.FSUs)));
+
+  ++requestCount;
+}
+
+void Kernel::ScheduleNextDeparture(const Event &event) {
+  queue.push(
+      Event(time + prng->next("service"), EventType::Departure, event.request));
+}
+
 Kernel::Kernel(std::shared_ptr<Configuration> configuration)
     : dispatcher{configuration->graph, configuration->keyGenerator,
                  configuration->FSUsPerLink},
@@ -82,12 +99,6 @@ void Kernel::Next(void) {
 
     dispatcher.release(event.request);
 
-    for (const auto &key :
-         configuration->keyGenerator.generate(event.request.route)) {
-      logger->log(Logger::Level::Info,
-                  dispatcher.GetCarriers().at(key).Serialize());
-    }
-
     return;
   }
 
@@ -123,19 +134,12 @@ void Kernel::Next(void) {
       dispatcher.dispatch(event.request, allocator)) {
     ++activeRequests;
 
-    queue.push(Event(time + prng->next("service"), EventType::Departure,
-                     event.request));
-
     logger->log(Logger::Level::Info, "Accept request for {} FSU(s) at {:.3f}",
                 event.request.FSUs, time);
 
-    for (const auto &key :
-         configuration->keyGenerator.generate(event.request.route)) {
-      logger->log(Logger::Level::Info,
-                  dispatcher.GetCarriers().at(key).Serialize());
-    }
-
     event.request.accepted = true;
+
+    ScheduleNextDeparture(event);
   } else {
     logger->log(Logger::Level::Info, "Blocking request for {} FSU(s) at {:.3f}",
                 event.request.FSUs, event.time);
@@ -159,15 +163,7 @@ void Kernel::Next(void) {
         Snapshot(event, GetFragmentation(), GetGradeOfService()));
   }
 
-  auto &request = configuration->requests[requestsKeys[prng->next("fsus")]];
-
-  ++request.counting;
-
-  queue.push(Event(
-      time + prng->next("arrival"), EventType::Arrival,
-      Request(router.compute(NullVertex, NullVertex).value(), request.FSUs)));
-
-  ++requestCount;
+  ScheduleNextArrival();
 }
 
 std::shared_ptr<PseudoRandomNumberGenerator>
@@ -246,16 +242,7 @@ void Kernel::Reset(void) {
 
   prng->uniform("routing", 0, configuration->graph.size());
 
-  auto &firstRequest =
-      configuration->requests[requestsKeys[prng->next("fsus")]];
-
-  ++firstRequest.counting;
-
   router.SetStrategy(std::make_shared<RandomRouting>(configuration->graph));
 
-  queue.push(Event(time + prng->next("arrival"), EventType::Arrival,
-                   Request(router.compute(NullVertex, NullVertex).value(),
-                           firstRequest.FSUs)));
-
-  ++requestCount;
+  ScheduleNextArrival();
 }

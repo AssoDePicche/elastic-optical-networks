@@ -12,7 +12,7 @@
 
 enum class EventType { Arrival, Departure };
 
-struct Event {
+struct Event final {
   double time;
   EventType type;
   Request request;
@@ -51,6 +51,10 @@ class Kernel final {
   std::shared_ptr<Configuration> configuration;
   std::shared_ptr<Logger> logger;
   std::shared_ptr<PseudoRandomNumberGenerator> prng;
+
+  void ScheduleNextArrival(void);
+
+  void ScheduleNextDeparture(const Event &);
 
  public:
   Kernel(std::shared_ptr<Configuration>);
