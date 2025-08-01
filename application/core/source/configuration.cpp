@@ -1,4 +1,3 @@
-
 #include "configuration.h"
 
 std::optional<std::shared_ptr<Configuration>> Configuration::From(
@@ -9,11 +8,6 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
                                    {"last-fit", LastFit},
                                    {"random-fit", RandomFit},
                                    {"worst-fit", WorstFit}};
-
-  static const std::unordered_map<std::string, PairingFunction>
-      pairingFunctionStrategies{
-          {"cantor", CantorPairingFunction},
-      };
 
   static const std::unordered_map<std::string,
                                   ModulationStrategyFactory::Option>
@@ -53,9 +47,6 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
 
   configuration->FSUsPerLink =
       configuration->spectrumWidth / configuration->slotWidth;
-
-  configuration->keyGenerator = KeyGenerator(pairingFunctionStrategies.at(
-      json.Get<std::string>("params.pairing-function").value_or("cantor")));
 
   configuration->modulationOption = modulationOptions.at(
       json.Get<std::string>("params.modulation").value_or("passband"));

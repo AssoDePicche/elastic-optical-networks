@@ -2,6 +2,7 @@
 
 #include <queue>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "configuration.h"
@@ -50,6 +51,10 @@ class Kernel final {
   bool ignored_first_k;
   std::shared_ptr<Configuration> configuration;
   std::shared_ptr<PseudoRandomNumberGenerator> prng;
+
+  [[nodiscard]] uint64_t GenerateKeys(const Vertex, const Vertex) const;
+
+  [[nodiscard]] std::unordered_set<uint64_t> GenerateKeys(const Route &) const;
 
   [[nodiscard]] bool Dispatch(Request &);
 

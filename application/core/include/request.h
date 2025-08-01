@@ -1,9 +1,7 @@
 #pragma once
 
-#include <functional>
 #include <memory>
 #include <string>
-#include <unordered_set>
 
 #include "route.h"
 #include "spectrum.h"
@@ -28,10 +26,6 @@ struct Request final {
 
   Request(const Route &);
 };
-
-using PairingFunction = std::function<uint64_t(uint64_t, uint64_t)>;
-
-[[nodiscard]] uint64_t CantorPairingFunction(uint64_t, uint64_t);
 
 struct Modulation {
   virtual ~Modulation() = default;
@@ -70,17 +64,4 @@ class ModulationStrategyFactory final {
   };
 
   [[nodiscard]] ModulationStrategy From(Option, double, uint64_t) const;
-};
-
-class KeyGenerator final {
-  PairingFunction function;
-
- public:
-  KeyGenerator(void) = default;
-
-  KeyGenerator(PairingFunction);
-
-  [[nodiscard]] uint64_t generate(const Vertex, const Vertex) const;
-
-  [[nodiscard]] std::unordered_set<uint64_t> generate(const Route &) const;
 };

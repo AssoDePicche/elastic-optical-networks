@@ -35,10 +35,37 @@ std::string Snapshot::Serialize(void) const {
   return buffer;
 }
 
+uint64_t CantorPairingFunction(uint64_t x, uint64_t y) {
+  return ((x + y) * (x + y + 1) / 2) + y;
+}
+
+uint64_t Kernel::GenerateKeys(const Vertex source,
+                              const Vertex destination) const {
+  return CantorPairingFunction(source, destination);
+}
+
+std::unordered_set<uint64_t> Kernel::GenerateKeys(const Route &route) const {
+  const auto &[vertices, cost] = route;
+
+  assert(!vertices.empty());
+
+  std::unordered_set<uint64_t> keys;
+
+  for (const auto &index : std::views::iota(1u, vertices.size())) {
+    const auto x = *std::next(vertices.begin(), index - 1);
+
+    const auto y = *std::next(vertices.begin(), index);
+
+    keys.insert(CantorPairingFunction(x, y));
+  }
+
+  return keys;
+}
+
 bool Kernel::Dispatch(Request &request) {
   assert(request.type.FSUs <= spectrum.size());
 
-  const auto keys = configuration->keyGenerator.generate(request.route);
+  const auto keys = GenerateKeys(request.route);
 
   const auto first = *keys.begin();
 
@@ -67,7 +94,7 @@ bool Kernel::Dispatch(Request &request) {
 }
 
 void Kernel::Release(Request &request) {
-  const auto keys = configuration->keyGenerator.generate(request.route);
+  const auto keys = GenerateKeys(request.route);
 
   std::for_each(keys.begin(), keys.end(), [&](const auto key) {
     assert(!carriers.at(key).available_at(slice));
@@ -101,7 +128,7 @@ Kernel::Kernel(std::shared_ptr<Configuration> configuration)
       configuration{configuration} {
   for (const auto &[source, destination, cost] :
        configuration->graph.get_edges()) {
-    const auto key = configuration->keyGenerator.generate(source, destination);
+    const auto key = GenerateKeys(source, destination);
 
     carriers[key] = Spectrum(configuration->FSUsPerLink);
   }
@@ -213,8 +240,7 @@ std::vector<double> Kernel::GetFragmentation(void) const {
 
     for (const auto &[source, destination, cost] :
          configuration->graph.get_edges()) {
-      const auto key =
-          configuration->keyGenerator.generate(source, destination);
+      const auto key = GenerateKeys(source, destination);
 
       sum += (*strategy)(carriers.at(key));
     }

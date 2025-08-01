@@ -7,10 +7,6 @@
 
 Request::Request(const Route &route) : route{route} {}
 
-uint64_t CantorPairingFunction(uint64_t x, uint64_t y) {
-  return ((x + y) * (x + y + 1) / 2) + y;
-}
-
 PassbandModulation::PassbandModulation(double slotWidth,
                                        uint64_t spectralEfficiency)
     : slotWidth{slotWidth}, spectralEfficiency{spectralEfficiency} {}
@@ -72,29 +68,4 @@ ModulationStrategy ModulationStrategyFactory::From(
   }
 
   return nullptr;
-}
-
-KeyGenerator::KeyGenerator(PairingFunction function) : function{function} {}
-
-uint64_t KeyGenerator::generate(const Vertex source,
-                                const Vertex destination) const {
-  return function(source, destination);
-}
-
-std::unordered_set<uint64_t> KeyGenerator::generate(const Route &route) const {
-  const auto &[vertices, cost] = route;
-
-  assert(!vertices.empty());
-
-  std::unordered_set<uint64_t> keys;
-
-  for (const auto &index : std::views::iota(1u, vertices.size())) {
-    const auto x = *std::next(vertices.begin(), index - 1);
-
-    const auto y = *std::next(vertices.begin(), index);
-
-    keys.insert(function(x, y));
-  }
-
-  return keys;
 }

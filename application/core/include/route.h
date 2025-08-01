@@ -8,6 +8,8 @@
 
 #include "graph.h"
 
+[[nodiscard]] uint64_t CantorPairingFunction(uint64_t, uint64_t);
+
 using Route = std::pair<std::unordered_set<Vertex>, Cost>;
 
 class RoutingStrategy {

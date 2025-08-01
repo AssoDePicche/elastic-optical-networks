@@ -16,7 +16,6 @@
 
 struct Configuration final {
   Graph graph;
-  KeyGenerator keyGenerator;
   ModulationStrategyFactory::Option modulationOption;
   std::unordered_map<std::string, FragmentationStrategy>
       fragmentationStrategies;
