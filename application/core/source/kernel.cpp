@@ -13,7 +13,7 @@ bool Event::operator<(const Event &other) const noexcept {
 Snapshot::Snapshot(const Event &event, std::vector<double> fragmentation,
                    double blocking)
     : time{event.time},
-      FSUs{event.request.FSUs},
+      FSUs{event.request.type.FSUs},
       accepted{event.request.accepted},
       fragmentation{fragmentation},
       blocking{blocking} {}
@@ -35,14 +35,14 @@ std::string Snapshot::Serialize(void) const {
   return buffer;
 }
 
-bool Kernel::Dispatch(Request &request, const SpectrumAllocator &allocator) {
-  assert(request.FSUs <= spectrum.size());
+bool Kernel::Dispatch(Request &request) {
+  assert(request.type.FSUs <= spectrum.size());
 
   const auto keys = configuration->keyGenerator.generate(request.route);
 
   const auto first = *keys.begin();
 
-  const auto slice = allocator(carriers[first], request.FSUs);
+  const auto slice = request.type.allocator(carriers[first], request.type.FSUs);
 
   if (!slice.has_value()) {
     return false;
@@ -51,7 +51,7 @@ bool Kernel::Dispatch(Request &request, const SpectrumAllocator &allocator) {
   request.slice = slice.value();
 
   for (const auto &key : keys) {
-    if (carriers.at(key).available() < request.FSUs ||
+    if (carriers.at(key).available() < request.type.FSUs ||
         !carriers.at(key).available_at(request.slice)) {
       return false;
     }
@@ -77,13 +77,15 @@ void Kernel::Release(Request &request) {
 }
 
 void Kernel::ScheduleNextArrival(void) {
-  auto &request = configuration->requests[requestsKeys[prng->next("fsus")]];
+  auto &requestType = configuration->requests[requestsKeys[prng->next("fsus")]];
 
-  ++request.counting;
+  ++requestType.counting;
 
-  queue.push(Event(
-      time + prng->next("arrival"), EventType::Arrival,
-      Request(router.compute(NullVertex, NullVertex).value(), request.FSUs)));
+  auto request = Request(router.compute(NullVertex, NullVertex).value());
+
+  request.type = requestType;
+
+  queue.push(Event(time + prng->next("arrival"), EventType::Arrival, request));
 
   ++requestCount;
 }
@@ -135,52 +137,25 @@ void Kernel::Next(void) {
   }
 
   if (event.type == EventType::Departure) {
-    --activeRequests;
+    --active_requests;
 
     configuration->logger->log(Logger::Level::Info,
                                "Request for {} FSU(s) departing at {:.3f}",
-                               event.request.FSUs, event.time);
+                               event.request.type.FSUs, event.time);
 
     Release(event.request);
 
     return;
   }
 
-  SpectrumAllocator allocator;
-
-  for (auto &requestType : configuration->requests) {
-    const ModulationStrategyFactory factory;
-
-    const auto spectralEfficiency =
-        configuration->modulations.at(requestType.second.modulation);
-
-    const auto strategy =
-        factory.From(configuration->modulationOption, configuration->slotWidth,
-                     spectralEfficiency);
-
-    const auto FSUs = configuration->modulationOption ==
-                              ModulationStrategyFactory::Option::Passband
-                          ? strategy->compute(requestType.second.bandwidth)
-                          : strategy->compute(event.request.route.second.value);
-
-    if (FSUs == event.request.FSUs) {
-      allocator =
-          *requestType.second.allocator
-               .target<std::optional<Slice> (*)(const Spectrum &, uint64_t)>();
-
-      break;
-    }
-  }
-
   event.request.accepted = false;
 
-  if (activeRequests < configuration->FSUsPerLink &&
-      Dispatch(event.request, allocator)) {
-    ++activeRequests;
+  if (active_requests < configuration->FSUsPerLink && Dispatch(event.request)) {
+    ++active_requests;
 
     configuration->logger->log(Logger::Level::Info,
                                "Accept request for {} FSU(s) at {:.3f}",
-                               event.request.FSUs, time);
+                               event.request.type.FSUs, time);
 
     event.request.accepted = true;
 
@@ -188,10 +163,10 @@ void Kernel::Next(void) {
   } else {
     configuration->logger->log(Logger::Level::Info,
                                "Blocking request for {} FSU(s) at {:.3f}",
-                               event.request.FSUs, event.time);
+                               event.request.type.FSUs, event.time);
 
     for (auto &request : configuration->requests) {
-      if (event.request.FSUs != request.second.FSUs) {
+      if (event.request.type.FSUs != request.second.FSUs) {
         continue;
       }
 
@@ -256,7 +231,7 @@ void Kernel::Reset(void) {
 
   blockedCount = 0u;
 
-  activeRequests = 0u;
+  active_requests = 0u;
 
   time = .0f;
 

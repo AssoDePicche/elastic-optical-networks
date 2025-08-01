@@ -46,12 +46,12 @@ class Kernel final {
   double time;
   uint64_t requestCount;
   uint64_t blockedCount;
-  uint64_t activeRequests;
+  uint64_t active_requests;
   bool ignored_first_k;
   std::shared_ptr<Configuration> configuration;
   std::shared_ptr<PseudoRandomNumberGenerator> prng;
 
-  [[nodiscard]] bool Dispatch(Request &, const SpectrumAllocator &);
+  [[nodiscard]] bool Dispatch(Request &);
 
   void Release(Request &);
 

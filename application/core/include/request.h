@@ -22,12 +22,11 @@ struct Request final {
   RequestType type;
   Route route;
   Slice slice;
-  uint64_t FSUs{};
   bool accepted;
 
   Request(void) = default;
 
-  Request(const Route &, const uint64_t);
+  Request(const Route &);
 };
 
 using PairingFunction = std::function<uint64_t(uint64_t, uint64_t)>;

@@ -5,8 +5,7 @@
 #include <ranges>
 #include <utility>
 
-Request::Request(const Route &route, const uint64_t FSUs)
-    : route{route}, FSUs{FSUs} {}
+Request::Request(const Route &route) : route{route} {}
 
 uint64_t CantorPairingFunction(uint64_t x, uint64_t y) {
   return ((x + y) * (x + y + 1) / 2) + y;
