@@ -5,6 +5,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 struct FSU final {
@@ -44,6 +45,8 @@ class Spectrum final {
   std::vector<FSU> resources;
   std::vector<Slice> slices;
 };
+
+using Carriers = std::unordered_map<uint64_t, Spectrum>;
 
 [[nodiscard]] std::optional<Slice> BestFit(const Spectrum &, const uint64_t);
 

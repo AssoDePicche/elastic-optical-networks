@@ -1,8 +1,7 @@
 #include "kernel.h"
 
+#include <cassert>
 #include <format>
-
-#include "graph.h"
 
 Event::Event(const double time, const EventType &type, const Request &request)
     : time{time}, type{type}, request{request} {}
@@ -36,6 +35,47 @@ std::string Snapshot::Serialize(void) const {
   return buffer;
 }
 
+bool Kernel::Dispatch(Request &request, const SpectrumAllocator &allocator) {
+  assert(request.FSUs <= spectrum.size());
+
+  const auto keys = configuration->keyGenerator.generate(request.route);
+
+  const auto first = *keys.begin();
+
+  const auto slice = allocator(carriers[first], request.FSUs);
+
+  if (!slice.has_value()) {
+    return false;
+  }
+
+  request.slice = slice.value();
+
+  for (const auto &key : keys) {
+    if (carriers.at(key).available() < request.FSUs ||
+        !carriers.at(key).available_at(request.slice)) {
+      return false;
+    }
+  }
+
+  const auto allocate = [&](const auto key) {
+    carriers[key].allocate(request.slice);
+  };
+
+  std::for_each(keys.begin(), keys.end(), allocate);
+
+  return true;
+}
+
+void Kernel::Release(Request &request) {
+  const auto keys = configuration->keyGenerator.generate(request.route);
+
+  std::for_each(keys.begin(), keys.end(), [&](const auto key) {
+    assert(!carriers.at(key).available_at(slice));
+
+    carriers[key].deallocate(request.slice);
+  });
+}
+
 void Kernel::ScheduleNextArrival(void) {
   auto &request = configuration->requests[requestsKeys[prng->next("fsus")]];
 
@@ -54,11 +94,14 @@ void Kernel::ScheduleNextDeparture(const Event &event) {
 }
 
 Kernel::Kernel(std::shared_ptr<Configuration> configuration)
-    : dispatcher{configuration->graph, configuration->keyGenerator,
-                 configuration->FSUsPerLink},
-      kToIgnore{0.1 * configuration->timeUnits},
+    : k_to_ignore{0.1 * configuration->timeUnits},
       configuration{configuration} {
-  logger = std::make_shared<Logger>(configuration->enableLogging);
+  for (const auto &[source, destination, cost] :
+       configuration->graph.get_edges()) {
+    const auto key = configuration->keyGenerator.generate(source, destination);
+
+    carriers[key] = Spectrum(configuration->FSUsPerLink);
+  }
 
   Reset();
 }
@@ -74,8 +117,8 @@ void Kernel::Next(void) {
 
   time = event.time;
 
-  if (configuration->ignoreFirst && time > kToIgnore && !ignoredFirst) {
-    ignoredFirst = true;
+  if (configuration->ignoreFirst && time > k_to_ignore && !ignored_first_k) {
+    ignored_first_k = true;
 
     requestCount = 0u;
 
@@ -87,17 +130,18 @@ void Kernel::Next(void) {
       request.second.counting = 0u;
     }
 
-    logger->log(Logger::Level::Info, "Discard first {:.3f} time units", time);
+    configuration->logger->log(Logger::Level::Info,
+                               "Discard first {:.3f} time units", time);
   }
 
   if (event.type == EventType::Departure) {
     --activeRequests;
 
-    logger->log(Logger::Level::Info,
-                "Request for {} FSU(s) departing at {:.3f}", event.request.FSUs,
-                event.time);
+    configuration->logger->log(Logger::Level::Info,
+                               "Request for {} FSU(s) departing at {:.3f}",
+                               event.request.FSUs, event.time);
 
-    dispatcher.release(event.request);
+    Release(event.request);
 
     return;
   }
@@ -131,18 +175,20 @@ void Kernel::Next(void) {
   event.request.accepted = false;
 
   if (activeRequests < configuration->FSUsPerLink &&
-      dispatcher.dispatch(event.request, allocator)) {
+      Dispatch(event.request, allocator)) {
     ++activeRequests;
 
-    logger->log(Logger::Level::Info, "Accept request for {} FSU(s) at {:.3f}",
-                event.request.FSUs, time);
+    configuration->logger->log(Logger::Level::Info,
+                               "Accept request for {} FSU(s) at {:.3f}",
+                               event.request.FSUs, time);
 
     event.request.accepted = true;
 
     ScheduleNextDeparture(event);
   } else {
-    logger->log(Logger::Level::Info, "Blocking request for {} FSU(s) at {:.3f}",
-                event.request.FSUs, event.time);
+    configuration->logger->log(Logger::Level::Info,
+                               "Blocking request for {} FSU(s) at {:.3f}",
+                               event.request.FSUs, event.time);
 
     for (auto &request : configuration->requests) {
       if (event.request.FSUs != request.second.FSUs) {
@@ -186,8 +232,6 @@ double Kernel::GetGradeOfService(void) const {
 std::vector<double> Kernel::GetFragmentation(void) const {
   std::vector<double> fragmentation;
 
-  const auto carriers = dispatcher.GetCarriers();
-
   for (const auto &[_, strategy] : configuration->fragmentationStrategies) {
     double sum = 0.0;
 
@@ -206,7 +250,7 @@ std::vector<double> Kernel::GetFragmentation(void) const {
 }
 
 void Kernel::Reset(void) {
-  ignoredFirst = false;
+  ignored_first_k = false;
 
   requestCount = 0u;
 

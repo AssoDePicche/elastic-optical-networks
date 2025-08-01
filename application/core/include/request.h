@@ -3,11 +3,8 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <unordered_set>
-#include <vector>
 
-#include "graph.h"
 #include "route.h"
 #include "spectrum.h"
 
@@ -87,21 +84,4 @@ class KeyGenerator final {
   [[nodiscard]] uint64_t generate(const Vertex, const Vertex) const;
 
   [[nodiscard]] std::unordered_set<uint64_t> generate(const Route &) const;
-};
-
-using Carriers = std::unordered_map<uint64_t, Spectrum>;
-
-class Dispatcher final {
-  KeyGenerator keyGenerator;
-  Carriers carriers;
-  uint64_t FSUsPerLink;
-
- public:
-  Dispatcher(Graph, KeyGenerator, uint64_t);
-
-  [[nodiscard]] bool dispatch(Request &, const SpectrumAllocator &);
-
-  [[nodiscard]] Carriers GetCarriers(void) const;
-
-  void release(Request &);
 };

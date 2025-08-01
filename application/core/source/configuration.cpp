@@ -27,6 +27,9 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
 
   configuration->enableLogging = json.Get<bool>("enable-logging").value();
 
+  configuration->logger =
+      std::make_shared<Logger>(configuration->enableLogging);
+
   configuration->exportDataset = json.Get<bool>("export-dataset").value();
 
   configuration->ignoreFirst = json.Get<bool>("params.ignore-first").value();

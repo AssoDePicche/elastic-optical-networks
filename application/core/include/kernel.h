@@ -37,20 +37,23 @@ struct Snapshot final {
 };
 
 class Kernel final {
-  Dispatcher dispatcher;
   Router router;
+  Carriers carriers;
   std::priority_queue<Event> queue;
   std::vector<Snapshot> snapshots;
   std::vector<std::string> requestsKeys;
-  double kToIgnore;
+  double k_to_ignore;
   double time;
   uint64_t requestCount;
   uint64_t blockedCount;
   uint64_t activeRequests;
-  bool ignoredFirst;
+  bool ignored_first_k;
   std::shared_ptr<Configuration> configuration;
-  std::shared_ptr<Logger> logger;
   std::shared_ptr<PseudoRandomNumberGenerator> prng;
+
+  [[nodiscard]] bool Dispatch(Request &, const SpectrumAllocator &);
+
+  void Release(Request &);
 
   void ScheduleNextArrival(void);
 

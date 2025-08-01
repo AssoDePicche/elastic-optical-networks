@@ -9,6 +9,7 @@
 
 #include "graph.h"
 #include "json.h"
+#include "logger.h"
 #include "prng.h"
 #include "request.h"
 #include "spectrum.h"
@@ -34,6 +35,7 @@ struct Configuration final {
   bool ignoreFirst;
   bool exportDataset;
   bool enableLogging;
+  std::shared_ptr<Logger> logger;
 
   [[nodiscard]] static std::optional<std::shared_ptr<Configuration>> From(
       const Json &);
