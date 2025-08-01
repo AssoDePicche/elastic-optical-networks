@@ -77,7 +77,8 @@ void Kernel::Release(Request &request) {
 }
 
 void Kernel::ScheduleNextArrival(void) {
-  auto &requestType = configuration->requests[requestsKeys[prng->next("fsus")]];
+  auto &requestType =
+      configuration->requestTypes[requestsKeys[prng->next("fsus")]];
 
   ++requestType.counting;
 
@@ -126,7 +127,7 @@ void Kernel::Next(void) {
 
     blockedCount = 0u;
 
-    for (auto &request : configuration->requests) {
+    for (auto &request : configuration->requestTypes) {
       request.second.blocking = 0u;
 
       request.second.counting = 0u;
@@ -165,12 +166,12 @@ void Kernel::Next(void) {
                                "Blocking request for {} FSU(s) at {:.3f}",
                                event.request.type.FSUs, event.time);
 
-    for (auto &request : configuration->requests) {
-      if (event.request.type.FSUs != request.second.FSUs) {
+    for (auto &[_, requestType] : configuration->requestTypes) {
+      if (event.request.type.FSUs != requestType.FSUs) {
         continue;
       }
 
-      ++request.second.blocking;
+      ++requestType.blocking;
 
       break;
     }
@@ -239,7 +240,8 @@ void Kernel::Reset(void) {
 
   requestsKeys.clear();
 
-  std::transform(configuration->requests.begin(), configuration->requests.end(),
+  std::transform(configuration->requestTypes.begin(),
+                 configuration->requestTypes.end(),
                  std::back_inserter(requestsKeys), [](auto &pair) {
                    pair.second.blocking = 0;
 

@@ -20,7 +20,7 @@ struct Configuration final {
   ModulationStrategyFactory::Option modulationOption;
   std::unordered_map<std::string, FragmentationStrategy>
       fragmentationStrategies;
-  std::unordered_map<std::string, RequestType> requests;
+  std::unordered_map<std::string, RequestType> requestTypes;
   std::unordered_map<std::string, uint64_t> modulations;
   std::vector<double> probs;
   double arrivalRate;

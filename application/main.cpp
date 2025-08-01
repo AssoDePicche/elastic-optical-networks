@@ -74,16 +74,16 @@ int main(void) {
           .append("grade of service: {:.3f}\n", kernel.GetGradeOfService())
           .append("total requests: {}\n", requestCount);
 
-      for (const auto &request : configuration->requests) {
-        const auto ratio = request.second.counting / kernel.GetRequestCount();
+      for (const auto &[_, requestType] : configuration->requestTypes) {
+        const auto ratio = requestType.counting / kernel.GetRequestCount();
 
-        const auto gos = request.second.blocking / kernel.GetRequestCount();
+        const auto gos = requestType.blocking / kernel.GetRequestCount();
 
         const auto normalized_load = configuration->arrivalRate *
-                                     (static_cast<double>(request.second.FSUs) /
+                                     (static_cast<double>(requestType.FSUs) /
                                       configuration->FSUsPerLink);
 
-        document.append("requests for {} FSU(s)\n", request.second.FSUs)
+        document.append("requests for {} FSU(s)\n", requestType.FSUs)
             .append("ratio: {:.3f}\n", ratio)
             .append("grade of service: {:.3f}\n", gos)
             .append("normalized load: {:.3f}\n", normalized_load);

@@ -64,23 +64,23 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
       json.Get<std::vector<nlohmann::json>>("params.requests");
 
   for (const auto &row : requests.value()) {
-    RequestType request;
+    RequestType requestType;
 
-    request.type = row["type"];
+    requestType.type = row["type"];
 
-    request.modulation = row["modulation"];
+    requestType.modulation = row["modulation"];
 
-    request.bandwidth = row["bandwidth"];
+    requestType.bandwidth = row["bandwidth"];
 
-    request.allocator = spectrumAllocationStrategies.at(row["allocator"]);
+    requestType.allocator = spectrumAllocationStrategies.at(row["allocator"]);
 
-    request.blocking = 0u;
+    requestType.blocking = 0u;
 
-    request.FSUs = 0u;
+    requestType.FSUs = 0u;
 
-    request.counting = 0u;
+    requestType.counting = 0u;
 
-    configuration->requests[request.type] = request;
+    configuration->requestTypes[requestType.type] = requestType;
   }
 
   const auto modulations = json.Get<std::vector<nlohmann::json>>("modulation");
@@ -89,7 +89,7 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
     configuration->modulations[row["type"]] = row["bits-per-symbol"];
   }
 
-  for (auto &request : configuration->requests) {
+  for (auto &request : configuration->requestTypes) {
     const ModulationStrategyFactory factory;
 
     const auto spectralEfficiency =
@@ -110,9 +110,9 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
   }
 
   configuration->minFSUsPerRequest =
-      (*configuration->requests.begin()).second.FSUs;
+      (*configuration->requestTypes.begin()).second.FSUs;
 
-  for (const auto &request : configuration->requests) {
+  for (const auto &request : configuration->requestTypes) {
     if (request.second.FSUs < configuration->minFSUsPerRequest) {
       configuration->minFSUsPerRequest = request.second.FSUs;
     }
