@@ -4,6 +4,7 @@
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <ranges>
 #include <stacktrace>
 #include <string>
@@ -13,11 +14,23 @@
 #include "json.h"
 #include "kernel.h"
 
-int main(void) {
+std::string GetConfigFilenameFromArgs(const int argc, const char **argv) {
+  if (argc > 1) {
+    return std::string(argv[1]);
+  }
+
+  return "resources/configuration/configuration.json";
+}
+
+int main(const int argc, const char **argv) {
   try {
-    const Json json("resources/configuration/configuration.json");
+    const std::string configFile = GetConfigFilenameFromArgs(argc, argv);
+
+    const Json json(configFile);
 
     auto configuration = Configuration::From(json).value();
+
+    std::cout << "Initializing simulation with " << configFile << std::endl;
 
     Kernel kernel(configuration);
 
