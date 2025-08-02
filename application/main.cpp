@@ -48,7 +48,7 @@ int main(void) {
       Document document;
 
       document
-          .append("created at: {:02}/{:02}/{:04} {:02}h{:02}",
+          .append("created at: {:02}/{:02}/{:04} {:02}h{:02}\n",
                   localtime->tm_mday, localtime->tm_mon + 1,
                   localtime->tm_year + 1900, localtime->tm_hour,
                   localtime->tm_min)
