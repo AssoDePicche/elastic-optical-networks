@@ -1,14 +1,13 @@
 {
-  "enable-logging": true,
+  "enable-logging": false,
   "export-dataset": true,
   "params": {
     "arrival-rate": 1,
     "ignore-first": false,
-    "iterations": 1,
+    "iterations": 10,
     "sampling-time": 0,
     "service-rate": 0.133138064,
     "modulation": "passband",
-    "pairing-function": "cantor",
     "requests": [
       {
         "type": "low-demand",
