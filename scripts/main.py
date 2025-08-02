@@ -41,7 +41,7 @@ def dataset_plotting():
 
   z_score_scale = []
 
-  y = ['blocking', 'absolute_fragmentation', 'entropy_based_fragmentation', 'external_fragmentation']
+  y = ['grade_of_service', 'slot_blocking_probability', 'active_requests', 'absolute_fragmentation', 'entropy', 'external_fragmentation']
 
   for column in dataframe.columns:
     if dataframe[column].isna().sum() != 0:
@@ -64,7 +64,7 @@ def dataset_plotting():
 
     pyplot.xlabel('Time [t]')
 
-    pyplot.ylabel('Score')
+    pyplot.ylabel(f'{column} Score')
 
     pyplot.yscale('log')
 
