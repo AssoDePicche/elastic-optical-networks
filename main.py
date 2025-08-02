@@ -29,13 +29,13 @@ if __name__ == '__main__':
 
     dataframe = pandas.concat(dataframes, ignore_index=True)
 
-    buffer = {
-        'Column': [],
-        'Mean': [],
-        'Stddev': [],
-        'CI Lower': [],
-        'CI Upper': [],
-    }
+    buffer = pandas.DataFrame(columns=[
+      'column',
+      'mean',
+      'stddev',
+      'ci_lower',
+      'ci_upper',
+    ])
 
     for column in dataframe.columns:
       dataframe[column].dropna()
@@ -51,19 +51,15 @@ if __name__ == '__main__':
 
         confidence_interval = stats.t.interval(confidence=.95, df=length-1, loc=mean, scale=sem)
 
-        buffer['Column'].append(column)
+        buffer = pandas.concat([buffer, pandas.DataFrame({
+          'column': [column],
+          'mean': [mean],
+          'stddev': [stddev],
+          'ci_lower': [confidence_interval[0]],
+          'ci_upper': [confidence_interval[1]],
+        })], ignore_index=True)
 
-        buffer['Mean'].append(mean)
-
-        buffer['Stddev'].append(stddev)
-
-        buffer['CI Lower'].append(confidence_interval[0])
-
-        buffer['CI Upper'].append(confidence_interval[1])
-
-    df = pandas.DataFrame(buffer)
-
-    df.to_csv('dataset.csv', index=False)
+    buffer.to_csv('dataset.csv', index=False)
 
     print('Wrote results in dataset.csv')
 
