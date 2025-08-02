@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "configuration.h"
-#include "logger.h"
 #include "prng.h"
 #include "request.h"
 #include "spectrum.h"
@@ -25,29 +24,44 @@ struct Event final {
   [[nodiscard]] bool operator<(const Event &) const noexcept;
 };
 
-struct Snapshot final {
+struct Statistics final {
+  double absolute_fragmentation;
+  double entropy_fragmentation;
+  double external_fragmentation;
   double time;
-  uint64_t FSUs;
-  bool accepted;
-  std::vector<double> fragmentation;
-  double blocking;
+  uint64_t active_requests;
+  uint64_t total_FSUs_requested;
+  uint64_t total_FSUs_blocked;
+  uint64_t total_requests;
+  uint64_t total_requests_blocked;
 
-  Snapshot(const Event &, std::vector<double>, double);
+  Statistics(void) = default;
+
+  void Reset(void);
+
+  [[nodiscard]] double GradeOfService(void) const;
+
+  [[nodiscard]] double SlotBlockingProbability(void) const;
 
   [[nodiscard]] std::string Serialize(void) const;
+};
+
+struct Trace final {
+  std::string type;
+  Vertex source;
+  Vertex destination;
+  uint64_t FSUs;
+  bool accepted;
 };
 
 class Kernel final {
   Router router;
   Carriers carriers;
   std::priority_queue<Event> queue;
-  std::vector<Snapshot> snapshots;
+  std::vector<Statistics> snapshots;
+  Statistics statistics;
   std::vector<std::string> requestsKeys;
   double k_to_ignore;
-  double time;
-  uint64_t requestCount;
-  uint64_t blockedCount;
-  uint64_t active_requests;
   bool ignored_first_k;
   std::shared_ptr<Configuration> configuration;
   std::shared_ptr<PseudoRandomNumberGenerator> prng;
@@ -74,15 +88,9 @@ class Kernel final {
   [[nodiscard]] std::shared_ptr<PseudoRandomNumberGenerator>
   GetPseudoRandomNumberGenerator(void) const;
 
-  [[nodiscard]] std::vector<Snapshot> GetSnapshots(void) const;
+  [[nodiscard]] std::vector<Statistics> GetSnapshots(void) const;
 
-  [[nodiscard]] double GetTime(void) const;
-
-  [[nodiscard]] double GetRequestCount(void) const;
-
-  [[nodiscard]] double GetGradeOfService(void) const;
-
-  [[nodiscard]] std::vector<double> GetFragmentation(void) const;
+  [[nodiscard]] Statistics GetStatistics(void) const;
 
   void Reset(void);
 };

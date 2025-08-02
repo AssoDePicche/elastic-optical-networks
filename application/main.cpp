@@ -40,23 +40,19 @@ int main(void) {
 
       const auto localtime = std::localtime(&time);
 
-      const auto DAY = localtime->tm_mday;
+      const auto kernel_time = kernel.GetStatistics().time;
 
-      const auto MONTH = localtime->tm_mon + 1;
-
-      const auto YEAR = localtime->tm_year + 1900;
-
-      const auto HOUR = localtime->tm_hour;
-
-      const auto MINUTE = localtime->tm_min;
-
-      const auto kernel_time = kernel.GetTime();
-
-      const auto requestCount = kernel.GetRequestCount();
+      const auto requestCount =
+          static_cast<double>(kernel.GetStatistics().total_requests);
 
       Document document;
 
-      document.append("iteration: {}\n", iteration)
+      document
+          .append("created at: {:02}/{:02}/{:04} {:02}h{:02}",
+                  localtime->tm_mday, localtime->tm_mon + 1,
+                  localtime->tm_year + 1900, localtime->tm_hour,
+                  localtime->tm_min)
+          .append("iteration: {}\n", iteration)
           .append("seed: {}\n", kernel.GetPseudoRandomNumberGenerator()->seed())
           .append("execution time (s): {}\n", execution_time)
           .append("simulated time: {:.3f}\n", kernel_time)
@@ -71,13 +67,14 @@ int main(void) {
       document.append("load (E): {:.3f}\n", load)
           .append("arrival rate: {:.3f}\n", configuration->arrivalRate)
           .append("service rate: {:.3f}\n", configuration->serviceRate)
-          .append("grade of service: {:.3f}\n", kernel.GetGradeOfService())
+          .append("grade of service: {:.3f}\n",
+                  kernel.GetStatistics().GradeOfService())
           .append("total requests: {}\n", requestCount);
 
       for (const auto &[_, requestType] : configuration->requestTypes) {
-        const auto ratio = requestType.counting / kernel.GetRequestCount();
+        const auto ratio = requestType.counting / requestCount;
 
-        const auto gos = requestType.blocking / kernel.GetRequestCount();
+        const auto gos = requestType.blocking / requestCount;
 
         const auto normalized_load = configuration->arrivalRate *
                                      (static_cast<double>(requestType.FSUs) /
@@ -90,8 +87,7 @@ int main(void) {
       }
 
       const auto report_filename =
-          std::format("resources/temp/{}_{:02}_{:02}_{:04}_{:02}h{:02}.txt",
-                      iteration, DAY, MONTH, YEAR, HOUR, MINUTE);
+          std::format("resources/temp/{:02}_report.txt", iteration);
 
       document.write(report_filename);
 
@@ -104,22 +100,17 @@ int main(void) {
         continue;
       }
 
-      std::string buffer{"time,fsus,accepted,"};
-
-      for (const auto &strategy : configuration->fragmentationStrategies) {
-        buffer.append(std::format("{},", strategy.first));
-      }
-
-      buffer.append("blocking\n");
+      std::string buffer{
+          "time,absolute_fragmentation,entropy,external_fragmentation,grade_of_"
+          "service,slot_blocking_probability,active_requests\n"};
 
       std::for_each(snapshots.begin(), snapshots.end(),
-                    [&buffer](const Snapshot &snapshot) {
+                    [&buffer](const Statistics &snapshot) {
                       buffer.append(std::format("{}\n", snapshot.Serialize()));
                     });
 
       const std::string filename =
-          std::format("resources/temp/{}_{:02}_{:02}_{:04}_{:02}h{:02}.csv",
-                      iteration, DAY, MONTH, YEAR, HOUR, MINUTE);
+          std::format("resources/temp/{:02}_dataset.csv", iteration);
 
       std::ofstream stream(filename);
 

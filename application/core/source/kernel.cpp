@@ -3,6 +3,8 @@
 #include <cassert>
 #include <format>
 
+#include "route.h"
+
 Event::Event(const double time, const EventType &type, const Request &request)
     : time{time}, type{type}, request{request} {}
 
@@ -10,33 +12,41 @@ bool Event::operator<(const Event &other) const noexcept {
   return time > other.time;
 }
 
-Snapshot::Snapshot(const Event &event, std::vector<double> fragmentation,
-                   double blocking)
-    : time{event.time},
-      FSUs{event.request.type.FSUs},
-      accepted{event.request.accepted},
-      fragmentation{fragmentation},
-      blocking{blocking} {}
+void Statistics::Reset(void) {
+  absolute_fragmentation = 0;
 
-std::string Snapshot::Serialize(void) const {
-  static const std::unordered_map<bool, std::string> map = {
-      {false, "False"},
-      {true, "True"},
-  };
+  entropy_fragmentation = 0;
 
-  std::string buffer = std::format("{},{},{},", time, FSUs, map.at(accepted));
+  external_fragmentation = 0;
 
-  for (const auto &value : fragmentation) {
-    buffer.append(std::format("{},", value));
-  }
+  time = 0;
 
-  buffer.append(std::format("{}", blocking));
+  active_requests = 0;
 
-  return buffer;
+  total_FSUs_requested = 0;
+
+  total_FSUs_blocked = 0;
+
+  total_requests = 0;
+
+  total_requests_blocked = 0;
 }
 
-uint64_t CantorPairingFunction(uint64_t x, uint64_t y) {
-  return ((x + y) * (x + y + 1) / 2) + y;
+double Statistics::GradeOfService(void) const {
+  return static_cast<double>(total_requests_blocked) /
+         static_cast<double>(total_requests);
+}
+
+double Statistics::SlotBlockingProbability(void) const {
+  return static_cast<double>(total_FSUs_blocked) /
+         static_cast<double>(total_FSUs_requested);
+}
+
+std::string Statistics::Serialize(void) const {
+  return std::format("{:3},{:3},{:3},{:3},{:3},{:3},{}", time,
+                     absolute_fragmentation, entropy_fragmentation,
+                     external_fragmentation, GradeOfService(),
+                     SlotBlockingProbability(), active_requests);
 }
 
 uint64_t Kernel::GenerateKeys(const Vertex source,
@@ -113,14 +123,17 @@ void Kernel::ScheduleNextArrival(void) {
 
   request.type = requestType;
 
-  queue.push(Event(time + prng->next("arrival"), EventType::Arrival, request));
+  queue.push(Event(statistics.time + prng->next("arrival"), EventType::Arrival,
+                   request));
 
-  ++requestCount;
+  statistics.total_FSUs_requested += request.type.FSUs;
+
+  ++statistics.total_requests;
 }
 
 void Kernel::ScheduleNextDeparture(const Event &event) {
-  queue.push(
-      Event(time + prng->next("service"), EventType::Departure, event.request));
+  queue.push(Event(statistics.time + prng->next("service"),
+                   EventType::Departure, event.request));
 }
 
 Kernel::Kernel(std::shared_ptr<Configuration> configuration)
@@ -145,14 +158,13 @@ void Kernel::Next(void) {
 
   queue.pop();
 
-  time = event.time;
+  statistics.time = event.time;
 
-  if (configuration->ignoreFirst && time > k_to_ignore && !ignored_first_k) {
+  if (configuration->ignoreFirst && statistics.time > k_to_ignore &&
+      !ignored_first_k) {
     ignored_first_k = true;
 
-    requestCount = 0u;
-
-    blockedCount = 0u;
+    statistics.Reset();
 
     for (auto &request : configuration->requestTypes) {
       request.second.blocking = 0u;
@@ -161,11 +173,12 @@ void Kernel::Next(void) {
     }
 
     configuration->logger->log(Logger::Level::Info,
-                               "Discard first {:.3f} time units", time);
+                               "Discard first {:.3f} time units",
+                               statistics.time);
   }
 
   if (event.type == EventType::Departure) {
-    --active_requests;
+    --statistics.active_requests;
 
     configuration->logger->log(Logger::Level::Info,
                                "Request for {} FSU(s) departing at {:.3f}",
@@ -178,12 +191,13 @@ void Kernel::Next(void) {
 
   event.request.accepted = false;
 
-  if (active_requests < configuration->FSUsPerLink && Dispatch(event.request)) {
-    ++active_requests;
+  if (statistics.active_requests < configuration->FSUsPerLink &&
+      Dispatch(event.request)) {
+    ++statistics.active_requests;
 
     configuration->logger->log(Logger::Level::Info,
                                "Accept request for {} FSU(s) at {:.3f}",
-                               event.request.type.FSUs, time);
+                               event.request.type.FSUs, statistics.time);
 
     event.request.accepted = true;
 
@@ -192,6 +206,8 @@ void Kernel::Next(void) {
     configuration->logger->log(Logger::Level::Info,
                                "Blocking request for {} FSU(s) at {:.3f}",
                                event.request.type.FSUs, event.time);
+
+    statistics.total_FSUs_blocked += event.request.type.FSUs;
 
     for (auto &[_, requestType] : configuration->requestTypes) {
       if (event.request.type.FSUs != requestType.FSUs) {
@@ -203,13 +219,34 @@ void Kernel::Next(void) {
       break;
     }
 
-    ++blockedCount;
+    ++statistics.total_requests_blocked;
   }
 
   if (snapshots.empty() ||
       abs(snapshots.back().time - event.time) >= configuration->samplingTime) {
-    snapshots.push_back(
-        Snapshot(event, GetFragmentation(), GetGradeOfService()));
+    statistics.absolute_fragmentation = 0.0;
+
+    statistics.entropy_fragmentation = 0.0;
+
+    statistics.external_fragmentation = 0.0;
+
+    const auto frag = configuration->fragmentationStrategies;
+
+    for (const auto &[source, destination, cost] :
+         configuration->graph.get_edges()) {
+      const auto key = GenerateKeys(source, destination);
+
+      statistics.absolute_fragmentation +=
+          (*(frag.at("absolute_fragmentation")))(carriers.at(key));
+
+      statistics.entropy_fragmentation +=
+          (*(frag.at("entropy_based_fragmentation")))(carriers.at(key));
+
+      statistics.external_fragmentation +=
+          (*(frag.at("external_fragmentation")))(carriers.at(key));
+    }
+
+    snapshots.push_back(statistics);
   }
 
   ScheduleNextArrival();
@@ -220,47 +257,14 @@ Kernel::GetPseudoRandomNumberGenerator(void) const {
   return prng;
 }
 
-std::vector<Snapshot> Kernel::GetSnapshots(void) const { return snapshots; }
+std::vector<Statistics> Kernel::GetSnapshots(void) const { return snapshots; }
 
-double Kernel::GetTime(void) const { return time; }
-
-double Kernel::GetRequestCount(void) const {
-  return static_cast<double>(requestCount);
-}
-
-double Kernel::GetGradeOfService(void) const {
-  return static_cast<double>(blockedCount) / static_cast<double>(requestCount);
-}
-
-std::vector<double> Kernel::GetFragmentation(void) const {
-  std::vector<double> fragmentation;
-
-  for (const auto &[_, strategy] : configuration->fragmentationStrategies) {
-    double sum = 0.0;
-
-    for (const auto &[source, destination, cost] :
-         configuration->graph.get_edges()) {
-      const auto key = GenerateKeys(source, destination);
-
-      sum += (*strategy)(carriers.at(key));
-    }
-
-    fragmentation.push_back(sum);
-  }
-
-  return fragmentation;
-}
+Statistics Kernel::GetStatistics(void) const { return statistics; }
 
 void Kernel::Reset(void) {
+  statistics.Reset();
+
   ignored_first_k = false;
-
-  requestCount = 0u;
-
-  blockedCount = 0u;
-
-  active_requests = 0u;
-
-  time = .0f;
 
   snapshots.clear();
 

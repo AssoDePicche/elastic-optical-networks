@@ -7,6 +7,10 @@
 #include "prng.h"
 #include "request.h"
 
+uint64_t CantorPairingFunction(uint64_t x, uint64_t y) {
+  return ((x + y) * (x + y + 1) / 2) + y;
+}
+
 RoutingStrategy::RoutingStrategy(const Graph &graph) : graph{graph} {}
 
 BreadthFirstSearch::BreadthFirstSearch(const Graph &graph)
