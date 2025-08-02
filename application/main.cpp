@@ -36,6 +36,8 @@ int main(const int argc, const char **argv) {
 
     for (const auto iteration :
          std::ranges::views::iota(1u, configuration->iterations + 1u)) {
+      std::cout << "Running iteration number " << iteration << std::endl;
+
       const auto start = std::chrono::system_clock::now();
 
       while (kernel.HasNext()) {
