@@ -252,6 +252,10 @@ void Kernel::Next(void) {
   ScheduleNextArrival();
 }
 
+std::shared_ptr<Configuration> Kernel::GetConfiguration(void) const {
+  return configuration;
+}
+
 std::shared_ptr<PseudoRandomNumberGenerator>
 Kernel::GetPseudoRandomNumberGenerator(void) const {
   return prng;

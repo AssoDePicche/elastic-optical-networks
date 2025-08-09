@@ -85,6 +85,8 @@ class Kernel final {
 
   void Next(void);
 
+  [[nodiscard]] std::shared_ptr<Configuration> GetConfiguration(void) const;
+
   [[nodiscard]] std::shared_ptr<PseudoRandomNumberGenerator>
   GetPseudoRandomNumberGenerator(void) const;
 
