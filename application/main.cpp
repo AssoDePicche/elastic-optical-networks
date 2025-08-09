@@ -3,6 +3,7 @@
 #include <ctime>
 #include <format>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <optional>
 #include <ranges>
@@ -14,9 +15,22 @@
 #include "json.h"
 #include "kernel.h"
 
-std::string GetConfigFilenameFromArgs(const int argc, const char **argv) {
-  if (argc > 1) {
-    return std::string(argv[1]);
+[[nodiscard]] double benchmark(std::function<void()> callable) {
+  const auto start = std::chrono::system_clock::now();
+
+  callable();
+
+  const auto end = std::chrono::system_clock::now();
+
+  return std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+             .count() /
+         1'000'000;
+}
+
+[[nodiscard]] std::string GetConfigFilenameFromArgs(const int argc,
+                                                    const char **argv) {
+  if (argc > 2) {
+    return std::string(argv[2]);
   }
 
   return "resources/configuration/configuration.json";
@@ -30,6 +44,10 @@ int main(const int argc, const char **argv) {
 
     auto configuration = Configuration::From(json).value();
 
+    if (argc > 1) {
+      configuration->serviceRate = std::atof(argv[1]);
+    }
+
     std::cout << "Initializing simulation with " << configFile << std::endl;
 
     Kernel kernel(configuration);
@@ -38,16 +56,11 @@ int main(const int argc, const char **argv) {
          std::ranges::views::iota(1u, configuration->iterations + 1u)) {
       std::cout << "Running iteration number " << iteration << std::endl;
 
-      const auto start = std::chrono::system_clock::now();
-
-      while (kernel.HasNext()) {
-        kernel.Next();
-      }
-
-      const auto end = std::chrono::system_clock::now();
-
-      const auto execution_time =
-          std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+      const auto execution_time = benchmark([&]() {
+        while (kernel.HasNext()) {
+          kernel.Next();
+        }
+      });
 
       const auto snapshots = kernel.GetSnapshots();
 
@@ -72,28 +85,33 @@ int main(const int argc, const char **argv) {
           .append("execution time (s): {}\n", execution_time)
           .append("simulated time: {:.3f}\n", kernel_time)
           .append("spectrum width (GHz): {:.2f}\n",
-                  configuration->spectrumWidth)
-          .append("slot width (GHz): {:.2f}\n", configuration->slotWidth)
-          .append("fsus per link: {}\n", configuration->FSUsPerLink);
+                  kernel.GetConfiguration()->spectrumWidth)
+          .append("slot width (GHz): {:.2f}\n",
+                  kernel.GetConfiguration()->slotWidth)
+          .append("fsus per link: {}\n",
+                  kernel.GetConfiguration()->FSUsPerLink);
 
-      const double load =
-          configuration->arrivalRate / configuration->serviceRate;
+      const double load = kernel.GetConfiguration()->arrivalRate /
+                          kernel.GetConfiguration()->serviceRate;
 
       document.append("load (E): {:.3f}\n", load)
-          .append("arrival rate: {:.3f}\n", configuration->arrivalRate)
-          .append("service rate: {:.3f}\n", configuration->serviceRate)
+          .append("arrival rate: {:.3f}\n",
+                  kernel.GetConfiguration()->arrivalRate)
+          .append("service rate: {:.3f}\n",
+                  kernel.GetConfiguration()->serviceRate)
           .append("grade of service: {:.3f}\n",
                   kernel.GetStatistics().GradeOfService())
           .append("total requests: {}\n", requestCount);
 
-      for (const auto &[_, requestType] : configuration->requestTypes) {
+      for (const auto &[_, requestType] :
+           kernel.GetConfiguration()->requestTypes) {
         const auto ratio = requestType.counting / requestCount;
 
         const auto gos = requestType.blocking / requestCount;
 
-        const auto normalized_load = configuration->arrivalRate *
+        const auto normalized_load = kernel.GetConfiguration()->arrivalRate *
                                      (static_cast<double>(requestType.FSUs) /
-                                      configuration->FSUsPerLink);
+                                      kernel.GetConfiguration()->FSUsPerLink);
 
         document.append("requests for {} FSU(s)\n", requestType.FSUs)
             .append("ratio: {:.3f}\n", ratio)
@@ -111,7 +129,7 @@ int main(const int argc, const char **argv) {
 
       kernel.Reset();
 
-      if (!configuration->exportDataset) {
+      if (!kernel.GetConfiguration()->exportDataset) {
         continue;
       }
 
