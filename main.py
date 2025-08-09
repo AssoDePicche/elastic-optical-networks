@@ -1,4 +1,5 @@
 import glob
+import matplotlib.pyplot as pyplot
 import numpy
 import os
 import pandas
@@ -85,6 +86,31 @@ if __name__ == '__main__':
         shutil.move(file, dirname)
 
       print('Done')
+
+    files = []
+
+    for arg in args:
+      files.append(f'{arg:03d}_dataset.csv')
+
+    buffer = pandas.DataFrame()
+
+    for file in files:
+      if os.path.exists(file):
+        buffer = pandas.concat([buffer, pandas.read_csv(file)], ignore_index=True)
+
+    x = buffer.groupby('column').get_group('grade_of_service')['mean']
+
+    y = buffer.groupby('column').get_group('slot_blocking_probability')['mean']
+
+    pyplot.plot(x, y)
+
+    pyplot.yscale('log')
+
+    pyplot.tight_layout()
+
+    pyplot.grid()
+
+    pyplot.show()
   except subprocess.CalledProcessError as error:
       print(error.stderr)
   except Exception as exception:
