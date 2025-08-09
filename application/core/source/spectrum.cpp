@@ -288,7 +288,7 @@ EntropyBasedFragmentation::EntropyBasedFragmentation(const uint64_t minFSUs)
 
 double EntropyBasedFragmentation::operator()(const Spectrum &spectrum) const {
   if (!spectrum.available()) {
-    return .0f;
+    return std::numeric_limits<double>::max();
   }
 
   const auto fit = [&](const uint64_t size) { return minFSUs <= size; };
