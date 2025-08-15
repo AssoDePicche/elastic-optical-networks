@@ -5,5 +5,5 @@ gprof.png
 gprof.txt
 report.txt
 /build/
-/resources/temp
 /third_party/
+/tmp/
