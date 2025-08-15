@@ -11,7 +11,9 @@ from scipy import stats
 if __name__ == '__main__':
   executable = './build/App'
 
-  args = numpy.arange(1, 101, 10)
+  args = numpy.arange(0, 101, 10)
+
+  args[0] = 1
 
   try:
     if not os.path.isfile(executable):
