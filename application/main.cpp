@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <chrono>
 #include <ctime>
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <functional>
@@ -36,7 +37,31 @@
   return "resources/configuration/configuration.json";
 }
 
+[[nodiscard]] bool CreateDirectory(const std::string &path) {
+  std::filesystem::path dir_path = path;
+
+  std::error_code errorCode;
+
+  if (std::filesystem::create_directories(dir_path, errorCode)) {
+    std::clog << "Created " << dir_path << " dir" << std::endl;
+
+    return true;
+  }
+
+  std::cerr << "Failed to create directory: " << errorCode.message()
+            << std::endl;
+
+  return false;
+}
+
 int main(const int argc, const char **argv) {
+  if (argc != 4) {
+    std::cerr << std::format(
+        "You must inform:\n1. Service Rate\n2. Config file\n3. Output dir\n");
+
+    return 1;
+  }
+
   try {
     const std::string configFile = GetConfigFilenameFromArgs(argc, argv);
 
@@ -48,19 +73,25 @@ int main(const int argc, const char **argv) {
       configuration->serviceRate = std::atof(argv[1]);
     }
 
-    std::cout << "Initializing simulation with " << configFile << std::endl;
+    const std::string dirname = "./" + std::string(argv[3]);
+
+    if (!CreateDirectory(dirname)) {
+      return 1;
+    }
 
     Kernel kernel(configuration);
 
     for (const auto iteration :
          std::ranges::views::iota(1u, configuration->iterations + 1u)) {
-      std::cout << "Running iteration number " << iteration << std::endl;
+      std::clog << "Running iteration number " << iteration << std::endl;
 
       const auto execution_time = benchmark([&]() {
         while (kernel.HasNext()) {
           kernel.Next();
         }
       });
+
+      std::clog << "Ended iteration number " << iteration << std::endl;
 
       const auto snapshots = kernel.GetSnapshots();
 
@@ -119,13 +150,10 @@ int main(const int argc, const char **argv) {
             .append("normalized load: {:.3f}\n", normalized_load);
       }
 
-      const auto report_filename =
-          std::format("resources/temp/{:02}_report.txt", iteration);
+      const std::string report_filename =
+          dirname + std::format("/{:02}_report.txt", iteration);
 
       document.write(report_filename);
-
-      std::cout << std::format("Simulation results wrote in {}\n",
-                               report_filename);
 
       kernel.Reset();
 
@@ -143,7 +171,7 @@ int main(const int argc, const char **argv) {
                     });
 
       const std::string filename =
-          std::format("resources/temp/{:02}_dataset.csv", iteration);
+          dirname + std::format("/{:02}_dataset.csv", iteration);
 
       std::ofstream stream(filename);
 
@@ -155,8 +183,6 @@ int main(const int argc, const char **argv) {
       stream << buffer;
 
       stream.close();
-
-      std::cout << std::format("Simulation data wrote in {}\n", filename);
     }
   } catch (const std::exception &exception) {
     std::cerr << "Exception thrown: " << exception.what() << std::endl;
