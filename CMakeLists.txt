@@ -6,7 +6,13 @@ set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -pg)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror -flto -march=native")
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -pg -O0")
+
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -funroll-loops -O3")
 
 set(APP_DIR ${CMAKE_SOURCE_DIR}/application)
 
@@ -28,11 +34,9 @@ add_executable(${PROJECT_NAME} ${APP_DIR}/main.cpp ${CORE_SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CORE_INCLUDE})
 
-target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
+target_compile_options(${PROJECT_NAME} PRIVATE)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${DEPENDENCIES})
-
-target_link_options(${PROJECT_NAME} PRIVATE -pg)
 
 enable_testing()
 
@@ -42,10 +46,8 @@ add_executable(${PROJECT_NAME}Test ${TEST_SOURCES} ${CORE_SOURCES})
 
 target_include_directories(${PROJECT_NAME}Test PRIVATE ${CORE_INCLUDE} ${CORE_SOURCE})
 
-target_compile_options(${PROJECT_NAME}Test PRIVATE ${COMPILE_OPTIONS})
+target_compile_options(${PROJECT_NAME}Test PRIVATE)
 
 target_link_libraries(${PROJECT_NAME}Test PRIVATE ${DEPENDENCIES})
-
-target_link_options(${PROJECT_NAME}Test PRIVATE -pg)
 
 add_test(NAME ${PROJECT_NAME}Test COMMAND ${PROJECT_NAME}Test --gtest_color=1)
