@@ -7,13 +7,14 @@
 #include "prng.h"
 #include "request.h"
 
+namespace core {
 uint64_t CantorPairingFunction(uint64_t x, uint64_t y) {
   return ((x + y) * (x + y + 1) / 2) + y;
 }
 
-RoutingStrategy::RoutingStrategy(const Graph &graph) : graph{graph} {}
+RoutingStrategy::RoutingStrategy(const Graph& graph) : graph{graph} {}
 
-BreadthFirstSearch::BreadthFirstSearch(const Graph &graph)
+BreadthFirstSearch::BreadthFirstSearch(const Graph& graph)
     : RoutingStrategy(graph) {}
 
 std::optional<Route> BreadthFirstSearch::compute(
@@ -24,7 +25,7 @@ std::optional<Route> BreadthFirstSearch::compute(
 
   std::queue<Vertex> queue;
 
-  for (const auto &vertex : graph.get_vertices()) {
+  for (const auto& vertex : graph.get_vertices()) {
     visited[vertex] = false;
 
     predecessors[vertex] = -1;
@@ -43,7 +44,7 @@ std::optional<Route> BreadthFirstSearch::compute(
       break;
     }
 
-    for (const auto &[adjacent, edges] : graph.at(vertex)) {
+    for (const auto& [adjacent, edges] : graph.at(vertex)) {
       if (visited[adjacent]) {
         continue;
       }
@@ -71,7 +72,7 @@ std::optional<Route> BreadthFirstSearch::compute(
   return std::make_pair(vertices, cost);
 }
 
-DepthFirstSearch::DepthFirstSearch(const Graph &graph)
+DepthFirstSearch::DepthFirstSearch(const Graph& graph)
     : RoutingStrategy{graph} {}
 
 std::optional<Route> DepthFirstSearch::compute(const Vertex source,
@@ -82,7 +83,7 @@ std::optional<Route> DepthFirstSearch::compute(const Vertex source,
 
   std::stack<Vertex> stack;
 
-  for (const auto &vertex : graph.get_vertices()) {
+  for (const auto& vertex : graph.get_vertices()) {
     visited[vertex] = false;
 
     predecessors[vertex] = -1;
@@ -105,7 +106,7 @@ std::optional<Route> DepthFirstSearch::compute(const Vertex source,
       break;
     }
 
-    for (const auto &[adjacent, edges] : graph.at(vertex)) {
+    for (const auto& [adjacent, edges] : graph.at(vertex)) {
       if (visited[adjacent]) {
         continue;
       }
@@ -131,7 +132,7 @@ std::optional<Route> DepthFirstSearch::compute(const Vertex source,
   return std::make_pair(vertices, cost);
 }
 
-Dijkstra::Dijkstra(const Graph &graph) : RoutingStrategy{graph} {}
+Dijkstra::Dijkstra(const Graph& graph) : RoutingStrategy{graph} {}
 
 std::optional<Route> Dijkstra::compute(const Vertex source,
                                        const Vertex destination) const {
@@ -146,7 +147,7 @@ std::optional<Route> Dijkstra::compute(const Vertex source,
 
   std::priority_queue<path_t, std::vector<path_t>, std::greater<>> queue;
 
-  for (const auto &vertex : graph.get_vertices()) {
+  for (const auto& vertex : graph.get_vertices()) {
     costs[vertex] = Cost::max();
 
     predecessors[vertex] = -1;
@@ -161,7 +162,7 @@ std::optional<Route> Dijkstra::compute(const Vertex source,
   queue.emplace(costs[source], edge_hops[source], source);
 
   while (!queue.empty()) {
-    const auto &[current_cost, hops, vertex] = queue.top();
+    const auto& [current_cost, hops, vertex] = queue.top();
 
     queue.pop();
 
@@ -177,7 +178,7 @@ std::optional<Route> Dijkstra::compute(const Vertex source,
       continue;
     }
 
-    for (const auto &[adjacent, cost] : graph.at(vertex)) {
+    for (const auto& [adjacent, cost] : graph.at(vertex)) {
       const auto new_cost = Cost(current_cost.value + cost.value);
 
       if (new_cost.value > costs[adjacent].value) {
@@ -219,7 +220,7 @@ std::optional<Route> Dijkstra::compute(const Vertex source,
   return std::make_pair(vertices, cost);
 }
 
-RandomRouting::RandomRouting(const Graph &graph) : RoutingStrategy{graph} {}
+RandomRouting::RandomRouting(const Graph& graph) : RoutingStrategy{graph} {}
 
 std::optional<Route> RandomRouting::compute(const Vertex, const Vertex) const {
   static Dijkstra dijkstra(graph);
@@ -243,7 +244,7 @@ std::optional<Route> RandomRouting::compute(const Vertex, const Vertex) const {
   }
 }
 
-KShortestPath::KShortestPath(const Graph &graph) : graph{graph} {}
+KShortestPath::KShortestPath(const Graph& graph) : graph{graph} {}
 
 std::vector<Route> KShortestPath::compute(const Vertex source,
                                           Vertex destination,
@@ -254,13 +255,13 @@ std::vector<Route> KShortestPath::compute(const Vertex source,
     Vertex vertex;
     Route path;
 
-    stub_t(const Vertex vertex, const Route &path)
+    stub_t(const Vertex vertex, const Route& path)
         : vertex{vertex}, path{path} {}
 
-    bool operator>(const stub_t &binding) const {
-      const auto &[vertices, cost] = path;
+    bool operator>(const stub_t& binding) const {
+      const auto& [vertices, cost] = path;
 
-      const auto &[other_vertices, other_cost] = binding.path;
+      const auto& [other_vertices, other_cost] = binding.path;
 
       return cost.value > other_cost.value;
     }
@@ -281,8 +282,8 @@ std::vector<Route> KShortestPath::compute(const Vertex source,
       continue;
     }
 
-    for (const auto &[adjacent, cost] : graph.at(vertex)) {
-      auto &[vertices, path_cost] = path;
+    for (const auto& [adjacent, cost] : graph.at(vertex)) {
+      auto& [vertices, path_cost] = path;
 
       vertices.insert(adjacent);
 
@@ -321,3 +322,4 @@ std::optional<Route> Router::compute(const Vertex source,
 
   return route;
 }
+}  // namespace core

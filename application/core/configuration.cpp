@@ -1,7 +1,8 @@
 #include "configuration.h"
 
+namespace core {
 std::optional<std::shared_ptr<Configuration>> Configuration::From(
-    const Json &json) {
+    const Json& json) {
   static const std::unordered_map<std::string, SpectrumAllocator>
       spectrumAllocationStrategies{{"best-fit", BestFit},
                                    {"first-fit", FirstFit},
@@ -54,7 +55,7 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
   const auto requests =
       json.Get<std::vector<nlohmann::json>>("params.requests");
 
-  for (const auto &row : requests.value()) {
+  for (const auto& row : requests.value()) {
     RequestType requestType;
 
     requestType.type = row["type"];
@@ -76,11 +77,11 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
 
   const auto modulations = json.Get<std::vector<nlohmann::json>>("modulation");
 
-  for (const auto &row : modulations.value()) {
+  for (const auto& row : modulations.value()) {
     configuration->modulations[row["type"]] = row["bits-per-symbol"];
   }
 
-  for (auto &request : configuration->requestTypes) {
+  for (auto& request : configuration->requestTypes) {
     const ModulationStrategyFactory factory;
 
     const auto spectralEfficiency =
@@ -103,7 +104,7 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
   configuration->minFSUsPerRequest =
       (*configuration->requestTypes.begin()).second.FSUs;
 
-  for (const auto &request : configuration->requestTypes) {
+  for (const auto& request : configuration->requestTypes) {
     if (request.second.FSUs < configuration->minFSUsPerRequest) {
       configuration->minFSUsPerRequest = request.second.FSUs;
     }
@@ -119,7 +120,7 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
 
   configuration->probs = {};
 
-  for (const auto &row : requests.value()) {
+  for (const auto& row : requests.value()) {
     configuration->probs.push_back(row["ratio"]);
   }
 
@@ -134,3 +135,4 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
 
   return configuration;
 }
+}  // namespace core

@@ -1,3 +1,8 @@
+#include <core/configuration.h>
+#include <core/document.h>
+#include <core/json.h>
+#include <core/kernel.h>
+
 #include <algorithm>
 #include <chrono>
 #include <ctime>
@@ -10,11 +15,6 @@
 #include <ranges>
 #include <stacktrace>
 #include <string>
-
-#include <core/configuration.h>
-#include <core/document.h>
-#include <core/json.h>
-#include <core/kernel.h>
 
 [[nodiscard]] double benchmark(std::function<void()> callable) {
   const auto start = std::chrono::system_clock::now();
@@ -29,7 +29,7 @@
 }
 
 [[nodiscard]] std::string GetConfigFilenameFromArgs(const int argc,
-                                                    const char **argv) {
+                                                    const char** argv) {
   if (argc > 2) {
     return std::string(argv[2]);
   }
@@ -37,7 +37,7 @@
   return "resources/configuration/configuration.json";
 }
 
-[[nodiscard]] bool CreateDirectory(const std::string &path) {
+[[nodiscard]] bool CreateDirectory(const std::string& path) {
   std::filesystem::path dir_path = path;
 
   std::error_code errorCode;
@@ -54,7 +54,7 @@
   return false;
 }
 
-int main(const int argc, const char **argv) {
+int main(const int argc, const char** argv) {
   if (argc != 4) {
     std::cerr << std::format(
         "You must inform:\n1. Service Rate\n2. Config file\n3. Output dir\n");
@@ -65,9 +65,9 @@ int main(const int argc, const char **argv) {
   try {
     const std::string configFile = GetConfigFilenameFromArgs(argc, argv);
 
-    const Json json(configFile);
+    const core::Json json(configFile);
 
-    auto configuration = Configuration::From(json).value();
+    auto configuration = core::Configuration::From(json).value();
 
     if (argc > 1) {
       configuration->serviceRate = std::atof(argv[1]);
@@ -79,7 +79,7 @@ int main(const int argc, const char **argv) {
       return 1;
     }
 
-    Kernel kernel(configuration);
+    core::Kernel kernel(configuration);
 
     for (const auto iteration :
          std::ranges::views::iota(1u, configuration->iterations + 1u)) {
@@ -104,7 +104,7 @@ int main(const int argc, const char **argv) {
       const auto requestCount =
           static_cast<double>(kernel.GetStatistics().total_requests);
 
-      Document document;
+      core::Document document;
 
       document
           .append("created at: {:02}/{:02}/{:04} {:02}h{:02}\n",
@@ -134,7 +134,7 @@ int main(const int argc, const char **argv) {
                   kernel.GetStatistics().GradeOfService())
           .append("total requests: {}\n", requestCount);
 
-      for (const auto &[_, requestType] :
+      for (const auto& [_, requestType] :
            kernel.GetConfiguration()->requestTypes) {
         const auto ratio = requestType.counting / requestCount;
 
@@ -166,7 +166,7 @@ int main(const int argc, const char **argv) {
           "service,slot_blocking_probability,active_requests\n"};
 
       std::for_each(snapshots.begin(), snapshots.end(),
-                    [&buffer](const Statistics &snapshot) {
+                    [&buffer](const core::Statistics& snapshot) {
                       buffer.append(std::format("{}\n", snapshot.Serialize()));
                     });
 
@@ -184,7 +184,7 @@ int main(const int argc, const char **argv) {
 
       stream.close();
     }
-  } catch (const std::exception &exception) {
+  } catch (const std::exception& exception) {
     std::cerr << "Exception thrown: " << exception.what() << std::endl;
 
     return 1;

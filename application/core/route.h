@@ -8,13 +8,14 @@
 
 #include "graph.h"
 
+namespace core {
 [[nodiscard]] uint64_t CantorPairingFunction(uint64_t, uint64_t);
 
 using Route = std::pair<std::unordered_set<Vertex>, Cost>;
 
 class RoutingStrategy {
  public:
-  RoutingStrategy(const Graph &);
+  RoutingStrategy(const Graph&);
 
   virtual ~RoutingStrategy() = default;
 
@@ -22,12 +23,12 @@ class RoutingStrategy {
                                                      const Vertex) const = 0;
 
  protected:
-  const Graph &graph;
+  const Graph& graph;
 };
 
 class BreadthFirstSearch : public RoutingStrategy {
  public:
-  BreadthFirstSearch(const Graph &);
+  BreadthFirstSearch(const Graph&);
 
   [[nodiscard]] std::optional<Route> compute(const Vertex,
                                              const Vertex) const override;
@@ -35,7 +36,7 @@ class BreadthFirstSearch : public RoutingStrategy {
 
 class DepthFirstSearch : public RoutingStrategy {
  public:
-  DepthFirstSearch(const Graph &);
+  DepthFirstSearch(const Graph&);
 
   [[nodiscard]] std::optional<Route> compute(const Vertex,
                                              const Vertex) const override;
@@ -43,7 +44,7 @@ class DepthFirstSearch : public RoutingStrategy {
 
 class Dijkstra : public RoutingStrategy {
  public:
-  Dijkstra(const Graph &);
+  Dijkstra(const Graph&);
 
   [[nodiscard]] std::optional<Route> compute(const Vertex,
                                              const Vertex) const override;
@@ -51,7 +52,7 @@ class Dijkstra : public RoutingStrategy {
 
 class RandomRouting : public RoutingStrategy {
  public:
-  RandomRouting(const Graph &);
+  RandomRouting(const Graph&);
 
   [[nodiscard]] std::optional<Route> compute(const Vertex,
                                              const Vertex) const override;
@@ -59,13 +60,13 @@ class RandomRouting : public RoutingStrategy {
 
 class KShortestPath {
  public:
-  KShortestPath(const Graph &);
+  KShortestPath(const Graph&);
 
   [[nodiscard]] std::vector<Route> compute(const Vertex, const Vertex,
                                            const uint64_t) const;
 
  private:
-  const Graph &graph;
+  const Graph& graph;
 };
 
 class Router final {
@@ -78,3 +79,4 @@ class Router final {
   std::unordered_map<uint64_t, Route> cache;
   std::shared_ptr<RoutingStrategy> strategy;
 };
+}  // namespace core

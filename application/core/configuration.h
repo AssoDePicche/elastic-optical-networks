@@ -14,6 +14,7 @@
 #include "request.h"
 #include "spectrum.h"
 
+namespace core {
 struct Configuration final {
   Graph graph;
   ModulationStrategyFactory::Option modulationOption;
@@ -37,5 +38,6 @@ struct Configuration final {
   std::shared_ptr<Logger> logger;
 
   [[nodiscard]] static std::optional<std::shared_ptr<Configuration>> From(
-      const Json &);
+      const Json&);
 };
+}  // namespace core

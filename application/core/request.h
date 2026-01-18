@@ -6,6 +6,7 @@
 #include "route.h"
 #include "spectrum.h"
 
+namespace core {
 struct RequestType final {
   std::string type;
   std::string modulation;
@@ -24,7 +25,7 @@ struct Request final {
 
   Request(void) = default;
 
-  Request(const Route &);
+  Request(const Route&);
 };
 
 struct Modulation {
@@ -65,3 +66,4 @@ class ModulationStrategyFactory final {
 
   [[nodiscard]] ModulationStrategy From(Option, double, uint64_t) const;
 };
+}  // namespace core

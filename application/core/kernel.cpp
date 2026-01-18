@@ -4,10 +4,11 @@
 
 #include "route.h"
 
-Event::Event(const double time, const EventType &type, const Request &request)
+namespace core {
+Event::Event(const double time, const EventType& type, const Request& request)
     : time{time}, type{type}, request{request} {}
 
-bool Event::operator<(const Event &other) const noexcept {
+bool Event::operator<(const Event& other) const noexcept {
   return time > other.time;
 }
 
@@ -53,12 +54,12 @@ uint64_t Kernel::GenerateKeys(const Vertex source,
   return CantorPairingFunction(source, destination);
 }
 
-std::unordered_set<uint64_t> Kernel::GenerateKeys(const Route &route) const {
-  const auto &[vertices, cost] = route;
+std::unordered_set<uint64_t> Kernel::GenerateKeys(const Route& route) const {
+  const auto& [vertices, cost] = route;
 
   std::unordered_set<uint64_t> keys;
 
-  for (const auto &index : std::views::iota(1u, vertices.size())) {
+  for (const auto& index : std::views::iota(1u, vertices.size())) {
     const auto x = *std::next(vertices.begin(), index - 1);
 
     const auto y = *std::next(vertices.begin(), index);
@@ -69,7 +70,7 @@ std::unordered_set<uint64_t> Kernel::GenerateKeys(const Route &route) const {
   return keys;
 }
 
-bool Kernel::Dispatch(Request &request) {
+bool Kernel::Dispatch(Request& request) {
   const auto keys = GenerateKeys(request.route);
 
   const auto first = *keys.begin();
@@ -82,7 +83,7 @@ bool Kernel::Dispatch(Request &request) {
 
   request.slice = slice.value();
 
-  for (const auto &key : keys) {
+  for (const auto& key : keys) {
     if (carriers.at(key).available() < request.type.FSUs ||
         !carriers.at(key).available_at(request.slice)) {
       return false;
@@ -98,7 +99,7 @@ bool Kernel::Dispatch(Request &request) {
   return true;
 }
 
-void Kernel::Release(Request &request) {
+void Kernel::Release(Request& request) {
   const auto keys = GenerateKeys(request.route);
 
   std::for_each(keys.begin(), keys.end(), [&](const auto key) {
@@ -107,7 +108,7 @@ void Kernel::Release(Request &request) {
 }
 
 void Kernel::ScheduleNextArrival(void) {
-  auto &requestType =
+  auto& requestType =
       configuration->requestTypes[requestsKeys[prng->next("fsus")]];
 
   ++requestType.counting;
@@ -124,7 +125,7 @@ void Kernel::ScheduleNextArrival(void) {
   ++statistics.total_requests;
 }
 
-void Kernel::ScheduleNextDeparture(const Event &event) {
+void Kernel::ScheduleNextDeparture(const Event& event) {
   queue.push(Event(statistics.time + prng->next("service"),
                    EventType::Departure, event.request));
 }
@@ -132,7 +133,7 @@ void Kernel::ScheduleNextDeparture(const Event &event) {
 Kernel::Kernel(std::shared_ptr<Configuration> configuration)
     : k_to_ignore{0.1 * configuration->timeUnits},
       configuration{configuration} {
-  for (const auto &[source, destination, cost] :
+  for (const auto& [source, destination, cost] :
        configuration->graph.get_edges()) {
     const auto key = GenerateKeys(source, destination);
 
@@ -159,7 +160,7 @@ void Kernel::Next(void) {
 
     statistics.Reset();
 
-    for (auto &request : configuration->requestTypes) {
+    for (auto& request : configuration->requestTypes) {
       request.second.blocking = 0u;
 
       request.second.counting = 0u;
@@ -202,7 +203,7 @@ void Kernel::Next(void) {
 
     statistics.total_FSUs_blocked += event.request.type.FSUs;
 
-    for (auto &[_, requestType] : configuration->requestTypes) {
+    for (auto& [_, requestType] : configuration->requestTypes) {
       if (event.request.type.FSUs != requestType.FSUs) {
         continue;
       }
@@ -225,7 +226,7 @@ void Kernel::Next(void) {
 
     const auto frag = configuration->fragmentationStrategies;
 
-    for (const auto &[source, destination, cost] :
+    for (const auto& [source, destination, cost] :
          configuration->graph.get_edges()) {
       const auto key = GenerateKeys(source, destination);
 
@@ -269,7 +270,7 @@ void Kernel::Reset(void) {
 
   std::transform(configuration->requestTypes.begin(),
                  configuration->requestTypes.end(),
-                 std::back_inserter(requestsKeys), [](auto &pair) {
+                 std::back_inserter(requestsKeys), [](auto& pair) {
                    pair.second.blocking = 0;
 
                    pair.second.counting = 0;
@@ -294,3 +295,4 @@ void Kernel::Reset(void) {
 
   ScheduleNextArrival();
 }
+}  // namespace core

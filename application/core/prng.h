@@ -5,11 +5,12 @@
 #include <string>
 #include <unordered_map>
 
+namespace core {
 class Distribution {
  public:
   virtual ~Distribution();
 
-  [[nodiscard]] virtual double next(std::mt19937 &) = 0;
+  [[nodiscard]] virtual double next(std::mt19937&) = 0;
 };
 
 class Exponential final : public Distribution {
@@ -18,7 +19,7 @@ class Exponential final : public Distribution {
  public:
   Exponential(const double);
 
-  [[nodiscard]] double next(std::mt19937 &) override;
+  [[nodiscard]] double next(std::mt19937&) override;
 };
 
 class Poisson final : public Distribution {
@@ -27,7 +28,7 @@ class Poisson final : public Distribution {
  public:
   Poisson(const double);
 
-  [[nodiscard]] double next(std::mt19937 &) override;
+  [[nodiscard]] double next(std::mt19937&) override;
 };
 
 class Normal final : public Distribution {
@@ -36,7 +37,7 @@ class Normal final : public Distribution {
  public:
   Normal(const double, const double);
 
-  [[nodiscard]] double next(std::mt19937 &) override;
+  [[nodiscard]] double next(std::mt19937&) override;
 };
 
 class Discrete final : public Distribution {
@@ -46,7 +47,7 @@ class Discrete final : public Distribution {
   template <typename Iterator>
   Discrete(Iterator begin, Iterator end) : _distribution{begin, end} {}
 
-  [[nodiscard]] double next(std::mt19937 &) override;
+  [[nodiscard]] double next(std::mt19937&) override;
 };
 
 class Uniform final : public Distribution {
@@ -55,7 +56,7 @@ class Uniform final : public Distribution {
  public:
   Uniform(const double, const double);
 
-  [[nodiscard]] double next(std::mt19937 &) override;
+  [[nodiscard]] double next(std::mt19937&) override;
 };
 
 class PseudoRandomNumberGenerator final {
@@ -88,3 +89,4 @@ class PseudoRandomNumberGenerator final {
 
   [[nodiscard]] double next(const std::string);
 };
+}  // namespace core

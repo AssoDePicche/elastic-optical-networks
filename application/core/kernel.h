@@ -10,6 +10,7 @@
 #include "request.h"
 #include "spectrum.h"
 
+namespace core {
 enum class EventType { Arrival, Departure };
 
 struct Event final {
@@ -19,9 +20,9 @@ struct Event final {
 
   Event(void) = default;
 
-  Event(const double, const EventType &, const Request &);
+  Event(const double, const EventType&, const Request&);
 
-  [[nodiscard]] bool operator<(const Event &) const noexcept;
+  [[nodiscard]] bool operator<(const Event&) const noexcept;
 };
 
 struct Statistics final {
@@ -68,15 +69,15 @@ class Kernel final {
 
   [[nodiscard]] uint64_t GenerateKeys(const Vertex, const Vertex) const;
 
-  [[nodiscard]] std::unordered_set<uint64_t> GenerateKeys(const Route &) const;
+  [[nodiscard]] std::unordered_set<uint64_t> GenerateKeys(const Route&) const;
 
-  [[nodiscard]] bool Dispatch(Request &);
+  [[nodiscard]] bool Dispatch(Request&);
 
-  void Release(Request &);
+  void Release(Request&);
 
   void ScheduleNextArrival(void);
 
-  void ScheduleNextDeparture(const Event &);
+  void ScheduleNextDeparture(const Event&);
 
  public:
   Kernel(std::shared_ptr<Configuration>);
@@ -96,3 +97,4 @@ class Kernel final {
 
   void Reset(void);
 };
+}  // namespace core

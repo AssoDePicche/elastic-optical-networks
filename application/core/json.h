@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+namespace core {
 class Json final {
  public:
   Json(const std::string&);
@@ -28,3 +29,4 @@ class Json final {
   std::optional<nlohmann::json> unwrap(const std::vector<std::string>&,
                                        const nlohmann::json&, size_t = 0) const;
 };
+}  // namespace core
