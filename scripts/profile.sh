@@ -8,17 +8,17 @@ if ! command -v "gprof" &> /dev/null; then
   exit 1
 fi
 
-if [[ ! -d "./build/" ]]; then
+if [[ ! -f "./App-linux-x86_64" ]]; then
   scripts/build.sh
 fi
 
 if [[ ! -e "gmon.out" ]]; then
-  ./build/App
+  ./App-linux-x86_64
 fi
 
 echo "Running Gprof..."
 
-gprof build/App gmon.out > gprof.txt
+gprof App-linux-x86_64 gmon.out > gprof.txt
 
 echo "Gprof report saved to gprof.txt"
 

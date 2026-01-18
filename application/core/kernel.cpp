@@ -1,6 +1,5 @@
 #include "kernel.h"
 
-#include <cassert>
 #include <format>
 
 #include "route.h"
@@ -57,8 +56,6 @@ uint64_t Kernel::GenerateKeys(const Vertex source,
 std::unordered_set<uint64_t> Kernel::GenerateKeys(const Route &route) const {
   const auto &[vertices, cost] = route;
 
-  assert(!vertices.empty());
-
   std::unordered_set<uint64_t> keys;
 
   for (const auto &index : std::views::iota(1u, vertices.size())) {
@@ -73,8 +70,6 @@ std::unordered_set<uint64_t> Kernel::GenerateKeys(const Route &route) const {
 }
 
 bool Kernel::Dispatch(Request &request) {
-  assert(request.type.FSUs <= spectrum.size());
-
   const auto keys = GenerateKeys(request.route);
 
   const auto first = *keys.begin();
@@ -107,8 +102,6 @@ void Kernel::Release(Request &request) {
   const auto keys = GenerateKeys(request.route);
 
   std::for_each(keys.begin(), keys.end(), [&](const auto key) {
-    assert(!carriers.at(key).available_at(slice));
-
     carriers[key].deallocate(request.slice);
   });
 }
@@ -250,6 +243,10 @@ void Kernel::Next(void) {
   }
 
   ScheduleNextArrival();
+}
+
+std::shared_ptr<Configuration> Kernel::GetConfiguration(void) const {
+  return configuration;
 }
 
 std::shared_ptr<PseudoRandomNumberGenerator>

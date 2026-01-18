@@ -43,6 +43,18 @@ def dataset_plotting():
 
   y = ['grade_of_service', 'slot_blocking_probability', 'active_requests', 'absolute_fragmentation', 'entropy', 'external_fragmentation']
 
+  translation: dict[str, dict[str, str]] = {
+      'pt_BR': {
+        'time': 'Tempo [t]',
+        'grade_of_service': 'Probabilidade de Bloqueio',
+        'slot_blocking_probability': 'Probabilidade de Bloqueio por FSU',
+        'active_requests': 'Conexões Ativas',
+        'absolute_fragmentation': 'Fragmentação Absoluta',
+        'entropy': 'Fragmentação Ponderada (WF)',
+        'external_fragmentation': 'Fragmentação Externa (EF)'
+    }
+  }
+
   for column in dataframe.columns:
     if dataframe[column].isna().sum() != 0:
       dataframe[column] = dataframe[column].fillna(dataframe[column].mean())
@@ -62,9 +74,9 @@ def dataset_plotting():
 
     pyplot.plot(x_, y_)
 
-    pyplot.xlabel('Time [t]')
+    pyplot.xlabel(translation['pt_BR']['time'])
 
-    pyplot.ylabel(f'{column} Score')
+    pyplot.ylabel(translation['pt_BR'][column])
 
     pyplot.yscale('log')
 
