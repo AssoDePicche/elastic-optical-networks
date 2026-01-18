@@ -1,0 +1,16 @@
+[
+  {
+    "type": "low-demand",
+    "bandwidth": 62.5,
+    "modulation": "BPSK",
+    "allocator": "first-fit",
+    "ratio": 0.5
+  },
+  {
+    "type": "high-demand",
+    "bandwidth": 162.5,
+    "modulation": "BPSK",
+    "allocator": "last-fit",
+    "ratio": 0.5
+  }
+]
