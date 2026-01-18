@@ -11,10 +11,10 @@
 #include <stacktrace>
 #include <string>
 
-#include "configuration.h"
-#include "document.h"
-#include "json.h"
-#include "kernel.h"
+#include <core/configuration.h>
+#include <core/document.h>
+#include <core/json.h>
+#include <core/kernel.h>
 
 [[nodiscard]] double benchmark(std::function<void()> callable) {
   const auto start = std::chrono::system_clock::now();

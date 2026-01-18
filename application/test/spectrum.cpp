@@ -1,4 +1,4 @@
-#include "spectrum.h"
+#include <core/spectrum.h>
 
 #include <gtest/gtest.h>
 
