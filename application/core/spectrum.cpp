@@ -8,18 +8,19 @@
 
 #include "prng.h"
 
-uint64_t size(const Slice &slice) { return slice.second - slice.first + 1; }
+namespace core {
+uint64_t size(const Slice& slice) { return slice.second - slice.first + 1; }
 
 Spectrum::Spectrum(const uint64_t FSUsPerLink)
     : resources(std::vector(FSUsPerLink, FSU(false, 0u))) {
   slices.push_back({0, FSUsPerLink - 1});
 }
 
-void Spectrum::allocate(const Slice &slice) {
-  const auto &[start, end] = slice;
+void Spectrum::allocate(const Slice& slice) {
+  const auto& [start, end] = slice;
 
   for (const auto index : std::ranges::views::iota(start, end + 1u)) {
-    auto &[allocated, occupancy] = resources[index];
+    auto& [allocated, occupancy] = resources[index];
 
     allocated = true;
 
@@ -27,7 +28,7 @@ void Spectrum::allocate(const Slice &slice) {
   }
 
   auto iterator =
-      std::ranges::find_if(slices, [&](const Slice &availableSlice) {
+      std::ranges::find_if(slices, [&](const Slice& availableSlice) {
         const auto [i, j] = availableSlice;
 
         return i <= start && end <= j;
@@ -37,7 +38,7 @@ void Spectrum::allocate(const Slice &slice) {
     return;
   }
 
-  const auto &[iteratorStart, iteratorEnd] = *iterator;
+  const auto& [iteratorStart, iteratorEnd] = *iterator;
 
   if (start == iteratorStart && end == iteratorEnd) {
     slices.erase(iterator);
@@ -66,23 +67,23 @@ void Spectrum::allocate(const Slice &slice) {
   slices.insert(iterator + 1, after);
 }
 
-void Spectrum::deallocate(const Slice &slice) {
-  const auto &[start, end] = slice;
+void Spectrum::deallocate(const Slice& slice) {
+  const auto& [start, end] = slice;
 
   for (const auto index : std::ranges::views::iota(start, end + 1u)) {
-    auto &[allocated, occupancy] = resources[index];
+    auto& [allocated, occupancy] = resources[index];
 
     allocated = false;
   }
 
   auto iterator = std::lower_bound(
       slices.begin(), slices.end(), slice,
-      [](const Slice &a, const Slice &b) { return a.second < b.first; });
+      [](const Slice& a, const Slice& b) { return a.second < b.first; });
 
   bool merged_previous = false;
 
   if (iterator != slices.begin()) {
-    auto &[iteratorStart, iteratorEnd] = *(iterator - 1);
+    auto& [iteratorStart, iteratorEnd] = *(iterator - 1);
 
     if (iteratorEnd + 1 == start) {
       iteratorEnd = end;
@@ -93,7 +94,7 @@ void Spectrum::deallocate(const Slice &slice) {
     }
   }
 
-  auto &[iteratorStart, iteratorEnd] = *iterator;
+  auto& [iteratorStart, iteratorEnd] = *iterator;
 
   if (iterator != slices.end() && end + 1 == iteratorStart) {
     if (merged_previous) {
@@ -116,18 +117,18 @@ uint64_t Spectrum::size(void) const noexcept { return resources.size(); }
 
 uint64_t Spectrum::available(void) const noexcept {
   return std::accumulate(slices.begin(), slices.end(), 0,
-                         [](const int sum, const Slice &slice) {
+                         [](const int sum, const Slice& slice) {
                            const auto [start, end] = slice;
 
                            return sum + end - start + 1;
                          });
 }
 
-bool Spectrum::available_at(const Slice &slice) const noexcept {
-  const auto &[start, end] = slice;
+bool Spectrum::available_at(const Slice& slice) const noexcept {
+  const auto& [start, end] = slice;
 
   const auto iterator = std::find_if(
-      slices.begin(), slices.end(), [&](const Slice &availableSlice) {
+      slices.begin(), slices.end(), [&](const Slice& availableSlice) {
         const auto [availableStart, availableEnd] = availableSlice;
 
         return start + end <= availableStart + availableEnd;
@@ -144,8 +145,8 @@ std::string Spectrum::Serialize(void) const noexcept {
   std::string buffer;
 
   std::for_each(resources.begin(), resources.end(),
-                [&buffer](const FSU &resource) {
-                  const auto &[allocated, occupancy] = resource;
+                [&buffer](const FSU& resource) {
+                  const auto& [allocated, occupancy] = resource;
 
                   buffer.append(allocated ? "#" : ".");
                 });
@@ -155,7 +156,7 @@ std::string Spectrum::Serialize(void) const noexcept {
 
 FSU Spectrum::at(const uint64_t index) const { return resources.at(index); }
 
-std::optional<Slice> BestFit(const Spectrum &spectrum, const uint64_t FSUs) {
+std::optional<Slice> BestFit(const Spectrum& spectrum, const uint64_t FSUs) {
   const auto fit = [&](const uint64_t size) { return FSUs <= size; };
 
   const auto slices = spectrum.available_slices();
@@ -170,18 +171,18 @@ std::optional<Slice> BestFit(const Spectrum &spectrum, const uint64_t FSUs) {
 
   const auto min = *iterator;
 
-  const auto minSize = [&](const Slice &slice) { return size(slice) == min; };
+  const auto minSize = [&](const Slice& slice) { return size(slice) == min; };
 
-  const auto &[start, _] = *std::ranges::find_if(slices, minSize);
+  const auto& [start, _] = *std::ranges::find_if(slices, minSize);
 
   return Slice(start, start + FSUs - 1);
 }
 
-std::optional<Slice> FirstFit(const Spectrum &spectrum, const uint64_t FSUs) {
+std::optional<Slice> FirstFit(const Spectrum& spectrum, const uint64_t FSUs) {
   const auto slices = spectrum.available_slices();
 
   const auto iterator =
-      std::find_if(slices.begin(), slices.end(), [=](const Slice &slice) {
+      std::find_if(slices.begin(), slices.end(), [=](const Slice& slice) {
         const auto [start, end] = slice;
 
         return start + FSUs - 1 <= end;
@@ -191,16 +192,16 @@ std::optional<Slice> FirstFit(const Spectrum &spectrum, const uint64_t FSUs) {
     return std::nullopt;
   }
 
-  const auto &[start, _] = *iterator;
+  const auto& [start, _] = *iterator;
 
   return Slice(start, start + FSUs - 1);
 }
 
-std::optional<Slice> LastFit(const Spectrum &spectrum, const uint64_t FSUs) {
+std::optional<Slice> LastFit(const Spectrum& spectrum, const uint64_t FSUs) {
   const auto slices = spectrum.available_slices();
 
   const auto iterator =
-      std::find_if(slices.rbegin(), slices.rend(), [=](const Slice &slice) {
+      std::find_if(slices.rbegin(), slices.rend(), [=](const Slice& slice) {
         const auto [start, end] = slice;
 
         return start + FSUs - 1 <= end;
@@ -210,13 +211,13 @@ std::optional<Slice> LastFit(const Spectrum &spectrum, const uint64_t FSUs) {
     return std::nullopt;
   }
 
-  const auto &[start, _] = *iterator;
+  const auto& [start, _] = *iterator;
 
   return Slice(start, start + FSUs - 1);
 }
 
-std::optional<Slice> RandomFit(const Spectrum &spectrum, const uint64_t FSUs) {
-  const auto predicate = [&](const Slice &slice) {
+std::optional<Slice> RandomFit(const Spectrum& spectrum, const uint64_t FSUs) {
+  const auto predicate = [&](const Slice& slice) {
     return FSUs <= size(slice);
   };
 
@@ -237,7 +238,7 @@ std::optional<Slice> RandomFit(const Spectrum &spectrum, const uint64_t FSUs) {
   return buffer[index];
 }
 
-std::optional<Slice> WorstFit(const Spectrum &spectrum, const uint64_t FSUs) {
+std::optional<Slice> WorstFit(const Spectrum& spectrum, const uint64_t FSUs) {
   const auto fit = [&](const uint64_t size) { return FSUs <= size; };
 
   const auto slices = spectrum.available_slices();
@@ -252,14 +253,14 @@ std::optional<Slice> WorstFit(const Spectrum &spectrum, const uint64_t FSUs) {
 
   const auto max = *iterator;
 
-  const auto maxSize = [&](const Slice &slice) { return size(slice) == max; };
+  const auto maxSize = [&](const Slice& slice) { return size(slice) == max; };
 
-  const auto &[start, _] = *std::ranges::find_if(slices, maxSize);
+  const auto& [start, _] = *std::ranges::find_if(slices, maxSize);
 
   return Slice(start, start + FSUs - 1);
 }
 
-double AbsoluteFragmentation::operator()(const Spectrum &spectrum) const {
+double AbsoluteFragmentation::operator()(const Spectrum& spectrum) const {
   if (!spectrum.available()) {
     return .0f;
   }
@@ -271,7 +272,7 @@ double AbsoluteFragmentation::operator()(const Spectrum &spectrum) const {
   return 1.f - max / static_cast<double>(spectrum.available());
 }
 
-double ExternalFragmentation::operator()(const Spectrum &spectrum) const {
+double ExternalFragmentation::operator()(const Spectrum& spectrum) const {
   if (!spectrum.available()) {
     return .0f;
   }
@@ -286,7 +287,7 @@ double ExternalFragmentation::operator()(const Spectrum &spectrum) const {
 EntropyBasedFragmentation::EntropyBasedFragmentation(const uint64_t minFSUs)
     : minFSUs{minFSUs} {}
 
-double EntropyBasedFragmentation::operator()(const Spectrum &spectrum) const {
+double EntropyBasedFragmentation::operator()(const Spectrum& spectrum) const {
   if (!spectrum.available()) {
     return std::numeric_limits<double>::max();
   }
@@ -295,11 +296,11 @@ double EntropyBasedFragmentation::operator()(const Spectrum &spectrum) const {
 
   const auto FSUs = static_cast<double>(spectrum.size());
 
-  const auto ratio = [&](const uint64_t &size) {
+  const auto ratio = [&](const uint64_t& size) {
     return static_cast<double>(size) / FSUs;
   };
 
-  const auto shannon = [&](const double &ratio) {
+  const auto shannon = [&](const double& ratio) {
     return ratio * std::log(ratio);
   };
 
@@ -309,3 +310,4 @@ double EntropyBasedFragmentation::operator()(const Spectrum &spectrum) const {
 
   return -std::accumulate(buffer.begin(), buffer.end(), .0f);
 }
+}  // namespace core

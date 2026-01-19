@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 
+namespace core {
 Json::Json(const std::string& filename) {
   if (!std::filesystem::exists(filename)) {
     throw std::runtime_error(std::format("{} not found", filename));
@@ -47,3 +48,4 @@ std::optional<nlohmann::json> Json::unwrap(
 
   return std::nullopt;
 }
+}  // namespace core

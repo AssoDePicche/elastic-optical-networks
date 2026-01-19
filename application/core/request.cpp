@@ -5,7 +5,8 @@
 #include <ranges>
 #include <utility>
 
-Request::Request(const Route &route) : route{route} {}
+namespace core {
+Request::Request(const Route& route) : route{route} {}
 
 PassbandModulation::PassbandModulation(double slotWidth,
                                        uint64_t spectralEfficiency)
@@ -26,7 +27,7 @@ uint64_t GigabitsTransmission::compute(const double distance) const {
       {8000.0, 13u},
   }};
 
-  for (const auto &[threshold, FSUs] : thresholds) {
+  for (const auto& [threshold, FSUs] : thresholds) {
     if (distance <= threshold) {
       return FSUs;
     }
@@ -46,7 +47,7 @@ uint64_t TerabitsTransmission::compute(const double distance) const {
       {8000.0, 28u},
   }};
 
-  for (const auto &[threshold, FSUs] : thresholds) {
+  for (const auto& [threshold, FSUs] : thresholds) {
     if (distance <= threshold) {
       return FSUs;
     }
@@ -69,3 +70,4 @@ ModulationStrategy ModulationStrategyFactory::From(
 
   return nullptr;
 }
+}  // namespace core

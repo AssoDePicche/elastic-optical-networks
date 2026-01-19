@@ -4,6 +4,7 @@
 #include <iostream>
 #include <unordered_map>
 
+namespace core {
 class Logger final {
  public:
   enum class Level {
@@ -16,7 +17,7 @@ class Logger final {
   Logger(const bool enableLogging) : _enableLogging{enableLogging} {}
 
   template <typename... Args>
-  void log(Level level, const std::string &format, Args &&...args) {
+  void log(Level level, const std::string& format, Args&&... args) {
     if (!_enableLogging) {
       return;
     }
@@ -36,3 +37,4 @@ class Logger final {
 
   bool _enableLogging;
 };
+}  // namespace core

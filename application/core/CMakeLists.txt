@@ -1,6 +1,7 @@
 add_library(core STATIC
   configuration.cpp
   csv.cpp
+  file_system.cpp
   graph.cpp
   json.cpp
   kernel.cpp

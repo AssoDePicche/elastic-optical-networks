@@ -1,5 +1,6 @@
 #include "prng.h"
 
+namespace core {
 Distribution::~Distribution() {}
 
 Exponential::Exponential(const double mean) : _distribution{mean} {}
@@ -73,3 +74,4 @@ void PseudoRandomNumberGenerator::uniform(const std::string key,
 double PseudoRandomNumberGenerator::next(const std::string key) {
   return _distribution.at(key)->next(_generator);
 }
+}  // namespace core

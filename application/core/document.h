@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 
+namespace core {
 class Document final {
  public:
   template <typename... Args>
@@ -28,3 +29,4 @@ class Document final {
  private:
   std::string buffer;
 };
+}  // namespace core

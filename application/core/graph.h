@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+namespace core {
 using Vertex = uint64_t;
 
 constexpr Vertex NullVertex = std::numeric_limits<uint64_t>::max();
@@ -26,7 +27,7 @@ struct Cost {
   static Cost min(void);
 };
 
-[[nodiscard]] bool operator<(const Cost &, const Cost &);
+[[nodiscard]] bool operator<(const Cost&, const Cost&);
 
 using AdjacentVertex = std::pair<Vertex, Cost>;
 
@@ -41,7 +42,7 @@ class Graph final {
 
   Graph(const uint64_t);
 
-  [[nodiscard]] static std::optional<Graph> from(const std::string &) noexcept;
+  [[nodiscard]] static std::optional<Graph> from(const std::string&) noexcept;
 
   [[nodiscard]] uint64_t size(void) const noexcept;
 
@@ -57,5 +58,6 @@ class Graph final {
 
   void add(const Vertex);
 
-  void add(const Edge &);
+  void add(const Edge&);
 };
+}  // namespace core

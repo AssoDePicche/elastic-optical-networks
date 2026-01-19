@@ -8,7 +8,8 @@
 #include <sstream>
 #include <vector>
 
-std::string csv_to_graphviz(const std::string &filename) {
+namespace core {
+std::string csv_to_graphviz(const std::string& filename) {
   std::ifstream csv(filename);
 
   if (!csv.is_open()) {
@@ -19,7 +20,7 @@ std::string csv_to_graphviz(const std::string &filename) {
 
   graphviz.append("graph G {\n");
 
-  auto next = [](std::stringstream &stream, std::string &buffer) {
+  auto next = [](std::stringstream& stream, std::string& buffer) {
     std::getline(stream, buffer, ',');
 
     return buffer;
@@ -49,7 +50,7 @@ std::string csv_to_graphviz(const std::string &filename) {
   return graphviz;
 }
 
-std::set<std::string> nodes_from(const std::string &filename) {
+std::set<std::string> nodes_from(const std::string& filename) {
   std::set<std::string> nodes{};
 
   std::ifstream file{filename};
@@ -77,7 +78,7 @@ std::set<std::string> nodes_from(const std::string &filename) {
   return nodes;
 }
 
-std::vector<std::vector<double>> matrix_from(const std::string &filename) {
+std::vector<std::vector<double>> matrix_from(const std::string& filename) {
   std::ifstream file{filename};
 
   if (!file.is_open()) {
@@ -125,13 +126,13 @@ std::vector<std::vector<double>> matrix_from(const std::string &filename) {
   return matrix;
 }
 
-std::string csv_to_txt(const std::string &filename) {
+std::string csv_to_txt(const std::string& filename) {
   const auto matrix{matrix_from(filename)};
 
   std::string buffer;
 
-  for (const auto &row : matrix) {
-    for (const auto &column : row) {
+  for (const auto& row : matrix) {
+    for (const auto& column : row) {
       buffer.append(std::format("{} ", column));
     }
 
@@ -140,3 +141,4 @@ std::string csv_to_txt(const std::string &filename) {
 
   return buffer;
 }
+}  // namespace core

@@ -1,17 +1,16 @@
 #include <core/spectrum.h>
-
 #include <gtest/gtest.h>
 
 #include <vector>
 
 TEST(Spectrum, AvailableSlices) {
-  Spectrum spectrum(10);
+  core::Spectrum spectrum(10);
 
   spectrum.allocate({0, 1});
 
   spectrum.allocate({5, 7});
 
-  std::vector<Slice> expected = {
+  std::vector<core::Slice> expected = {
       {2, 4},
       {8, 9},
   };
@@ -20,7 +19,7 @@ TEST(Spectrum, AvailableSlices) {
 }
 
 TEST(Spectrum, AvailableFSUs) {
-  Spectrum spectrum(10);
+  core::Spectrum spectrum(10);
 
   spectrum.allocate({0, 1});
 
@@ -32,15 +31,15 @@ TEST(Spectrum, AvailableFSUs) {
 }
 
 TEST(Spectrum, BestFit) {
-  Spectrum spectrum(10);
+  core::Spectrum spectrum(10);
 
   spectrum.allocate({0, 1});
 
   spectrum.allocate({5, 7});
 
-  const Slice expected = {8, 9};
+  const core::Slice expected = {8, 9};
 
-  const auto maybe = BestFit(spectrum, 2);
+  const auto maybe = core::BestFit(spectrum, 2);
 
   ASSERT_TRUE(maybe.has_value());
 
@@ -48,13 +47,13 @@ TEST(Spectrum, BestFit) {
 }
 
 TEST(Spectrum, FirstFit) {
-  Spectrum spectrum(10);
+  core::Spectrum spectrum(10);
 
   spectrum.allocate({0, 1});
 
   spectrum.allocate({5, 7});
 
-  const Slice expected = {2, 3};
+  const core::Slice expected = {2, 3};
 
   const auto maybe = FirstFit(spectrum, 2);
 
@@ -64,15 +63,15 @@ TEST(Spectrum, FirstFit) {
 }
 
 TEST(Spectrum, LastFit) {
-  Spectrum spectrum(10);
+  core::Spectrum spectrum(10);
 
   spectrum.allocate({0, 1});
 
   spectrum.allocate({5, 7});
 
-  const Slice expected = {8, 9};
+  const core::Slice expected = {8, 9};
 
-  const auto maybe = LastFit(spectrum, 2);
+  const auto maybe = core::LastFit(spectrum, 2);
 
   ASSERT_TRUE(maybe.has_value());
 
@@ -80,25 +79,25 @@ TEST(Spectrum, LastFit) {
 }
 
 TEST(Spectrum, RandomFit) {
-  Spectrum spectrum(10);
+  core::Spectrum spectrum(10);
 
   spectrum.allocate({0, 1});
 
   spectrum.allocate({5, 7});
 
-  ASSERT_TRUE(RandomFit(spectrum, 1).has_value());
+  ASSERT_TRUE(core::RandomFit(spectrum, 1).has_value());
 }
 
 TEST(Spectrum, WorstFit) {
-  Spectrum spectrum(10);
+  core::Spectrum spectrum(10);
 
   spectrum.allocate({0, 1});
 
   spectrum.allocate({5, 7});
 
-  const Slice expected = {2, 3};
+  const core::Slice expected = {2, 3};
 
-  const auto maybe = WorstFit(spectrum, 2);
+  const auto maybe = core::WorstFit(spectrum, 2);
 
   ASSERT_TRUE(maybe.has_value());
 
@@ -106,7 +105,7 @@ TEST(Spectrum, WorstFit) {
 }
 
 TEST(Spectrum, ExternalFragmentation) {
-  Spectrum spectrum(10);
+  core::Spectrum spectrum(10);
 
   spectrum.allocate({1, 3});
 
@@ -116,13 +115,14 @@ TEST(Spectrum, ExternalFragmentation) {
 
   const auto absolute_error = 1;
 
-  std::unique_ptr<Fragmentation> fn = std::make_unique<ExternalFragmentation>();
+  std::unique_ptr<core::Fragmentation> fn =
+      std::make_unique<core::ExternalFragmentation>();
 
   EXPECT_NEAR(expected, (*fn)(spectrum), absolute_error);
 }
 
 TEST(Spectrum, EntropyBasedFragmentation) {
-  Spectrum spectrum(10);
+  core::Spectrum spectrum(10);
 
   spectrum.allocate({0, 2});
 
@@ -132,14 +132,14 @@ TEST(Spectrum, EntropyBasedFragmentation) {
 
   const auto absolute_error = .25;
 
-  std::unique_ptr<Fragmentation> fn =
-      std::make_unique<EntropyBasedFragmentation>(1);
+  std::unique_ptr<core::Fragmentation> fn =
+      std::make_unique<core::EntropyBasedFragmentation>(1);
 
   EXPECT_NEAR(expected, (*fn)(spectrum), absolute_error);
 }
 
 TEST(Spectrum, AbsoluteFragmentation) {
-  Spectrum spectrum(10);
+  core::Spectrum spectrum(10);
 
   spectrum.allocate({1, 3});
 
@@ -149,7 +149,8 @@ TEST(Spectrum, AbsoluteFragmentation) {
 
   const auto absolute_error = .15;
 
-  std::unique_ptr<Fragmentation> fn = std::make_unique<AbsoluteFragmentation>();
+  std::unique_ptr<core::Fragmentation> fn =
+      std::make_unique<core::AbsoluteFragmentation>();
 
   EXPECT_NEAR(expected, (*fn)(spectrum), absolute_error);
 }
