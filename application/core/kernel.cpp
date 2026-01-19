@@ -246,6 +246,12 @@ void Kernel::Next(void) {
   ScheduleNextArrival();
 }
 
+void Kernel::Run(void) {
+  while (HasNext()) {
+    Next();
+  }
+}
+
 std::shared_ptr<Configuration> Kernel::GetConfiguration(void) const {
   return configuration;
 }
@@ -294,5 +300,77 @@ void Kernel::Reset(void) {
   router.SetStrategy(std::make_shared<RandomRouting>(configuration->graph));
 
   ScheduleNextArrival();
+}
+
+Document Kernel::GetReport(void) const {
+  const auto time = std::time(nullptr);
+
+  const auto localtime = std::localtime(&time);
+
+  const auto kernel_time = GetStatistics().time;
+
+  const auto requestCount = static_cast<double>(GetStatistics().total_requests);
+
+  core::Document document;
+
+  document
+      .append("created at: {:02}/{:02}/{:04} {:02}h{:02}\n", localtime->tm_mday,
+              localtime->tm_mon + 1, localtime->tm_year + 1900,
+              localtime->tm_hour, localtime->tm_min)
+      .append("seed: {}\n", GetPseudoRandomNumberGenerator()->seed())
+      .append("simulated time: {:.3f}\n", kernel_time)
+      .append("spectrum width (GHz): {:.2f}\n",
+              GetConfiguration()->spectrumWidth)
+      .append("slot width (GHz): {:.2f}\n", GetConfiguration()->slotWidth)
+      .append("fsus per link: {}\n", GetConfiguration()->FSUsPerLink);
+
+  const double load =
+      GetConfiguration()->arrivalRate / GetConfiguration()->serviceRate;
+
+  document.append("load (E): {:.3f}\n", load)
+      .append("arrival rate: {:.3f}\n", GetConfiguration()->arrivalRate)
+      .append("service rate: {:.3f}\n", GetConfiguration()->serviceRate)
+      .append("grade of service: {:.3f}\n", GetStatistics().GradeOfService())
+      .append("total requests: {}\n", requestCount);
+
+  for (const auto& [_, requestType] : GetConfiguration()->requestTypes) {
+    const auto ratio = requestType.counting / requestCount;
+
+    const auto gos = requestType.blocking / requestCount;
+
+    const auto normalized_load = GetConfiguration()->arrivalRate *
+                                 (static_cast<double>(requestType.FSUs) /
+                                  GetConfiguration()->FSUsPerLink);
+
+    document.append("requests for {} FSU(s)\n", requestType.FSUs)
+        .append("ratio: {:.3f}\n", ratio)
+        .append("grade of service: {:.3f}\n", gos)
+        .append("normalized load: {:.3f}\n", normalized_load);
+  }
+
+  return document;
+}
+
+void Kernel::ExportDataset(const std::string& filename) const {
+  const auto snapshots = GetSnapshots();
+
+  std::string buffer{
+      "time,absolute_fragmentation,entropy,external_fragmentation,grade_of_"
+      "service,slot_blocking_probability,active_requests\n"};
+
+  std::for_each(snapshots.begin(), snapshots.end(),
+                [&buffer](const core::Statistics& snapshot) {
+                  buffer.append(std::format("{}\n", snapshot.Serialize()));
+                });
+
+  std::ofstream stream(filename);
+
+  if (!stream.is_open()) {
+    throw std::runtime_error(std::format("Failed to write {} file", filename));
+  }
+
+  stream << buffer;
+
+  stream.close();
 }
 }  // namespace core

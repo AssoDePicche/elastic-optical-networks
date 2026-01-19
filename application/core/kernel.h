@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "configuration.h"
+#include "document.h"
 #include "prng.h"
 #include "request.h"
 #include "spectrum.h"
@@ -86,6 +87,8 @@ class Kernel final {
 
   void Next(void);
 
+  void Run(void);
+
   [[nodiscard]] std::shared_ptr<Configuration> GetConfiguration(void) const;
 
   [[nodiscard]] std::shared_ptr<PseudoRandomNumberGenerator>
@@ -94,6 +97,10 @@ class Kernel final {
   [[nodiscard]] std::vector<Statistics> GetSnapshots(void) const;
 
   [[nodiscard]] Statistics GetStatistics(void) const;
+
+  [[nodiscard]] Document GetReport(void) const;
+
+  void ExportDataset(const std::string&) const;
 
   void Reset(void);
 };
