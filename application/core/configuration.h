@@ -10,7 +10,6 @@
 #include "graph.h"
 #include "json.h"
 #include "logger.h"
-#include "prng.h"
 #include "request.h"
 #include "spectrum.h"
 

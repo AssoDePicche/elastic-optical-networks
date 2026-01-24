@@ -1,10 +1,11 @@
 #include "route.h"
 
+#include <prng/prng.h>
+
 #include <queue>
 #include <random>
 #include <stack>
 
-#include "prng.h"
 #include "request.h"
 
 namespace core {
@@ -227,10 +228,10 @@ std::optional<Route> RandomRouting::compute(const Vertex, const Vertex) const {
 
   while (true) {
     auto source = static_cast<Vertex>(
-        PseudoRandomNumberGenerator::Instance()->next("routing"));
+        prng::PseudoRandomNumberGenerator::Instance()->Next("routing"));
 
     auto destination = static_cast<Vertex>(
-        PseudoRandomNumberGenerator::Instance()->next("routing"));
+        prng::PseudoRandomNumberGenerator::Instance()->Next("routing"));
 
     if (source == destination) {
       continue;

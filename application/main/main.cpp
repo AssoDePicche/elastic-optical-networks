@@ -74,7 +74,7 @@ int main(const int argc, const char** argv) {
 
       document.write(report_filename);
 
-      if (kernel.GetConfiguration()->exportDataset) {
+      if (configuration->exportDataset) {
         const std::string filename =
             dirname + std::format("/{:02}_dataset.csv", iteration);
 

@@ -109,7 +109,7 @@ void Kernel::Release(Request& request) {
 
 void Kernel::ScheduleNextArrival(void) {
   auto& requestType =
-      configuration->requestTypes[requestsKeys[prng->next("fsus")]];
+      configuration->requestTypes[requestsKeys[prng->Next("fsus")]];
 
   ++requestType.counting;
 
@@ -117,7 +117,7 @@ void Kernel::ScheduleNextArrival(void) {
 
   request.type = requestType;
 
-  queue.push(Event(statistics.time + prng->next("arrival"), EventType::Arrival,
+  queue.push(Event(statistics.time + prng->Next("arrival"), EventType::Arrival,
                    request));
 
   statistics.total_FSUs_requested += request.type.FSUs;
@@ -126,7 +126,7 @@ void Kernel::ScheduleNextArrival(void) {
 }
 
 void Kernel::ScheduleNextDeparture(const Event& event) {
-  queue.push(Event(statistics.time + prng->next("service"),
+  queue.push(Event(statistics.time + prng->Next("service"),
                    EventType::Departure, event.request));
 }
 
@@ -252,19 +252,6 @@ void Kernel::Run(void) {
   }
 }
 
-std::shared_ptr<Configuration> Kernel::GetConfiguration(void) const {
-  return configuration;
-}
-
-std::shared_ptr<PseudoRandomNumberGenerator>
-Kernel::GetPseudoRandomNumberGenerator(void) const {
-  return prng;
-}
-
-std::vector<Statistics> Kernel::GetSnapshots(void) const { return snapshots; }
-
-Statistics Kernel::GetStatistics(void) const { return statistics; }
-
 void Kernel::Reset(void) {
   statistics.Reset();
 
@@ -284,18 +271,18 @@ void Kernel::Reset(void) {
                    return pair.first;
                  });
 
-  prng = PseudoRandomNumberGenerator::Instance();
+  prng = prng::PseudoRandomNumberGenerator::Instance();
 
-  prng->random_seed();
+  prng->SetRandomSeed();
 
-  prng->exponential("arrival", configuration->arrivalRate);
+  prng->SetExponentialVariable("arrival", configuration->arrivalRate);
 
-  prng->exponential("service", configuration->serviceRate);
+  prng->SetExponentialVariable("service", configuration->serviceRate);
 
-  prng->discrete("fsus", configuration->probs.begin(),
-                 configuration->probs.end());
+  prng->SetDiscreteVariable("fsus", configuration->probs.begin(),
+                            configuration->probs.end());
 
-  prng->uniform("routing", 0, configuration->graph.size());
+  prng->SetUniformVariable("routing", 0, configuration->graph.size());
 
   router.SetStrategy(std::make_shared<RandomRouting>(configuration->graph));
 
@@ -307,9 +294,9 @@ Document Kernel::GetReport(void) const {
 
   const auto localtime = std::localtime(&time);
 
-  const auto kernel_time = GetStatistics().time;
+  const auto kernel_time = statistics.time;
 
-  const auto requestCount = static_cast<double>(GetStatistics().total_requests);
+  const auto requestCount = static_cast<double>(statistics.total_requests);
 
   core::Document document;
 
@@ -317,30 +304,28 @@ Document Kernel::GetReport(void) const {
       .append("created at: {:02}/{:02}/{:04} {:02}h{:02}\n", localtime->tm_mday,
               localtime->tm_mon + 1, localtime->tm_year + 1900,
               localtime->tm_hour, localtime->tm_min)
-      .append("seed: {}\n", GetPseudoRandomNumberGenerator()->seed())
+      .append("seed: {}\n", prng->GetSeed())
       .append("simulated time: {:.3f}\n", kernel_time)
-      .append("spectrum width (GHz): {:.2f}\n",
-              GetConfiguration()->spectrumWidth)
-      .append("slot width (GHz): {:.2f}\n", GetConfiguration()->slotWidth)
-      .append("fsus per link: {}\n", GetConfiguration()->FSUsPerLink);
+      .append("spectrum width (GHz): {:.2f}\n", configuration->spectrumWidth)
+      .append("slot width (GHz): {:.2f}\n", configuration->slotWidth)
+      .append("fsus per link: {}\n", configuration->FSUsPerLink);
 
-  const double load =
-      GetConfiguration()->arrivalRate / GetConfiguration()->serviceRate;
+  const double load = configuration->arrivalRate / configuration->serviceRate;
 
   document.append("load (E): {:.3f}\n", load)
-      .append("arrival rate: {:.3f}\n", GetConfiguration()->arrivalRate)
-      .append("service rate: {:.3f}\n", GetConfiguration()->serviceRate)
-      .append("grade of service: {:.3f}\n", GetStatistics().GradeOfService())
+      .append("arrival rate: {:.3f}\n", configuration->arrivalRate)
+      .append("service rate: {:.3f}\n", configuration->serviceRate)
+      .append("grade of service: {:.3f}\n", statistics.GradeOfService())
       .append("total requests: {}\n", requestCount);
 
-  for (const auto& [_, requestType] : GetConfiguration()->requestTypes) {
+  for (const auto& [_, requestType] : configuration->requestTypes) {
     const auto ratio = requestType.counting / requestCount;
 
     const auto gos = requestType.blocking / requestCount;
 
-    const auto normalized_load = GetConfiguration()->arrivalRate *
-                                 (static_cast<double>(requestType.FSUs) /
-                                  GetConfiguration()->FSUsPerLink);
+    const auto normalized_load =
+        configuration->arrivalRate *
+        (static_cast<double>(requestType.FSUs) / configuration->FSUsPerLink);
 
     document.append("requests for {} FSU(s)\n", requestType.FSUs)
         .append("ratio: {:.3f}\n", ratio)
@@ -352,8 +337,6 @@ Document Kernel::GetReport(void) const {
 }
 
 void Kernel::ExportDataset(const std::string& filename) const {
-  const auto snapshots = GetSnapshots();
-
   std::string buffer{
       "time,absolute_fragmentation,entropy,external_fragmentation,grade_of_"
       "service,slot_blocking_probability,active_requests\n"};
