@@ -1,8 +1,8 @@
 #include "kernel.h"
 
-#include <format>
+#include <hash/cantor.h>
 
-#include "route.h"
+#include <format>
 
 namespace core {
 Event::Event(const double time, const EventType& type, const Request& request)
@@ -49,12 +49,13 @@ std::string Statistics::Serialize(void) const {
                      SlotBlockingProbability(), active_requests);
 }
 
-uint64_t Kernel::GenerateKeys(const Vertex source,
-                              const Vertex destination) const {
-  return CantorPairingFunction(source, destination);
+uint64_t Kernel::GenerateKeys(const graph::Vertex source,
+                              const graph::Vertex destination) const {
+  return hash::CantorPairingFunction(source, destination);
 }
 
-std::unordered_set<uint64_t> Kernel::GenerateKeys(const Route& route) const {
+std::unordered_set<uint64_t> Kernel::GenerateKeys(
+    const graph::Route& route) const {
   const auto& [vertices, cost] = route;
 
   std::unordered_set<uint64_t> keys;
@@ -64,7 +65,7 @@ std::unordered_set<uint64_t> Kernel::GenerateKeys(const Route& route) const {
 
     const auto y = *std::next(vertices.begin(), index);
 
-    keys.insert(CantorPairingFunction(x, y));
+    keys.insert(hash::CantorPairingFunction(x, y));
   }
 
   return keys;
@@ -113,7 +114,8 @@ void Kernel::ScheduleNextArrival(void) {
 
   ++requestType.counting;
 
-  auto request = Request(router.compute(NullVertex, NullVertex).value());
+  auto request =
+      Request(router.compute(graph::NullVertex, graph::NullVertex).value());
 
   request.type = requestType;
 
@@ -284,7 +286,8 @@ void Kernel::Reset(void) {
 
   prng->SetUniformVariable("routing", 0, configuration->graph.size());
 
-  router.SetStrategy(std::make_shared<RandomRouting>(configuration->graph));
+  router.SetStrategy(
+      std::make_shared<graph::RandomRouting>(configuration->graph));
 
   ScheduleNextArrival();
 }

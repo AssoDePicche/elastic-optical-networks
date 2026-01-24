@@ -1,15 +1,13 @@
 add_library(core STATIC
+  application.cpp
   configuration.cpp
-  csv.cpp
   file_system.cpp
-  graph.cpp
   json.cpp
   kernel.cpp
   request.cpp
-  route.cpp
   spectrum.cpp
 )
 
 target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
-target_link_libraries(core PUBLIC prng nlohmann_json::nlohmann_json)
+target_link_libraries(core PUBLIC graph hash prng nlohmann_json::nlohmann_json)

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <graph/graph.h>
+
 #include <functional>
 #include <memory>
 #include <optional>
@@ -7,7 +9,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "graph.h"
 #include "json.h"
 #include "logger.h"
 #include "request.h"
@@ -15,7 +16,7 @@
 
 namespace core {
 struct Configuration final {
-  Graph graph;
+  graph::Graph graph;
   ModulationStrategyFactory::Option modulationOption;
   std::unordered_map<std::string, FragmentationStrategy>
       fragmentationStrategies;

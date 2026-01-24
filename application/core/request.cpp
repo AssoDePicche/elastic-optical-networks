@@ -6,7 +6,7 @@
 #include <utility>
 
 namespace core {
-Request::Request(const Route& route) : route{route} {}
+Request::Request(const graph::Route& route) : route{route} {}
 
 PassbandModulation::PassbandModulation(double slotWidth,
                                        uint64_t spectralEfficiency)

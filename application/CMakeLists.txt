@@ -15,6 +15,8 @@ find_package(nlohmann_json CONFIG REQUIRED)
 enable_testing()
 
 add_subdirectory(core)
+add_subdirectory(graph)
+add_subdirectory(hash)
 add_subdirectory(main)
 add_subdirectory(prng)
 add_subdirectory(test)

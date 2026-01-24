@@ -1,38 +1,18 @@
 #pragma once
 
 #include <cstdint>
-#include <limits>
 #include <list>
 #include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
-namespace core {
-using Vertex = uint64_t;
+#include "cost.h"
+#include "edge.h"
+#include "vertex.h"
 
-constexpr Vertex NullVertex = std::numeric_limits<uint64_t>::max();
-
-struct Cost {
-  double value;
-
-  Cost(void) = default;
-
-  Cost(double);
-
-  static Cost max(void);
-
-  static Cost min(void);
-};
-
-[[nodiscard]] bool operator<(const Cost&, const Cost&);
-
-using AdjacentVertex = std::pair<Vertex, Cost>;
-
-using Edge = std::tuple<Vertex, Vertex, Cost>;
-
+namespace graph {
 class Graph final {
   std::unordered_map<Vertex, std::list<AdjacentVertex>> adjacency_list;
   std::set<Vertex> vertices;
@@ -60,4 +40,4 @@ class Graph final {
 
   void add(const Edge&);
 };
-}  // namespace core
+}  // namespace graph

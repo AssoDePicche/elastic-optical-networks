@@ -1,5 +1,6 @@
 #pragma once
 
+#include <graph/router.h>
 #include <prng/prng.h>
 
 #include <queue>
@@ -51,14 +52,14 @@ struct Statistics final {
 
 struct Trace final {
   std::string type;
-  Vertex source;
-  Vertex destination;
+  graph::Vertex source;
+  graph::Vertex destination;
   uint64_t FSUs;
   bool accepted;
 };
 
 class Kernel final {
-  Router router;
+  graph::Router router;
   Carriers carriers;
   std::priority_queue<Event> queue;
   std::vector<Statistics> snapshots;
@@ -69,9 +70,11 @@ class Kernel final {
   std::shared_ptr<Configuration> configuration;
   std::shared_ptr<prng::PseudoRandomNumberGenerator> prng;
 
-  [[nodiscard]] uint64_t GenerateKeys(const Vertex, const Vertex) const;
+  [[nodiscard]] uint64_t GenerateKeys(const graph::Vertex,
+                                      const graph::Vertex) const;
 
-  [[nodiscard]] std::unordered_set<uint64_t> GenerateKeys(const Route&) const;
+  [[nodiscard]] std::unordered_set<uint64_t> GenerateKeys(
+      const graph::Route&) const;
 
   [[nodiscard]] bool Dispatch(Request&);
 

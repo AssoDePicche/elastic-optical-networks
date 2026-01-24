@@ -2,21 +2,10 @@
 
 #include <format>
 #include <fstream>
-#include <limits>
 #include <ranges>
 #include <sstream>
 
-namespace core {
-Cost::Cost(double value) : value{value} {}
-
-Cost Cost::max(void) { return Cost(std::numeric_limits<double>::max()); }
-
-Cost Cost::min(void) { return Cost(.0f); }
-
-bool operator<(const Cost& lhs, const Cost& rhs) {
-  return lhs.value < rhs.value;
-}
-
+namespace graph {
 Graph::Graph(const uint64_t vertices) {
   for (const auto& vertex : std::views::iota(0u, vertices)) {
     add(vertex);
@@ -102,4 +91,4 @@ void Graph::add(const Edge& edge) {
 
   adjacency_list[source].emplace_back(destination, cost);
 }
-}  // namespace core
+}  // namespace graph

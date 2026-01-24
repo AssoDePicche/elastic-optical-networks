@@ -8,7 +8,7 @@
 #include <sstream>
 #include <vector>
 
-namespace core {
+namespace graph {
 std::string csv_to_graphviz(const std::string& filename) {
   std::ifstream csv(filename);
 
@@ -141,4 +141,4 @@ std::string csv_to_txt(const std::string& filename) {
 
   return buffer;
 }
-}  // namespace core
+}  // namespace graph
