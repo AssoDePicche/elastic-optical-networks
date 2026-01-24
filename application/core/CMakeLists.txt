@@ -1,4 +1,5 @@
 add_library(core STATIC
+  application.cpp
   configuration.cpp
   file_system.cpp
   json.cpp
