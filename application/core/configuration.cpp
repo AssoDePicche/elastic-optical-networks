@@ -94,7 +94,7 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
     request.second.FSUs = configuration->modulationOption ==
                                   ModulationStrategyFactory::Option::Passband
                               ? strategy->compute(request.second.bandwidth)
-                              : strategy->compute(Cost::max().value);
+                              : strategy->compute(graph::Cost::max().value);
 
     request.second.counting = 0u;
 
@@ -125,7 +125,7 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
   }
 
   const auto graph =
-      Graph::from(json.Get<std::string>("params.topology").value());
+      graph::Graph::from(json.Get<std::string>("params.topology").value());
 
   if (!graph.has_value()) {
     return std::nullopt;
