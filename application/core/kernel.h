@@ -1,5 +1,7 @@
 #pragma once
 
+#include <prng/prng.h>
+
 #include <queue>
 #include <string>
 #include <unordered_set>
@@ -7,7 +9,6 @@
 
 #include "configuration.h"
 #include "document.h"
-#include "prng.h"
 #include "request.h"
 #include "spectrum.h"
 
@@ -66,7 +67,7 @@ class Kernel final {
   double k_to_ignore;
   bool ignored_first_k;
   std::shared_ptr<Configuration> configuration;
-  std::shared_ptr<PseudoRandomNumberGenerator> prng;
+  std::shared_ptr<prng::PseudoRandomNumberGenerator> prng;
 
   [[nodiscard]] uint64_t GenerateKeys(const Vertex, const Vertex) const;
 
@@ -88,15 +89,6 @@ class Kernel final {
   void Next(void);
 
   void Run(void);
-
-  [[nodiscard]] std::shared_ptr<Configuration> GetConfiguration(void) const;
-
-  [[nodiscard]] std::shared_ptr<PseudoRandomNumberGenerator>
-  GetPseudoRandomNumberGenerator(void) const;
-
-  [[nodiscard]] std::vector<Statistics> GetSnapshots(void) const;
-
-  [[nodiscard]] Statistics GetStatistics(void) const;
 
   [[nodiscard]] Document GetReport(void) const;
 

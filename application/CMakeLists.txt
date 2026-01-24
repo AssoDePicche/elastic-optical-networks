@@ -16,6 +16,7 @@ enable_testing()
 
 add_subdirectory(core)
 add_subdirectory(main)
+add_subdirectory(prng)
 add_subdirectory(test)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION /usr/local/bin)

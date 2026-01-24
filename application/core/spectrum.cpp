@@ -1,12 +1,12 @@
 #include "spectrum.h"
 
+#include <prng/prng.h>
+
 #include <algorithm>
 #include <limits>
 #include <numeric>
 #include <random>
 #include <ranges>
-
-#include "prng.h"
 
 namespace core {
 uint64_t size(const Slice& slice) { return slice.second - slice.first + 1; }
@@ -229,11 +229,11 @@ std::optional<Slice> RandomFit(const Spectrum& spectrum, const uint64_t FSUs) {
 
   std::vector<Slice> buffer(filter.begin(), filter.end());
 
-  auto prng = PseudoRandomNumberGenerator::Instance();
+  auto prng = prng::PseudoRandomNumberGenerator::Instance();
 
-  prng->uniform("random_fit", 0, buffer.size());
+  prng->SetUniformVariable("random_fit", 0, buffer.size());
 
-  const auto index = static_cast<uint64_t>(prng->next("random_fit"));
+  const auto index = static_cast<uint64_t>(prng->Next("random_fit"));
 
   return buffer[index];
 }
