@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     exit(1)
 
-  executable = './build/App'
+  executable = './build/App-linux-x86_64'
 
   min_load = int(sys.argv[1])
 
