@@ -2,6 +2,10 @@ import numpy
 import pandas
 import sys
 
+import matplotlib
+
+matplotlib.use("Agg")
+
 from matplotlib import pyplot
 from scipy.interpolate import make_interp_spline
 from scipy.optimize import bisect
@@ -82,7 +86,9 @@ def dataset_plotting():
 
     pyplot.grid()
 
-    pyplot.show()
+    pyplot.savefig(f"{column}.png")
+
+    pyplot.clf()
 
 if __name__ == '__main__':
   if len(sys.argv) == 1:
