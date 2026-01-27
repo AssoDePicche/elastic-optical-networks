@@ -22,7 +22,7 @@ jobs:
 
       - name: Build and Extract Binary
         run: |
-          docker build --target exporter --output type=local,dest=./dist .
+          docker build -f application/Dockerfile --target exporter --output type=local,dest=./dist .
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
