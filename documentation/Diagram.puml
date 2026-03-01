@@ -1,0 +1,226 @@
+@startuml
+!theme vibrant
+
+skinparam classAttributeIconSize 0
+
+' =========================
+' RCMSA ENGINE
+' =========================
+
+class RCMSAEngine {
+  - Network& network
+  - RoutingPolicy* routing
+  - CorePolicy* corePolicy
+  - SpectrumPolicy* spectrumPolicy
+  - ModulationPolicy* modulationPolicy
+  - PhysicalModel* physicalModel
+  + allocate(demand: Demand) : bool
+  + release(demandId: int)
+}
+
+' =========================
+' POLICY INTERFACES
+' =========================
+
+interface RoutingPolicy {
+  + computePaths(n: Network, d: Demand) : vector<Path>
+  + name() : string
+}
+
+interface CorePolicy {
+  + candidateCores(n: Network, p: Path, d: Demand) : vector<int>
+}
+
+interface SpectrumPolicy {
+  + findFSU(n: Network, p: Path, coreId: int, width: int) : optional<int>
+}
+
+interface ModulationPolicy {
+  + select(pathLength: double, bitrate: double) : ModulationProfile
+}
+
+interface PhysicalModel {
+  + isFeasible(n: Network, p: Path,
+               coreId: int, fsu: int,
+               width: int,
+               mod: ModulationProfile) : bool
+}
+
+RCMSAEngine --> RoutingPolicy
+RCMSAEngine --> CorePolicy
+RCMSAEngine --> SpectrumPolicy
+RCMSAEngine --> ModulationPolicy
+RCMSAEngine --> PhysicalModel
+
+' =========================
+' NETWORK MODEL
+' =========================
+
+class Network {
+  - vector<Node> nodes
+  - vector<FiberLink> links
+  - map<int, vector<int>> adjacencyList
+  + getNode(id: int) : Node
+  + getLink(u: int, v: int) : FiberLink
+  + computePathLength(p: Path) : double
+  + commitAllocation(...)
+  + releaseAllocation(demandId: int)
+  + getNeighbors(nodeId: int) : vector<int>
+}
+
+class Node {
+  - int id
+  - vector<BVT> bvts
+  + addBVT(bvt: BVT)
+  + getAvailableBVT(bitrate: double) : BVT
+}
+
+class BVT {
+  - int id
+  - double maxBitrate
+  - vector<ModulationProfile> supportedModulations
+  - int slices
+  + computeRequiredFSUs(bitrate: double, mod: ModulationProfile) : int
+  + supports(mod: ModulationProfile) : bool
+}
+
+class FiberLink {
+  - int id
+  - int src
+  - int dst
+  - double lengthKm
+  - vector<Core> cores
+  + getCore(coreId: int) : Core
+  + getLength() : double
+  + getNumCores() : int
+}
+
+class Core {
+  - int id
+  - SpectrumGrid spectrum
+  - vector<int> adjacentCores
+  + isFree(start: int, width: int) : bool
+  + allocate(start: int, width: int, demandId: int)
+  + release(demandId: int)
+}
+
+class SpectrumGrid {
+  - vector<FSU> fsus
+  + isFree(start: int, width: int) : bool
+  + allocate(start: int, width: int, demandId: int)
+  + release(demandId: int)
+  + fragmentationIndex() : double
+}
+
+class FSU {
+  - bool occupied
+  - int demandId
+}
+
+class Path {
+  - vector<int> nodes
+  - vector<FiberLink*> links
+  - double totalLength
+  + computeLength() : double
+}
+
+Network "1" o-- "*" Node
+Network "1" o-- "*" FiberLink
+FiberLink "1" o-- "*" Core
+Core "1" o-- "1" SpectrumGrid
+SpectrumGrid "1" o-- "*" FSU
+Node "1" o-- "*" BVT
+
+' =========================
+' TRAFFIC & SIMULATION
+' =========================
+
+class SimulationEngine {
+  - priority_queue<Event*> eventQueue
+  - RCMSAEngine rcmsa
+  - TrafficGenerator* trafficGen
+  - MetricsCollector metrics
+  - double currentTime
+  + run(untilTime: double)
+  + schedule(e: Event)
+}
+
+abstract class Event {
+  - double time
+  + execute(sim: SimulationEngine)
+}
+
+class ArrivalEvent
+class DepartureEvent
+
+Event <|-- ArrivalEvent
+Event <|-- DepartureEvent
+
+class Demand {
+  - int id
+  - int source
+  - int destination
+  - double bitrate
+  - double arrivalTime
+  - double holdingTime
+}
+
+interface TrafficGenerator {
+  + nextDemand(currentTime: double) : Demand
+}
+
+SimulationEngine --> RCMSAEngine
+SimulationEngine --> TrafficGenerator
+SimulationEngine --> MetricsCollector
+SimulationEngine --> Event
+
+' =========================
+' PHYSICAL & MODULATION
+' =========================
+
+class ModulationProfile {
+  - ModulationFormat format
+  - double spectralEfficiency
+  - double maxReachKm
+  - double requiredOSNR
+}
+
+enum ModulationFormat {
+  BPSK
+  QPSK
+  QAM8
+  QAM16
+  QAM32
+  QAM64
+  QAM128
+  QAM256
+}
+
+' =========================
+' METRICS & EXPERIMENT
+' =========================
+
+class MetricsCollector {
+  - long totalRequests
+  - long blockedRequests
+  - double spectrumUtilization
+  - vector<double> coreUtilization
+  + recordAllocation(...)
+  + recordBlocking()
+  + computeBlockingProbability() : double
+  + computeFragmentation()
+  + exportCSV(filename: string)
+}
+
+class ExperimentConfig {
+  - string routingName
+  - string corePolicyName
+  - string spectrumPolicyName
+  - string modulationName
+  - double load
+  - int numCores
+  - int numFSUs
+  - int seed
+}
+
+@enduml
