@@ -6,7 +6,7 @@
   "main": ".vite/build/main.js",
   "private": true,
   "scripts": {
-    "dev": "nodemon --exec npm start",
+    "dev": "nodemon --watch src --exec npm start",
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
@@ -42,8 +42,12 @@
     "vite": "^5.4.21"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "@vitejs/plugin-react": "^5.1.4",
     "electron-squirrel-startup": "^1.0.1",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "sqlite3": "^5.1.7",
+    "tailwindcss": "^4.2.1"
   }
 }
