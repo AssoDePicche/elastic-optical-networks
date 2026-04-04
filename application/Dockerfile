@@ -1,5 +1,9 @@
 FROM debian:trixie-slim AS builder
 
+ARG BUILD_TYPE=Release
+
+ENV BUILD_TYPE=${BUILD_TYPE}
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -22,18 +26,19 @@ RUN conan profile detect --force && \
     conan install application/conanfile.txt \
     --output-folder=build \
     --build=missing \
-    -s build_type=Release \
+    -s build_type=${BUILD_TYPE} \
     -c tools.system.package_manager:mode=install
 
 RUN cmake -S application -B build -G Ninja \
-    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
     -DCMAKE_TOOLCHAIN_FILE=/src/build/conan_toolchain.cmake
 RUN cmake --build build
 
 RUN cd build && ctest --output-on-failure
 
 RUN cmake --install build --prefix /src/install
-RUN strip /src/install/App
+
+RUN if [ "$BUILD_TYPE" = "Release" ]; then strip /src/install/App; fi
 
 FROM scratch AS exporter
 COPY --from=builder /src/install/App /App-linux-x86_64
