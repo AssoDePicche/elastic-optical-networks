@@ -229,17 +229,15 @@ struct Kernel::Implementation {
         request.second.counting = 0u;
       }
 
-      configuration->logger->log(Logger::Level::Info,
-                                 "Discard first {:.3f} time units",
-                                 statistics.time);
+      configuration->logger->Info("Discard first {:.3f} time units",
+                                  statistics.time);
     }
 
     if (event.type == Event::Type::Departure) {
       --statistics.active_requests;
 
-      configuration->logger->log(Logger::Level::Info,
-                                 "Request for {} FSU(s) departing at {:.3f}",
-                                 event.request.type.FSUs, event.time);
+      configuration->logger->Info("Request for {} FSU(s) departing at {:.3f}",
+                                  event.request.type.FSUs, event.time);
 
       Release(event.request);
 
@@ -252,17 +250,15 @@ struct Kernel::Implementation {
         Dispatch(event.request)) {
       ++statistics.active_requests;
 
-      configuration->logger->log(Logger::Level::Info,
-                                 "Accept request for {} FSU(s) at {:.3f}",
-                                 event.request.type.FSUs, statistics.time);
+      configuration->logger->Info("Accept request for {} FSU(s) at {:.3f}",
+                                  event.request.type.FSUs, statistics.time);
 
       event.request.accepted = true;
 
       ScheduleNextDeparture(event);
     } else {
-      configuration->logger->log(Logger::Level::Info,
-                                 "Blocking request for {} FSU(s) at {:.3f}",
-                                 event.request.type.FSUs, event.time);
+      configuration->logger->Info("Blocking request for {} FSU(s) at {:.3f}",
+                                  event.request.type.FSUs, event.time);
 
       statistics.total_FSUs_blocked += event.request.type.FSUs;
 
