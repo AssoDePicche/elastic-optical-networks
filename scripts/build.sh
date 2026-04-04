@@ -1,3 +1,10 @@
 #!/bin/bash
 
-docker build -f application/Dockerfile --target exporter --output type=local,dest=. .
+BUILD_TYPE=${1:-Release}
+
+docker build \
+  -f application/Dockerfile \
+  --build-arg BUILD_TYPE=$BUILD_TYPE \
+  --target exporter \
+  --output type=local,dest=. \
+  .
