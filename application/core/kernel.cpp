@@ -4,6 +4,8 @@
 
 #include <format>
 
+#include "agent.h"
+
 namespace core {
 Event::Event(const double time, const Event::Type& type, const Request& request)
     : time{time}, type{type}, request{request} {}
@@ -68,6 +70,7 @@ struct Kernel::Implementation {
   bool ignored_first_k;
   std::shared_ptr<Configuration> configuration;
   std::shared_ptr<prng::PseudoRandomNumberGenerator> prng;
+  std::unique_ptr<Agent> agent;
 
   void Reset(void) {
     statistics.Reset();
@@ -87,6 +90,8 @@ struct Kernel::Implementation {
 
                      return pair.first;
                    });
+
+    agent = std::make_unique<ClassicAgent>();
 
     prng = prng::PseudoRandomNumberGenerator::Instance();
 
@@ -246,8 +251,16 @@ struct Kernel::Implementation {
 
     event.request.accepted = false;
 
-    if (statistics.active_requests < configuration->FSUsPerLink &&
-        Dispatch(event.request)) {
+    Environment environment{
+        .request = event.request,
+        .carriers = carriers,
+        .activeRequests = statistics.active_requests,
+        .FSUsPerLink = configuration->FSUsPerLink,
+    };
+
+    if (this->agent->ShouldAccept(environment)) {
+      Dispatch(event.request);
+
       ++statistics.active_requests;
 
       configuration->logger->Info("Accept request for {} FSU(s) at {:.3f}",
