@@ -2,6 +2,7 @@
   "enable-logging": false,
   "export-dataset": true,
   "params": {
+    "agent": "classic",
     "arrival-rate": 1,
     "ignore-first": false,
     "iterations": 10,

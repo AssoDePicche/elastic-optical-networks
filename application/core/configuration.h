@@ -23,6 +23,7 @@ struct Configuration final {
   std::unordered_map<std::string, RequestType> requestTypes;
   std::unordered_map<std::string, uint64_t> modulations;
   std::vector<double> probs;
+  std::string agent;
   double arrivalRate;
   double serviceRate;
   double timeUnits;

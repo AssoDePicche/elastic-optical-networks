@@ -14,18 +14,22 @@
 #include "spectrum.h"
 
 namespace core {
-enum class EventType { Arrival, Departure };
-
 struct Event final {
+  enum class Type { Arrival, Departure };
+
   double time;
-  EventType type;
+  Type type;
   Request request;
 
   Event(void) = default;
 
-  Event(const double, const EventType&, const Request&);
+  Event(const double, const Type&, const Request&);
 
   [[nodiscard]] bool operator<(const Event&) const noexcept;
+
+  [[nodiscard]] static Event MakeArrival(const double, const Request&);
+
+  [[nodiscard]] static Event MakeDeparture(const double, const Request&);
 };
 
 struct Statistics final {
@@ -59,37 +63,10 @@ struct Trace final {
 };
 
 class Kernel final {
-  graph::Router router;
-  Carriers carriers;
-  std::priority_queue<Event> queue;
-  std::vector<Statistics> snapshots;
-  Statistics statistics;
-  std::vector<std::string> requestsKeys;
-  double k_to_ignore;
-  bool ignored_first_k;
-  std::shared_ptr<Configuration> configuration;
-  std::shared_ptr<prng::PseudoRandomNumberGenerator> prng;
-
-  [[nodiscard]] uint64_t GenerateKeys(const graph::Vertex,
-                                      const graph::Vertex) const;
-
-  [[nodiscard]] std::unordered_set<uint64_t> GenerateKeys(
-      const graph::Route&) const;
-
-  [[nodiscard]] bool Dispatch(Request&);
-
-  void Release(Request&);
-
-  void ScheduleNextArrival(void);
-
-  void ScheduleNextDeparture(const Event&);
-
  public:
   Kernel(std::shared_ptr<Configuration>);
 
-  bool HasNext(void) const;
-
-  void Next(void);
+  ~Kernel();
 
   void Run(void);
 
@@ -98,5 +75,9 @@ class Kernel final {
   void ExportDataset(const std::string&) const;
 
   void Reset(void);
+
+ private:
+  struct Implementation;
+  std::unique_ptr<Implementation> pImpl;
 };
 }  // namespace core
