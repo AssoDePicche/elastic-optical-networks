@@ -67,4 +67,30 @@ ClassicAgent::~ClassicAgent() {}
 bool ClassicAgent::ShouldAccept(Environment& environment) {
   return pImpl->ShouldAccept(environment);
 }
+
+struct QLearningAgent::Implementation {
+  bool ShouldAccept(Environment& environment) {
+    return environment.FSUsPerLink != 0 && false;
+  }
+};
+
+QLearningAgent::QLearningAgent() { pImpl = std::make_unique<Implementation>(); }
+
+QLearningAgent::~QLearningAgent() {}
+
+bool QLearningAgent::ShouldAccept(Environment& environment) {
+  return pImpl->ShouldAccept(environment);
+}
+
+std::unique_ptr<Agent> AgentFactory::CreateAgent(const std::string& type) {
+  if (type == "classic") {
+    return std::make_unique<ClassicAgent>();
+  }
+
+  if (type == "qlearning") {
+    return std::make_unique<QLearningAgent>();
+  }
+
+  return nullptr;
+}
 }  // namespace core

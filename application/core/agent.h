@@ -33,4 +33,22 @@ class ClassicAgent : public Agent {
   struct Implementation;
   std::unique_ptr<Implementation> pImpl;
 };
+
+class QLearningAgent : public Agent {
+  public:
+    QLearningAgent();
+
+    ~QLearningAgent();
+
+    [[nodiscard]] bool ShouldAccept(Environment&) override;
+
+  private:
+    struct Implementation;
+    std::unique_ptr<Implementation> pImpl;
+};
+
+class AgentFactory final {
+  public:
+    [[nodiscard]] static std::unique_ptr<Agent> CreateAgent(const std::string&);
+};
 }  // namespace core

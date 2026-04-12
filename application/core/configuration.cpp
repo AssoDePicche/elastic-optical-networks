@@ -27,6 +27,8 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
 
   configuration->exportDataset = json.Get<bool>("export-dataset").value();
 
+  configuration->agent = json.Get<std::string>("params.agent").value();
+
   configuration->ignoreFirst = json.Get<bool>("params.ignore-first").value();
 
   configuration->samplingTime =

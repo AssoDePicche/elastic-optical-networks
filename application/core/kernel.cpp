@@ -91,7 +91,7 @@ struct Kernel::Implementation {
                      return pair.first;
                    });
 
-    agent = std::make_unique<ClassicAgent>();
+    agent = AgentFactory::CreateAgent(configuration->agent);
 
     prng = prng::PseudoRandomNumberGenerator::Instance();
 
