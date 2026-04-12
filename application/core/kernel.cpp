@@ -336,6 +336,7 @@ struct Kernel::Implementation {
                 localtime->tm_min)
         .append("seed: {}\n", prng->GetSeed())
         .append("simulated time: {:.3f}\n", kernel_time)
+        .append("agent: {}\n", configuration->agent)
         .append("spectrum width (GHz): {:.2f}\n", configuration->spectrumWidth)
         .append("slot width (GHz): {:.2f}\n", configuration->slotWidth)
         .append("fsus per link: {}\n", configuration->FSUsPerLink);
