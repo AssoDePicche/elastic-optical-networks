@@ -12,9 +12,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "paths": {
-      "@domain/*": ["src/domain/*"],
-      "@application/*": ["src/application/*"],
-      "@infrastructure/*": ["src/infrastructure/*"]
+      "@root/*": ["src/*"]
     },
     "types": ["vite/client", "node"]
   }
