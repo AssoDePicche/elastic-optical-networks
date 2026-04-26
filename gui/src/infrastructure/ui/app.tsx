@@ -1,15 +1,14 @@
+import { StrictMode } from 'react';
+
 import { createRoot } from 'react-dom/client';
 
-const App = () => {
-  return (
-    <div>
-      <h1 className="capitalize">Hello, World!</h1>
-    </div>
-  );
-};
+import { RouterProvider } from 'react-router-dom';
 
-const container = document.getElementById('root');
+import { router } from './routes/router';
 
-const root = createRoot(container);
-
-root.render(<App/>);
+createRoot(document.getElementById('root'))
+.render(
+  <StrictMode>
+    <RouterProvider router={router} />
+  </StrictMode>
+);
