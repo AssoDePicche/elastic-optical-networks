@@ -1,4 +1,6 @@
-import { app, BrowserWindow, Menu } from 'electron';
+import Docker from 'dockerode';
+
+import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 
 import path from 'node:path';
 
@@ -8,6 +10,44 @@ if (started) {
   app.quit();
 }
 
+const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+
+const refreshContainers = async (window: BrowserWindow) => {
+  const containers = await docker.listContainers({ all: true });
+
+  window.webContents.send('docker-containers-updated', containers);
+};
+
+docker.getEvents((err, stream) => {
+  if (err) {
+    return;
+  }
+
+  stream.on('data', (chunk) => {
+    const event = JSON.parse(chunk.toString());
+
+    if (event.type === 'container') {
+      const mainWindow = BrowserWindow.getAllWindows()[0];
+
+      if (mainWindow) {
+        refreshContainers(mainWindow);
+      }
+    }
+  });
+});
+
+ipcMain.handle('containers', async () => {
+  try {
+    const containers = await docker.listContainers({ all: true });
+
+    return containers;
+  } catch (error) {
+    console.error(error);
+
+    return [];
+  }
+});
+
 const createWindow = () => {
   Menu.setApplicationMenu(null);
 
@@ -15,6 +55,8 @@ const createWindow = () => {
     width: 800,
     height: 600,
     webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: true,
       preload: path.join(__dirname, 'preload.js'),
     },
   });
