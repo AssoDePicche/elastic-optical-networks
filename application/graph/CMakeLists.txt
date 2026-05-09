@@ -10,6 +10,8 @@ add_library(graph STATIC
   router.cpp
 )
 
+find_package(Boost REQUIRED)
+
 target_include_directories(graph PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
-target_link_libraries(graph PRIVATE hash)
+target_link_libraries(graph PRIVATE Boost::boost hash)
