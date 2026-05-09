@@ -1,22 +1,6 @@
 import sys
 
-import time
-
-from geopy.distance import geodesic
-
-from geopy.geocoders import Nominatim
-
-from geopy.exc import GeocoderTimedOut
-
-def get_lat_long(city, geolocator):
-    try:
-        location = geolocator.geocode(city)
-        if location:
-            return (location.latitude, location.longitude)
-        return None
-    except GeocoderTimedOut:
-        time.sleep(2)
-        return get_lat_long(city, geolocator)
+from geocode import fetch_coordinates, fetch_distance_km
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
@@ -34,35 +18,23 @@ if __name__ == '__main__':
 
       sys.exit(1)
 
-    cities.sort()
-
-    geolocator = Nominatim(user_agent="topology_generator_v2")
-
-    coords_map = {}
     print(f"Fetching coordinates for {len(cities)} nodes...")
 
-    for city in cities:
-        coords = get_lat_long(city, geolocator)
-        coords_map[city] = coords
+    coords_map = fetch_coordinates(cities)
+
+    for city, coords in coords_map:
         print(f"-> {city}: {coords}")
-        time.sleep(1.2)
 
     matrix = []
+
     for source in cities:
         costs = []
-        source_coords = coords_map[source]
 
         for destination in cities:
-            dest_coords = coords_map[destination]
-
-            if source == destination:
-                cost = 0
-            elif source_coords and dest_coords:
-                cost = geodesic(source_coords, dest_coords).km
-            else:
-                cost = 0
+            cost = fetch_distance_km(coords_map, source, destination)
 
             costs.append(cost)
+
         matrix.append(costs)
 
     output_filename = sys.argv[2]
@@ -72,6 +44,7 @@ if __name__ == '__main__':
 
         for row in matrix:
             line = ' '.join(str(int(val)) for val in row)
+
             stream.write(f"{line}\n")
 
     print(f"\nSuccess! Matrix saved to {output_filename}")
