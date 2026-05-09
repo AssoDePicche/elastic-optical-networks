@@ -1,14 +1,13 @@
 import glob
-import matplotlib.pyplot as pyplot
 import numpy
 import os
 import pandas
-import shutil
 import subprocess
 import sys
 import tempfile
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
 from scipy import stats
 
 def execute(executable, load):
@@ -92,7 +91,7 @@ if __name__ == '__main__':
 
     exit(1)
 
-  executable = './build/App-linux-x86_64'
+  executable = './App-linux-x86_64'
 
   min_load = int(sys.argv[1])
 
@@ -106,6 +105,6 @@ if __name__ == '__main__':
   try:
     main(executable, min_load, max_load, offset)
   except subprocess.CalledProcessError as error:
-    print(exception.stderr)
+    print(error.stderr)
   except Exception as exception:
     print(exception)
