@@ -1,5 +1,9 @@
 #!/bin/bash
 
-docker build -t geocoding .
+INPUT=${1-cities.txt}
 
-docker run -v $(pwd):/app geocoding
+OUTPUT=${2-matrix.txt}
+
+docker build -f Dockerfile -t geocoding .
+
+docker run -v $(pwd):/app geocoding "$INPUT" "$OUTPUT"
