@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <list>
+#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -14,13 +15,23 @@
 
 namespace graph {
 class Graph final {
-  std::unordered_map<Vertex, std::list<AdjacentVertex>> adjacency_list;
-  std::set<Vertex> vertices;
+  struct Implementation;
+  std::unique_ptr<Implementation> pImpl;
 
  public:
-  Graph(void) = default;
+  Graph(void);
 
   Graph(const uint64_t);
+
+  ~Graph();
+
+  Graph(const Graph& other);
+
+  Graph& operator=(const Graph& other);
+
+  Graph(Graph&&) noexcept;
+
+  Graph& operator=(Graph&&) noexcept;
 
   [[nodiscard]] static std::optional<Graph> from(const std::string&) noexcept;
 
