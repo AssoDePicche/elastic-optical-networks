@@ -1,12 +1,28 @@
 @import 'tailwindcss';
 
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
 html {
+  font-size: 62.5%;
   height: 100%;
   width: 100%;
 }
 
 body {
   font-family: sans-serif;
+  height: 100%;
+  width: 100%;
+}
+
+#root {
   height: 100%;
   width: 100%;
 }

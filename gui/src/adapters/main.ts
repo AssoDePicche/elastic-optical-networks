@@ -1,23 +1,24 @@
-import Docker from 'dockerode';
-
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 
 import path from 'node:path';
 
 import started from 'electron-squirrel-startup';
 
+import { type DockerContainer, type DockerService, DockerServiceImpl } from '../services/docker';
+
 if (started) {
   app.quit();
 }
 
-const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+const dockerService: DockerService = new DockerServiceImpl('/var/run/docker.sock');
 
 const refreshContainers = async (window: BrowserWindow) => {
-  const containers = await docker.listContainers({ all: true });
+  const containers: DockerContainer[] = await dockerService.listContainers();
 
   window.webContents.send('docker-containers-updated', containers);
 };
 
+/*
 docker.getEvents((err, stream) => {
   if (err) {
     return;
@@ -35,18 +36,9 @@ docker.getEvents((err, stream) => {
     }
   });
 });
+*/
 
-ipcMain.handle('containers', async () => {
-  try {
-    const containers = await docker.listContainers({ all: true });
-
-    return containers;
-  } catch (error) {
-    console.error(error);
-
-    return [];
-  }
-});
+ipcMain.handle('containers', async () => await dockerService.listContainers());
 
 const createWindow = () => {
   Menu.setApplicationMenu(null);
