@@ -9,6 +9,10 @@ bool FileSystem::CreateDirectory(const std::string& pathname) {
 
   std::error_code errorCode;
 
+  if (std::filesystem::exists(path)) {
+    return true;
+  }
+
   if (std::filesystem::create_directories(path, errorCode)) {
     return true;
   }
