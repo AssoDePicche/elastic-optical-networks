@@ -41,10 +41,10 @@ def fetch_coordinates(cities):
 def fetch_distance_km(coord_map, source, destination):
     source_coords = coord_map[source]
 
-    destination_coords = coord_map[source]
+    destination_coords = coord_map[destination]
 
     if source == destination:
-        return 0;
+        return 0
     elif source_coords and destination_coords:
         return geodesic(source_coords, destination_coords).km
     else:
