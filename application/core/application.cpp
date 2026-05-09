@@ -26,7 +26,11 @@ int Application::Run(const int argc, const char** argv) {
 
     auto configuration = core::Configuration::From(json).value();
 
-    const std::string dirname = "./temp";
+    std::string dirname = "./temp";
+
+    if (argc >= 4) {
+      dirname = argv[3];
+    }
 
     if (!core::FileSystem::CreateDirectory(dirname)) {
       return 1;
