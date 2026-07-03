@@ -24,11 +24,21 @@ int Application::Run(const int argc, const char** argv) {
 
     const core::Json json(configFile);
 
-    auto configuration = core::Configuration::From(json).value();
+    auto configurationWrapper = core::Configuration::From(json);
+
+    if (!configurationWrapper.has_value()) {
+      return 1;
+    }
+
+    auto configuration = configurationWrapper.value();
 
     std::string dirname = "./temp";
 
-    if (argc >= 4) {
+    if (argc == 4) {
+      configuration->arrivalRate = 1.0;
+
+      configuration->serviceRate = std::stod(argv[2]);
+
       dirname = argv[3];
     }
 
@@ -91,10 +101,10 @@ double Application::Benchmark(std::function<void()> callable) {
 
 std::string Application::GetConfigFilenameFromArgs(const int argc,
                                                    const char** argv) {
-  if (argc < 2) {
-    return "resources/configuration/configuration.json";
+  if (argc == 2 || argc == 4) {
+    return std::string(argv[1]);
   }
 
-  return std::string(argv[2]);
+  return "resources/configuration/configuration.json";
 }
 }  // namespace core
