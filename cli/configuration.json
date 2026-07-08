@@ -1,0 +1,67 @@
+{
+  "enable-logging": true,
+  "export-dataset": true,
+  "params": {
+    "agent": "classic",
+    "arrival-rate": 1,
+    "ignore-first": false,
+    "iterations": 1,
+    "sampling-time": 0,
+    "service-rate": 1,
+    "modulation": "passband",
+    "requests": [
+      {
+        "type": "low-demand",
+        "bandwidth": 62.5,
+        "modulation": "BPSK",
+        "allocator": "first-fit",
+        "ratio": 0.5
+      },
+      {
+        "type": "high-demand",
+        "bandwidth": 162.5,
+        "modulation": "BPSK",
+        "allocator": "last-fit",
+        "ratio": 0.5
+      }
+    ],
+    "simulation-duration": 1000,
+    "slot-width": 12.5,
+    "spectrum-width": 4000,
+    "topology": "nsfnet-full-mesh.txt"
+  },
+  "modulation": [
+    {
+      "type": "BPSK",
+      "bits-per-symbol": 1
+    },
+    {
+      "type": "QPSK",
+      "bits-per-symbol": 2
+    },
+    {
+      "type": "8-QAM",
+      "bits-per-symbol": 3
+    },
+    {
+      "type": "16-QAM",
+      "bits-per-symbol": 4
+    },
+    {
+      "type": "32-QAM",
+      "bits-per-symbol": 5
+    },
+    {
+      "type": "64-QAM",
+      "bits-per-symbol": 6
+    },
+    {
+      "type": "128-QAM",
+      "bits-per-symbol": 7
+    },
+    {
+      "type": "256-QAM",
+      "bits-per-symbol": 8
+    }
+  ]
+}
