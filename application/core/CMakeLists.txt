@@ -1,9 +1,9 @@
 add_library(core STATIC
   agent.cpp
   application.cpp
-  arena.cpp
   configuration.cpp
   file_system.cpp
+  flexgrid.cpp
   json.cpp
   kernel.cpp
   request.cpp
