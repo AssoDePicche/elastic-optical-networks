@@ -3,7 +3,7 @@
 #include <cassert>
 
 namespace core {
-struct FSU final {
+struct FrequencySlotUnit final {
   uint16_t timesAllocated{0};
   bool isAllocated{false};
 
@@ -29,7 +29,7 @@ struct Flexgrid::Implementation final {
     const size_t totalSize =
         static_cast<size_t>(fsusPerCore * coresPerFiber * links);
 
-    buffer = std::make_unique<FSU[]>(totalSize);
+    buffer = std::make_unique<FrequencySlotUnit[]>(totalSize);
   }
 
   void Allocate(const Lightpath& lightpath) {
@@ -63,7 +63,7 @@ struct Flexgrid::Implementation final {
   }
 
  private:
-  std::unique_ptr<FSU[]> buffer;
+  std::unique_ptr<FrequencySlotUnit[]> buffer;
   uint16_t fsusPerCore;
   uint8_t coresPerFiber;
   uint16_t links;
@@ -81,9 +81,9 @@ struct Flexgrid::Implementation final {
            static_cast<size_t>(link) * fsusPerCore * coresPerFiber;
   }
 
-  FSU& GetFSU(const Unit unit) { return buffer[Index3D(unit)]; }
+  FrequencySlotUnit& GetFSU(const Unit unit) { return buffer[Index3D(unit)]; }
 
-  const FSU& GetFSU(const Unit unit) const { return buffer[Index3D(unit)]; }
+  const FrequencySlotUnit& GetFSU(const Unit unit) const { return buffer[Index3D(unit)]; }
 };
 
 Flexgrid::Flexgrid(const uint16_t fsusPerCore, const uint8_t coresPerFiber,
