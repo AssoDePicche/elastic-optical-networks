@@ -32,7 +32,27 @@ struct Flexgrid::Implementation final {
     buffer = std::make_unique<FSU[]>(totalSize);
   }
 
+  void Allocate(const Lightpath& lightpath) {
+    for (const auto& allocation : lightpath) {
+      for (auto fsu = allocation.slice.firstFSU;
+           fsu <= allocation.slice.lastFSU; ++fsu) {
+        GetFSU({.fsu = fsu, .link = allocation.link, .core = allocation.core})
+            .Allocate();
+      }
+    }
+  }
+
   void Allocate(const Unit unit) { GetFSU(unit).Allocate(); }
+
+  void Deallocate(const Lightpath& lightpath) {
+    for (const auto& allocation : lightpath) {
+      for (auto fsu = allocation.slice.firstFSU;
+           fsu <= allocation.slice.lastFSU; ++fsu) {
+        GetFSU({.fsu = fsu, .link = allocation.link, .core = allocation.core})
+            .Deallocate();
+      }
+    }
+  }
 
   void Deallocate(const Unit unit) { GetFSU(unit).Deallocate(); }
 
@@ -77,7 +97,15 @@ Flexgrid::Flexgrid(Flexgrid&&) noexcept = default;
 
 Flexgrid& Flexgrid::operator=(Flexgrid&&) noexcept = default;
 
+void Flexgrid::Allocate(const Lightpath& lightpath) {
+  pImpl->Allocate(lightpath);
+}
+
 void Flexgrid::Allocate(const Unit unit) { pImpl->Allocate(unit); }
+
+void Flexgrid::Deallocate(const Lightpath& lightpath) {
+  pImpl->Deallocate(lightpath);
+}
 
 void Flexgrid::Deallocate(const Unit unit) { pImpl->Deallocate(unit); }
 

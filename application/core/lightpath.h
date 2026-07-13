@@ -4,11 +4,15 @@
 #include <vector>
 
 namespace core {
-struct Allocation {
-  uint64_t fiberIndex;
-  uint64_t coreIndex;
-  uint64_t start;
-  uint64_t end;
+struct Slice final {
+  uint16_t firstFSU;
+  uint16_t lastFSU;
+};
+
+struct Allocation final {
+  Slice slice;
+  uint16_t link;
+  uint8_t core;
 };
 
 using Lightpath = std::vector<Allocation>;

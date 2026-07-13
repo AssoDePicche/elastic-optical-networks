@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <memory>
 
+#include "lightpath.h"
+
 namespace core {
 class Flexgrid final {
  public:
@@ -24,7 +26,11 @@ class Flexgrid final {
 
   Flexgrid& operator=(Flexgrid&&) noexcept;
 
+  void Allocate(const Lightpath&);
+
   void Allocate(const Unit);
+
+  void Deallocate(const Lightpath&);
 
   void Deallocate(const Unit);
 
