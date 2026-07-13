@@ -1,0 +1,51 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run Build Script
+        run: |
+          chmod +x scripts/build.sh
+          ./scripts/build.sh Release
+
+      - name: Verify and Package Build Artifacts
+        id: package
+        run: |
+          echo "Checking exported files:"
+          ls -la
+
+          tar -czvf release-artifact.tar.gz App-linux-x86_64
+
+      - name: Update 'latest' Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "release-artifact.tar.gz"
+          tag: "latest"
+          name: "Latest Build (${{ github.sha }})"
+          body: |
+            ### Latest Changes:
+
+            ${{ github.event.head_commit.message }}
+
+            * **Triggered by:** `${{ github.actor }}`
+            * **Commit:** [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            * **Built on:** ${{ github.event.head_commit.timestamp }}
+          allowUpdates: true
+          removeArtifacts: true
+          makeLatest: true
