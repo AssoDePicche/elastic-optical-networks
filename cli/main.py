@@ -1,27 +1,24 @@
 import glob
-import matplotlib.pyplot as pyplot
 import numpy
 import os
 import pandas
-import shutil
 import subprocess
 import sys
 import tempfile
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
 from scipy import stats
 
-def execute(executable, load):
+def execute(executable, load, configuration):
   service_rate = 1 / load
 
-  configuration = './resources/configuration/configuration.json'
-
   with tempfile.TemporaryDirectory() as temp_dir:
-    with subprocess.Popen([executable, str(service_rate), configuration, temp_dir], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) as process:
+    with subprocess.Popen([executable, configuration, str(service_rate), temp_dir], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) as process:
       for line in process.stdout:
         print(f'[Load={load:03d}] {line}', end='')
 
-    files = glob.glob(f'./{temp_dir}/*.csv')
+    files = glob.glob(os.path.join(temp_dir, '*.csv'))
 
     if not files:
       raise Exception('No CSV file found for {load} Erlangs')
@@ -31,9 +28,11 @@ def execute(executable, load):
     rows = []
 
     for column in buffer.columns:
-      data = buffer[column].dropna()
+      series = pandas.to_numeric(buffer[column], errors='coerce')
 
-      if len(data) == 0:
+      data = series[numpy.isfinite(series)]
+
+      if len(data) < 2:
         continue
 
       mean = data.mean()
@@ -42,7 +41,7 @@ def execute(executable, load):
 
       sem = stats.sem(data)
 
-      if numpy.isnan(sem) or numpy.isinf(sem) or sem == 0:
+      if numpy.isnan(sem) or sem == 0:
         ci = [mean, mean]
       else:
         ci = stats.t.interval(confidence=.95, df=len(data) - 1, loc=mean, scale=sem)
@@ -61,9 +60,9 @@ def execute(executable, load):
 
     return dataframe
 
-def main(executable, min_load, max_load, offset) -> None:
+def main(executable, min_load, max_load, offset, configuration) -> None:
   if not os.path.isfile(executable):
-    subprocess.run(['bash', './scripts/build.sh'], check=True)
+    raise Exception('No executable {executable} found')
 
   loads = numpy.arange(min_load, max_load + 1, offset)
 
@@ -75,7 +74,7 @@ def main(executable, min_load, max_load, offset) -> None:
   buffer = []
 
   with ProcessPoolExecutor() as executor:
-    tasks = { executor.submit(execute, executable, load): load for load in loads }
+    tasks = { executor.submit(execute, executable, load, configuration): load for load in loads }
 
     for task in as_completed(tasks):
       buffer.append(task.result())
@@ -87,12 +86,12 @@ def main(executable, min_load, max_load, offset) -> None:
   print('Done')
 
 if __name__ == '__main__':
-  if len(sys.argv) != 4:
-    print(f'You must inform min/max load and the offset')
+  if len(sys.argv) != 5:
+    print(f'Usage: python main.py <min_load> <max_load> <offset> <configuration_filepath>')
 
     exit(1)
 
-  executable = './build/App-linux-x86_64'
+  executable = './App-linux-x86_64'
 
   min_load = int(sys.argv[1])
 
@@ -100,12 +99,14 @@ if __name__ == '__main__':
 
   offset = int(sys.argv[3])
 
+  configuration = sys.argv[4]
+
   if min_load < 0:
     min_load = 0
 
   try:
-    main(executable, min_load, max_load, offset)
+    main(executable, min_load, max_load, offset, configuration)
   except subprocess.CalledProcessError as error:
-    print(exception.stderr)
+    print(error.stderr)
   except Exception as exception:
     print(exception)

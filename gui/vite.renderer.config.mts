@@ -14,9 +14,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@domain': join(__dirname, 'src/domain'),
-      '@ui': join(__dirname, 'src/infrastructure/ui'),
+      '@ui': join(__dirname, 'src/ui'),
     },
   },
-  root: join(__dirname, 'src/infrastructure/ui'),
+  root: join(__dirname, 'src/ui'),
 });

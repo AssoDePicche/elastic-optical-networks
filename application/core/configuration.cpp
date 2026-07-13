@@ -133,7 +133,7 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
     return std::nullopt;
   }
 
-  configuration->graph = graph.value();
+  configuration->graph = std::move(graph.value());
 
   return configuration;
 }

@@ -3,6 +3,78 @@
 
 skinparam classAttributeIconSize 0
 
+class Configuration {
+}
+
+class Event {
+  - int id
+  - int source
+  - int destination
+  - double bitrate
+  - double time
+}
+
+class Kernel {
+}
+
+class Link {
+  - int id
+  - int source
+  - int destination
+  - double length
+}
+
+class Metrics {
+  - double absolute_fragmentation
+  - double entropy_fragmentation
+  - double external_fragmentation
+  - double spectrumUtilization
+  - vector<double> coreUtilization
+  - int totalRequests
+  - int blockedRequests
+  - int total_FSUs_requested;
+  - int total_FSUs_blocked;
+  + GradeOfService(): double
+  + SlotBlockingProbability(): double
+}
+
+enum Modulation {
+  BPSK
+  QPSK
+  QAM8
+  QAM16
+  QAM32
+  QAM64
+  QAM128
+  QAM256
+}
+
+class ModulationProfile {
+  - Modulation modulation
+  - double spectralEfficiency
+  - double maxReachKm
+}
+
+class Node {
+  - int id
+  - bool withTransponder
+}
+
+class Route {
+  - vector<int> nodes;
+  - double length;
+}
+
+class Topology {
+  - map<int, vector<int>> adjacencyList;
+  - vector<Link> links;
+  - vector<Node> nodes;
+  - vector<bool> flexgrid;
+
+  + commit(...)
+  + release()
+}
+
 ' =========================
 ' RCMSA ENGINE
 ' =========================
@@ -52,78 +124,6 @@ RCMSAEngine --> SpectrumPolicy
 RCMSAEngine --> ModulationPolicy
 RCMSAEngine --> PhysicalModel
 
-' =========================
-' NETWORK MODEL
-' =========================
-
-class Network {
-  - vector<Node> nodes
-  - vector<FiberLink> links
-  - map<int, vector<int>> adjacencyList
-  + getNode(id: int) : Node
-  + getLink(u: int, v: int) : FiberLink
-  + computePathLength(p: Path) : double
-  + commitAllocation(...)
-  + releaseAllocation(demandId: int)
-  + getNeighbors(nodeId: int) : vector<int>
-}
-
-class Node {
-  - int id
-  - vector<BVT> bvts
-  + addBVT(bvt: BVT)
-  + getAvailableBVT(bitrate: double) : BVT
-}
-
-class BVT {
-  - int id
-  - double maxBitrate
-  - vector<ModulationProfile> supportedModulations
-  - int slices
-  + computeRequiredFSUs(bitrate: double, mod: ModulationProfile) : int
-  + supports(mod: ModulationProfile) : bool
-}
-
-class FiberLink {
-  - int id
-  - int src
-  - int dst
-  - double lengthKm
-  - vector<Core> cores
-  + getCore(coreId: int) : Core
-  + getLength() : double
-  + getNumCores() : int
-}
-
-class Core {
-  - int id
-  - SpectrumGrid spectrum
-  - vector<int> adjacentCores
-  + isFree(start: int, width: int) : bool
-  + allocate(start: int, width: int, demandId: int)
-  + release(demandId: int)
-}
-
-class SpectrumGrid {
-  - vector<FSU> fsus
-  + isFree(start: int, width: int) : bool
-  + allocate(start: int, width: int, demandId: int)
-  + release(demandId: int)
-  + fragmentationIndex() : double
-}
-
-class FSU {
-  - bool occupied
-  - int demandId
-}
-
-class Path {
-  - vector<int> nodes
-  - vector<FiberLink*> links
-  - double totalLength
-  + computeLength() : double
-}
-
 Network "1" o-- "*" Node
 Network "1" o-- "*" FiberLink
 FiberLink "1" o-- "*" Core
@@ -145,17 +145,6 @@ class SimulationEngine {
   + schedule(e: Event)
 }
 
-abstract class Event {
-  - double time
-  + execute(sim: SimulationEngine)
-}
-
-class ArrivalEvent
-class DepartureEvent
-
-Event <|-- ArrivalEvent
-Event <|-- DepartureEvent
-
 class Demand {
   - int id
   - int source
@@ -175,42 +164,8 @@ SimulationEngine --> MetricsCollector
 SimulationEngine --> Event
 
 ' =========================
-' PHYSICAL & MODULATION
-' =========================
-
-class ModulationProfile {
-  - ModulationFormat format
-  - double spectralEfficiency
-  - double maxReachKm
-  - double requiredOSNR
-}
-
-enum ModulationFormat {
-  BPSK
-  QPSK
-  QAM8
-  QAM16
-  QAM32
-  QAM64
-  QAM128
-  QAM256
-}
-
-' =========================
 ' METRICS & EXPERIMENT
 ' =========================
-
-class MetricsCollector {
-  - long totalRequests
-  - long blockedRequests
-  - double spectrumUtilization
-  - vector<double> coreUtilization
-  + recordAllocation(...)
-  + recordBlocking()
-  + computeBlockingProbability() : double
-  + computeFragmentation()
-  + exportCSV(filename: string)
-}
 
 class ExperimentConfig {
   - string routingName

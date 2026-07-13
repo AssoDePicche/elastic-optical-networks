@@ -6,6 +6,8 @@
 #include <ranges>
 #include <unordered_set>
 
+#include "spectrum.h"
+
 namespace core {
 struct ClassicAgent::Implementation {
   bool ShouldAccept(Environment& environment) {
@@ -69,8 +71,78 @@ bool ClassicAgent::ShouldAccept(Environment& environment) {
 }
 
 struct QLearningAgent::Implementation {
+  double learningRate;
+  double eagerness;
+  double reward;
+  double penalty;
+  std::vector<std::vector<int>> qRewards;
+  std::vector<std::vector<double>> qStates;
+
   bool ShouldAccept(Environment& environment) {
-    return environment.FSUsPerLink != 0 && false;
+    if (environment.FSUsPerLink <= environment.activeRequests) {
+      return false;
+    }
+
+    const auto keys = GenerateKeys(environment.request.route);
+
+    const auto first = *keys.begin();
+
+    const auto slice = environment.request.type.allocator(
+        environment.carriers[first], environment.request.type.FSUs);
+
+    if (!slice.has_value()) {
+      return false;
+    }
+
+    for (const auto& key : keys) {
+      if (environment.carriers.at(key).available() <
+              environment.request.type.FSUs ||
+          !environment.carriers.at(key).available_at(
+              environment.request.slice)) {
+        return false;
+      }
+    }
+
+    auto carriers = environment.carriers;
+
+    const auto allocate = [&](const auto key) {
+      carriers[key].allocate(environment.request.slice);
+    };
+
+    std::for_each(keys.begin(), keys.end(), allocate);
+
+    AbsoluteFragmentation fragmentation;
+
+    double meanFragmentation = 0.0;
+
+    for (const auto& key : keys) {
+      meanFragmentation += fragmentation(carriers.at(key));
+    }
+
+    meanFragmentation /= keys.size();
+
+    return meanFragmentation < 0.75;
+  }
+
+  uint64_t GenerateKeys(const graph::Vertex source,
+                        const graph::Vertex destination) const {
+    return hash::CantorPairingFunction(source, destination);
+  }
+
+  std::unordered_set<uint64_t> GenerateKeys(const graph::Route& route) const {
+    const auto& [vertices, cost] = route;
+
+    std::unordered_set<uint64_t> keys;
+
+    for (const auto& index : std::views::iota(1u, vertices.size())) {
+      const auto x = *std::next(vertices.begin(), index - 1);
+
+      const auto y = *std::next(vertices.begin(), index);
+
+      keys.insert(hash::CantorPairingFunction(x, y));
+    }
+
+    return keys;
   }
 };
 

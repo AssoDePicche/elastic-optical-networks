@@ -8,6 +8,10 @@ struct Cost {
 
   Cost(double);
 
+  auto operator<=>(const Cost&) const = default;
+
+  bool operator==(const Cost&) const = default;
+
   static Cost max(void);
 
   static Cost min(void);

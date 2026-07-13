@@ -3,6 +3,7 @@ add_library(core STATIC
   application.cpp
   configuration.cpp
   file_system.cpp
+  flexgrid.cpp
   json.cpp
   kernel.cpp
   request.cpp
