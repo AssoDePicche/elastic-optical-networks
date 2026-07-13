@@ -30,14 +30,14 @@ jobs:
           echo "Checking exported files:"
           ls -la
 
-          tar -czvf release-artifact.tar.gz App-linux-x86_64
+          tar -czvf artifacts.tar.gz App-linux-x86_64 README.md LICENSE
 
       - name: Update 'latest' Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "release-artifact.tar.gz"
+          artifacts: "artifacts.tar.gz"
           tag: "latest"
-          name: "Latest Build (${{ github.sha }})"
+          name: "Latest"
           body: |
             ### Latest Changes:
 
