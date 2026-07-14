@@ -1,8 +1,8 @@
-#include <cstdint>
-
+#include <core/flexgrid.h>
 #include <gtest/gtest.h>
 
-#include <core/flexgrid.h>
+#include <cstdint>
+#include <vector>
 
 TEST(Flexgrid, Allocation) {
   const uint16_t fsusPerCore = 5;
@@ -13,20 +13,30 @@ TEST(Flexgrid, Allocation) {
 
   core::Flexgrid flexgrid(fsusPerCore, coresPerFiber, links);
 
-  const core::Flexgrid::Unit unit = {
-    .fsu = 0,
-    .link = 0,
-    .core = 0,
+  std::vector<core::Flexgrid::Unit> units = {
+      {
+          .fsu = 0,
+          .link = 0,
+          .core = 0,
+
+      },
+      {
+          .fsu = 1,
+          .link = 0,
+          .core = 0,
+
+      },
   };
 
-  ASSERT_EQ(flexgrid.IsAllocated(unit), false);
+  for (const auto& unit : units) {
+    ASSERT_FALSE(flexgrid.IsAllocated(unit));
 
-  flexgrid.Allocate(unit);
+    flexgrid.Allocate(unit);
 
-  ASSERT_EQ(flexgrid.IsAllocated(unit), true);
+    ASSERT_TRUE(flexgrid.IsAllocated(unit));
 
-  flexgrid.Deallocate(unit);
+    flexgrid.Deallocate(unit);
 
-  ASSERT_EQ(flexgrid.IsAllocated(unit), false);
-
+    ASSERT_FALSE(flexgrid.IsAllocated(unit));
+  }
 }
