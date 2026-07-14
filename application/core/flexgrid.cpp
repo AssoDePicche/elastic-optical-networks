@@ -83,7 +83,9 @@ struct Flexgrid::Implementation final {
 
   FrequencySlotUnit& GetFSU(const Unit unit) { return buffer[Index3D(unit)]; }
 
-  const FrequencySlotUnit& GetFSU(const Unit unit) const { return buffer[Index3D(unit)]; }
+  const FrequencySlotUnit& GetFSU(const Unit unit) const {
+    return buffer[Index3D(unit)];
+  }
 };
 
 Flexgrid::Flexgrid(const uint16_t fsusPerCore, const uint8_t coresPerFiber,
