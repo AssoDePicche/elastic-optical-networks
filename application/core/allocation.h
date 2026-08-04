@@ -15,4 +15,4 @@ struct Allocation final {
   uint16_t link;
   uint8_t core;
 };
-};
+};  // namespace core
