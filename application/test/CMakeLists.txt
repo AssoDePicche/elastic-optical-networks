@@ -1,4 +1,5 @@
 add_executable(Tests
+  flexgrid.cpp
   main.cpp
   spectrum.cpp
 )

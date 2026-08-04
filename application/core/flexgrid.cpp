@@ -3,7 +3,7 @@
 #include <cassert>
 
 namespace core {
-struct FSU final {
+struct FrequencySlotUnit final {
   uint16_t timesAllocated{0};
   bool isAllocated{false};
 
@@ -29,30 +29,10 @@ struct Flexgrid::Implementation final {
     const size_t totalSize =
         static_cast<size_t>(fsusPerCore * coresPerFiber * links);
 
-    buffer = std::make_unique<FSU[]>(totalSize);
-  }
-
-  void Allocate(const Lightpath& lightpath) {
-    for (const auto& allocation : lightpath) {
-      for (auto fsu = allocation.slice.firstFSU;
-           fsu <= allocation.slice.lastFSU; ++fsu) {
-        GetFSU({.fsu = fsu, .link = allocation.link, .core = allocation.core})
-            .Allocate();
-      }
-    }
+    buffer = std::make_unique<FrequencySlotUnit[]>(totalSize);
   }
 
   void Allocate(const Unit unit) { GetFSU(unit).Allocate(); }
-
-  void Deallocate(const Lightpath& lightpath) {
-    for (const auto& allocation : lightpath) {
-      for (auto fsu = allocation.slice.firstFSU;
-           fsu <= allocation.slice.lastFSU; ++fsu) {
-        GetFSU({.fsu = fsu, .link = allocation.link, .core = allocation.core})
-            .Deallocate();
-      }
-    }
-  }
 
   void Deallocate(const Unit unit) { GetFSU(unit).Deallocate(); }
 
@@ -63,7 +43,7 @@ struct Flexgrid::Implementation final {
   }
 
  private:
-  std::unique_ptr<FSU[]> buffer;
+  std::unique_ptr<FrequencySlotUnit[]> buffer;
   uint16_t fsusPerCore;
   uint8_t coresPerFiber;
   uint16_t links;
@@ -81,9 +61,11 @@ struct Flexgrid::Implementation final {
            static_cast<size_t>(link) * fsusPerCore * coresPerFiber;
   }
 
-  FSU& GetFSU(const Unit unit) { return buffer[Index3D(unit)]; }
+  FrequencySlotUnit& GetFSU(const Unit unit) { return buffer[Index3D(unit)]; }
 
-  const FSU& GetFSU(const Unit unit) const { return buffer[Index3D(unit)]; }
+  const FrequencySlotUnit& GetFSU(const Unit unit) const {
+    return buffer[Index3D(unit)];
+  }
 };
 
 Flexgrid::Flexgrid(const uint16_t fsusPerCore, const uint8_t coresPerFiber,
@@ -97,15 +79,7 @@ Flexgrid::Flexgrid(Flexgrid&&) noexcept = default;
 
 Flexgrid& Flexgrid::operator=(Flexgrid&&) noexcept = default;
 
-void Flexgrid::Allocate(const Lightpath& lightpath) {
-  pImpl->Allocate(lightpath);
-}
-
 void Flexgrid::Allocate(const Unit unit) { pImpl->Allocate(unit); }
-
-void Flexgrid::Deallocate(const Lightpath& lightpath) {
-  pImpl->Deallocate(lightpath);
-}
 
 void Flexgrid::Deallocate(const Unit unit) { pImpl->Deallocate(unit); }
 

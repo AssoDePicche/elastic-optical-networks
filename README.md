@@ -1,6 +1,7 @@
-This repository contains an event-driven simulator for elastic optical networks to study the problem of routing, modulation, and spectrum allocation (RMSA), as well as quality of service metrics. In the event that the simulator is utilized in an academic context, proper citation is required.
+This repository contains an event-driven simulator for elastic optical networks to study the problem of Routing, Modulation, Core, and Spectrum Allocation (RMCSA), as well as quality of service metrics. In the event that the simulator is utilized in an academic context, proper citation is required.
 
 > More detailed documentation is currently being written. Please wait. Consider visiting the [official page](https://assodepicche.github.io/elastic-optical-networks/) for this application.
+
 ## Scope and Features
 
 The scope of this project consists of analyzing network behavior in different configuration contexts, such as topology, traffic, routing policies, and resource allocation. Multiple topologies are available by default, however, it is possible to use any desired topology, as long as it follows the application standards.
@@ -30,7 +31,7 @@ If you use this application in your research, please cite:
 First install and configure all necessary dependencies, then clone this repository:
 
 ```bash
-git clone git@github.com:AssoDePicche/elastic-optical-networks.git --recursive
+git clone git@github.com:AssoDePicche/elastic-optical-networks.git
 ```
 
 After that, use the available scripts to perform the build, tests, and profiling.
@@ -44,7 +45,7 @@ After that, use the available scripts to perform the build, tests, and profiling
 Once the application has been built, you can run it. To modify the simulation parameters, edit the [settings.json](resources/configuration/settings.json) file.
 
 ```bash
-./build/App
+./App-linux-x86_64
 ```
 
 When the simulation ends, it saves a .csv file with the simulation data and a report.txt file is created with the results.
