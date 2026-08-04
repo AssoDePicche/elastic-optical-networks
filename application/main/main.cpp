@@ -1,7 +1,7 @@
-#include <core/application.h>
+#include <core/cli.h>
 
 int main(const int argc, const char** argv) {
-  core::Application application;
+  core::CommandLineInterface cli;
 
-  return application.Run(argc, argv);
+  return cli.Run(argc, argv);
 }

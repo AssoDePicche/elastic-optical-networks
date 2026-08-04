@@ -1,6 +1,6 @@
 add_library(core STATIC
   agent.cpp
-  application.cpp
+  cli.cpp
   configuration.cpp
   file_system.cpp
   flexgrid.cpp
