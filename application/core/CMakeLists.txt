@@ -4,7 +4,6 @@ add_library(core STATIC
   configuration.cpp
   file_system.cpp
   flexgrid.cpp
-  json.cpp
   kernel.cpp
   request.cpp
   spectrum.cpp

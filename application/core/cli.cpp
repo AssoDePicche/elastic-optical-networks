@@ -15,7 +15,6 @@
 #include "configuration.h"
 #include "document.h"
 #include "file_system.h"
-#include "json.h"
 #include "kernel.h"
 
 static double Benchmark(std::function<void()> callable) {
@@ -41,15 +40,11 @@ struct CommandLineInterface::Implementation {
     try {
       const std::string configFile = GetConfigFilenameFromArgs(argc, argv);
 
-      const Json json(configFile);
+      auto configuration = Configuration::From(configFile);
 
-      auto configurationWrapper = Configuration::From(json);
-
-      if (!configurationWrapper.has_value()) {
+      if (!configuration) {
         return 1;
       }
-
-      auto configuration = configurationWrapper.value();
 
       std::string dirname = "./temp";
 

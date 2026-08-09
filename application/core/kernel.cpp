@@ -1,5 +1,7 @@
 #include "kernel.h"
 
+#include  <ranges>
+
 #include <hash/cantor.h>
 
 #include <format>

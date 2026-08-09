@@ -1,9 +1,24 @@
 #include "configuration.h"
 
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+
+#include "file_system.h"
+
+#include <nlohmann/json.hpp>
+
 namespace core {
-std::optional<std::shared_ptr<Configuration>> Configuration::From(
-    const Json& json) {
-  static const std::unordered_map<std::string, SpectrumAllocator>
+std::shared_ptr<Configuration> Configuration::From(const std::string &filename) {
+  if (!FileSystem::Exists(filename)) {
+    return nullptr;
+  }
+
+  std::ifstream stream(filename);
+
+  nlohmann::json json = nlohmann::json::parse(stream);
+
+static const std::unordered_map<std::string, SpectrumAllocator>
       spectrumAllocationStrategies{{"best-fit", BestFit},
                                    {"first-fit", FirstFit},
                                    {"last-fit", LastFit},
@@ -18,46 +33,40 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
           {"terabits", ModulationStrategyFactory::Option::Terabits},
       };
 
-  auto configuration = std::make_shared<Configuration>();
 
-  configuration->enableLogging = json.Get<bool>("enable-logging").value();
+  std::shared_ptr<Configuration> configuration = std::make_shared<Configuration>();
 
-  configuration->logger =
-      std::make_shared<Logger>(configuration->enableLogging);
+  configuration->enableLogging = static_cast<bool>(json["enable-logging"]);
 
-  configuration->exportDataset = json.Get<bool>("export-dataset").value();
+  configuration->logger = std::make_shared<Logger>(configuration->enableLogging);
 
-  configuration->agent = json.Get<std::string>("params.agent").value();
+  configuration->exportDataset = static_cast<bool>(json["export-dataset"]);
 
-  configuration->ignoreFirst = json.Get<bool>("params.ignore-first").value();
+  configuration->agent = json["params"]["agent"];
 
-  configuration->samplingTime =
-      json.Get<uint64_t>("params.sampling-time").value();
+  configuration->ignoreFirst = static_cast<bool>(json["params"]["ignore-first"]);
 
-  configuration->timeUnits =
-      json.Get<double>("params.simulation-duration").value();
+  configuration->samplingTime = static_cast<uint64_t>(json["params"]["sampling-time"]);
 
-  configuration->arrivalRate = json.Get<double>("params.arrival-rate").value();
+  configuration->timeUnits = static_cast<double>(json["params"]["simulation-duration"]);
 
-  configuration->serviceRate = json.Get<double>("params.service-rate").value();
+  configuration->arrivalRate = static_cast<double>(json["params"]["arrival-rate"]);
 
-  configuration->iterations = json.Get<uint64_t>("params.iterations").value();
+  configuration->serviceRate = static_cast<double>(json["params"]["service-rate"]);
 
-  configuration->spectrumWidth =
-      json.Get<double>("params.spectrum-width").value();
+  configuration->iterations = static_cast<double>(json["params"]["iterations"]);
 
-  configuration->slotWidth = json.Get<double>("params.slot-width").value();
+  configuration->spectrumWidth = static_cast<double>(json["params"]["spectrum-width"]);
 
-  configuration->FSUsPerLink =
-      configuration->spectrumWidth / configuration->slotWidth;
+  configuration->slotWidth = static_cast<double>(json["params"]["slot-width"]);
 
-  configuration->modulationOption = modulationOptions.at(
-      json.Get<std::string>("params.modulation").value_or("passband"));
+  configuration->FSUsPerLink = configuration->spectrumWidth / configuration->slotWidth;
 
-  const auto requests =
-      json.Get<std::vector<nlohmann::json>>("params.requests");
+  configuration->modulationOption = modulationOptions.at(json["params"]["modulation"]);
 
-  for (const auto& row : requests.value()) {
+  const std::vector<nlohmann::json> requests = json["params"]["requests"];
+
+  for (const auto &row : requests) {
     RequestType requestType;
 
     requestType.type = row["type"];
@@ -68,22 +77,22 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
 
     requestType.allocator = spectrumAllocationStrategies.at(row["allocator"]);
 
-    requestType.blocking = 0u;
+    requestType.blocking = 0;
 
-    requestType.FSUs = 0u;
+    requestType.FSUs = 0;
 
-    requestType.counting = 0u;
+    requestType.counting = 0;
 
     configuration->requestTypes[requestType.type] = requestType;
   }
 
-  const auto modulations = json.Get<std::vector<nlohmann::json>>("modulation");
+  const std::vector<nlohmann::json> modulations = json["modulation"];
 
-  for (const auto& row : modulations.value()) {
+  for (const auto &row : modulations) {
     configuration->modulations[row["type"]] = row["bits-per-symbol"];
   }
 
-  for (auto& request : configuration->requestTypes) {
+  for (auto &request : configuration->requestTypes) {
     const ModulationStrategyFactory factory;
 
     const auto spectralEfficiency =
@@ -122,15 +131,14 @@ std::optional<std::shared_ptr<Configuration>> Configuration::From(
 
   configuration->probs = {};
 
-  for (const auto& row : requests.value()) {
+  for (const auto& row : requests) {
     configuration->probs.push_back(row["ratio"]);
   }
 
-  const auto graph =
-      graph::Graph::from(json.Get<std::string>("params.topology").value());
+  const auto graph = graph::Graph::from(json["params"]["topology"]);
 
   if (!graph.has_value()) {
-    return std::nullopt;
+    return nullptr;
   }
 
   configuration->graph = std::move(graph.value());

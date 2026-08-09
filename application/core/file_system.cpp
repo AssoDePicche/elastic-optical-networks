@@ -10,7 +10,7 @@ bool FileSystem::CreateDirectory(const std::string& pathname) {
   std::error_code errorCode;
 
   if (std::filesystem::exists(path)) {
-    return true;
+    return false;
   }
 
   if (std::filesystem::create_directories(path, errorCode)) {
@@ -21,5 +21,9 @@ bool FileSystem::CreateDirectory(const std::string& pathname) {
             << std::endl;
 
   return false;
+}
+
+bool FileSystem::Exists(const std::string &pathname) {
+  return std::filesystem::exists(pathname);
 }
 }  // namespace core
