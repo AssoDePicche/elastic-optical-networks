@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "json.h"
 #include "logger.h"
 #include "request.h"
 #include "spectrum.h"
@@ -38,7 +37,6 @@ struct Configuration final {
   bool enableLogging;
   std::shared_ptr<Logger> logger;
 
-  [[nodiscard]] static std::optional<std::shared_ptr<Configuration>> From(
-      const Json&);
+  [[nodiscard]] static std::shared_ptr<Configuration> From(const std::string &);
 };
 }  // namespace core
