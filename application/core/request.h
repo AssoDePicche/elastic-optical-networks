@@ -1,10 +1,9 @@
 #pragma once
 
-#include <graph/route.h>
-
 #include <memory>
 #include <string>
 
+#include "route.h"
 #include "spectrum.h"
 
 namespace core {
@@ -20,13 +19,13 @@ struct RequestType final {
 
 struct Request final {
   RequestType type;
-  graph::Route route;
+  Route route;
   Slice slice;
   bool accepted;
 
   Request(void) = default;
 
-  Request(const graph::Route&);
+  Request(const Route&);
 };
 
 struct Modulation {

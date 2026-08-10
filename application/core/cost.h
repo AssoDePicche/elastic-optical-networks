@@ -1,6 +1,6 @@
 #pragma once
 
-namespace graph {
+namespace core {
 struct Cost {
   double value;
 
@@ -8,14 +8,10 @@ struct Cost {
 
   Cost(double);
 
-  auto operator<=>(const Cost&) const = default;
-
-  bool operator==(const Cost&) const = default;
-
   static Cost max(void);
 
   static Cost min(void);
 };
 
 [[nodiscard]] bool operator<(const Cost&, const Cost&);
-}  // namespace graph
+}  // namespace core

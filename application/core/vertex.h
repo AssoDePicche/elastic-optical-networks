@@ -1,14 +1,12 @@
 #pragma once
 
-#include <limits>
+#include <cstdint>
 #include <utility>
 
 #include "cost.h"
 
-namespace graph {
+namespace core {
 using Vertex = uint64_t;
 
-constexpr Vertex NullVertex = std::numeric_limits<uint64_t>::max();
-
 using AdjacentVertex = std::pair<Vertex, Cost>;
-}  // namespace graph
+}  // namespace core

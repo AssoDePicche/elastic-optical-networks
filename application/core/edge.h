@@ -5,6 +5,6 @@
 #include "cost.h"
 #include "vertex.h"
 
-namespace graph {
+namespace core {
 using Edge = std::tuple<Vertex, Vertex, Cost>;
 }

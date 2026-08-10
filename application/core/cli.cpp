@@ -34,8 +34,6 @@ static double Benchmark(std::function<void()> callable) {
 
 namespace core {
 struct CommandLineInterface::Implementation {
-  ~Implementation() = default;
-
   int Run(const int argc, const char** argv) {
     try {
       const std::string configFile = GetConfigFilenameFromArgs(argc, argv);
@@ -60,7 +58,9 @@ struct CommandLineInterface::Implementation {
         return 1;
       }
 
-      Kernel kernel(configuration);
+      Router router(configuration->graph);
+
+      Kernel kernel(router, configuration);
 
       for (const auto iteration :
            std::ranges::views::iota(1u, configuration->iterations + 1u)) {
