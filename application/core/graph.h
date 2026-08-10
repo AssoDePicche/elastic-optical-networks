@@ -13,7 +13,7 @@
 #include "edge.h"
 #include "vertex.h"
 
-namespace graph {
+namespace core {
 class Graph final {
   struct Implementation;
   std::unique_ptr<Implementation> pImpl;
@@ -51,4 +51,4 @@ class Graph final {
 
   void add(const Edge&);
 };
-}  // namespace graph
+}  // namespace core

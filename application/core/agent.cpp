@@ -1,11 +1,11 @@
 #include "agent.h"
 
-#include <graph/router.h>
 #include <hash/cantor.h>
 
 #include <ranges>
 #include <unordered_set>
 
+#include "router.h"
 #include "spectrum.h"
 
 namespace core {
@@ -40,12 +40,11 @@ struct ClassicAgent::Implementation {
     return true;
   }
 
-  uint64_t GenerateKeys(const graph::Vertex source,
-                        const graph::Vertex destination) const {
+  uint64_t GenerateKeys(const Vertex source, const Vertex destination) const {
     return hash::CantorPairingFunction(source, destination);
   }
 
-  std::unordered_set<uint64_t> GenerateKeys(const graph::Route& route) const {
+  std::unordered_set<uint64_t> GenerateKeys(const Route& route) const {
     const auto& [vertices, cost] = route;
 
     std::unordered_set<uint64_t> keys;
@@ -124,12 +123,11 @@ struct QLearningAgent::Implementation {
     return meanFragmentation < 0.75;
   }
 
-  uint64_t GenerateKeys(const graph::Vertex source,
-                        const graph::Vertex destination) const {
+  uint64_t GenerateKeys(const Vertex source, const Vertex destination) const {
     return hash::CantorPairingFunction(source, destination);
   }
 
-  std::unordered_set<uint64_t> GenerateKeys(const graph::Route& route) const {
+  std::unordered_set<uint64_t> GenerateKeys(const Route& route) const {
     const auto& [vertices, cost] = route;
 
     std::unordered_set<uint64_t> keys;

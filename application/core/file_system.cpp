@@ -23,7 +23,7 @@ bool FileSystem::CreateDirectory(const std::string& pathname) {
   return false;
 }
 
-bool FileSystem::Exists(const std::string &pathname) {
+bool FileSystem::Exists(const std::string& pathname) {
   return std::filesystem::exists(pathname);
 }
 }  // namespace core

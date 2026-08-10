@@ -7,7 +7,7 @@
 #include <ranges>
 #include <sstream>
 
-namespace graph {
+namespace core {
 struct Graph::Implementation {
   typedef boost::property<boost::edge_weight_t, Cost> EdgeWeightProperty;
   typedef boost::adjacency_list<boost::listS, boost::vecS, boost::directedS,
@@ -178,4 +178,4 @@ std::vector<Edge> Graph::get_edges(void) const noexcept {
 void Graph::add(const Vertex vertex) { pImpl->add(vertex); }
 
 void Graph::add(const Edge& edge) { pImpl->add(edge); }
-}  // namespace graph
+}  // namespace core

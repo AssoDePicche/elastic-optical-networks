@@ -1,12 +1,13 @@
 #include "kernel.h"
 
-#include  <ranges>
-
 #include <hash/cantor.h>
 
 #include <format>
+#include <ranges>
 
 #include "agent.h"
+#include "route.h"
+#include "router.h"
 
 namespace core {
 Event::Event(const double time, const Event::Type& type, const Request& request)
@@ -62,7 +63,7 @@ std::string Statistics::Serialize(void) const {
 }
 
 struct Kernel::Implementation {
-  graph::Router router;
+  const Router& router;
   Carriers carriers;
   std::priority_queue<Event> queue;
   std::vector<Statistics> snapshots;
@@ -106,16 +107,13 @@ struct Kernel::Implementation {
     prng->SetDiscreteVariable("fsus", configuration->probs.begin(),
                               configuration->probs.end());
 
-    prng->SetUniformVariable("routing", 0, configuration->graph.size());
-
-    router.SetStrategy(
-        std::make_shared<graph::RandomRouting>(configuration->graph));
-
     ScheduleNextArrival();
   }
 
-  Implementation(std::shared_ptr<Configuration> configuration)
-      : k_to_ignore{0.1 * configuration->timeUnits},
+  Implementation(const Router& router,
+                 std::shared_ptr<Configuration> configuration)
+      : router{router},
+        k_to_ignore{0.1 * configuration->timeUnits},
         configuration{configuration} {
     for (const auto& [source, destination, cost] :
          configuration->graph.get_edges()) {
@@ -127,12 +125,11 @@ struct Kernel::Implementation {
     Reset();
   }
 
-  uint64_t GenerateKeys(const graph::Vertex source,
-                        const graph::Vertex destination) const {
+  uint64_t GenerateKeys(const Vertex source, const Vertex destination) const {
     return hash::CantorPairingFunction(source, destination);
   }
 
-  std::unordered_set<uint64_t> GenerateKeys(const graph::Route& route) const {
+  std::unordered_set<uint64_t> GenerateKeys(const Route& route) const {
     const auto& [vertices, cost] = route;
 
     std::unordered_set<uint64_t> keys;
@@ -192,8 +189,7 @@ struct Kernel::Implementation {
 
     ++requestType.counting;
 
-    auto request =
-        Request(router.compute(graph::NullVertex, graph::NullVertex).value());
+    Request request(router.compute());
 
     request.type = requestType;
 
@@ -392,8 +388,9 @@ struct Kernel::Implementation {
   }
 };
 
-Kernel::Kernel(std::shared_ptr<Configuration> configuration) {
-  pImpl = std::make_unique<Implementation>(configuration);
+Kernel::Kernel(const Router& router,
+               std::shared_ptr<Configuration> configuration) {
+  pImpl = std::make_unique<Implementation>(router, configuration);
 }
 
 Kernel::~Kernel() {}

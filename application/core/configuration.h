@@ -1,7 +1,5 @@
 #pragma once
 
-#include <graph/graph.h>
-
 #include <functional>
 #include <memory>
 #include <optional>
@@ -9,13 +7,14 @@
 #include <unordered_map>
 #include <vector>
 
+#include "graph.h"
 #include "logger.h"
 #include "request.h"
 #include "spectrum.h"
 
 namespace core {
 struct Configuration final {
-  graph::Graph graph;
+  Graph graph;
   ModulationStrategyFactory::Option modulationOption;
   std::unordered_map<std::string, FragmentationStrategy>
       fragmentationStrategies;
@@ -37,6 +36,6 @@ struct Configuration final {
   bool enableLogging;
   std::shared_ptr<Logger> logger;
 
-  [[nodiscard]] static std::shared_ptr<Configuration> From(const std::string &);
+  [[nodiscard]] static std::shared_ptr<Configuration> From(const std::string&);
 };
 }  // namespace core

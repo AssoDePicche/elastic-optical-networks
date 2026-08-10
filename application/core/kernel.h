@@ -1,6 +1,5 @@
 #pragma once
 
-#include <graph/router.h>
 #include <prng/prng.h>
 
 #include <queue>
@@ -11,6 +10,7 @@
 #include "configuration.h"
 #include "document.h"
 #include "request.h"
+#include "router.h"
 #include "spectrum.h"
 
 namespace core {
@@ -56,15 +56,15 @@ struct Statistics final {
 
 struct Trace final {
   std::string type;
-  graph::Vertex source;
-  graph::Vertex destination;
+  Vertex source;
+  Vertex destination;
   uint64_t FSUs;
   bool accepted;
 };
 
 class Kernel final {
  public:
-  Kernel(std::shared_ptr<Configuration>);
+  Kernel(const Router&, std::shared_ptr<Configuration>);
 
   ~Kernel();
 
