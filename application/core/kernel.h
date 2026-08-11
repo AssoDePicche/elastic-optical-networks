@@ -56,8 +56,8 @@ struct Statistics final {
 
 struct Trace final {
   std::string type;
-  Vertex source;
-  Vertex destination;
+  Graph::Vertex source;
+  Graph::Vertex destination;
   uint64_t FSUs;
   bool accepted;
 };

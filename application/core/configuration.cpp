@@ -10,7 +10,7 @@
 namespace core {
 std::shared_ptr<Configuration> Configuration::From(
     const std::string& filename) {
-  if (!FileSystem::Exists(filename)) {
+  if (!file_system::exists(filename)) {
     return nullptr;
   }
 
@@ -114,7 +114,7 @@ std::shared_ptr<Configuration> Configuration::From(
     request.second.FSUs = configuration->modulationOption ==
                                   ModulationStrategyFactory::Option::Passband
                               ? strategy->compute(request.second.bandwidth)
-                              : strategy->compute(Cost::max().value);
+                              : strategy->compute(Graph::Edge::MAX_COST);
 
     request.second.counting = 0u;
 

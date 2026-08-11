@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <unordered_map>
 #include <vector>
 
 #include "yen.h"
@@ -13,33 +14,24 @@
 namespace core {
 struct Router::Implementation {
   Graph graph;
-  std::unordered_map<uint64_t, std::vector<Route>> cache;
+  std::unordered_map<uint64_t, std::vector<Path>> cache;
 
   Implementation(const Graph& graph) : graph{graph} {
     Yen yen(graph);
-    for (Vertex source = 0; source < graph.size(); ++source) {
-      for (Vertex destination = 0; destination < graph.size(); ++destination) {
+
+    for (Graph::Vertex source = 0; source < graph.size(); ++source) {
+      for (Graph::Vertex destination = 0; destination < graph.size();
+           ++destination) {
         if (source == destination) continue;
 
-        const auto key = hash::CantorPairingFunction(source, destination);
-
-        const auto iterator = cache.find(key);
-
-        if (iterator != cache.end()) {
-          continue;
-        }
-
         const std::vector<Path> paths = yen.compute(source, destination, 3);
+
+        const auto key = hash::CantorPairingFunction(source, destination);
 
         for (const auto& path : paths) {
           if (path.empty()) continue;
 
-          const auto route =
-              std::make_pair(std::unordered_set<Vertex>(path.vertices.begin(),
-                                                        path.vertices.end()),
-                             path.cost);
-
-          cache[key].push_back(route);
+          cache[key].push_back(path);
         }
       }
     }
@@ -50,7 +42,7 @@ struct Router::Implementation {
     prng->SetUniformVariable("routing", 0, cache.size() - 1);
   }
 
-  Route compute(void) const {
+  Path compute(void) const {
     std::shared_ptr<prng::PseudoRandomNumberGenerator> prng =
         prng::PseudoRandomNumberGenerator::Instance();
 
@@ -62,19 +54,6 @@ struct Router::Implementation {
 
     return iterator->second[0];
   };
-
-  std::optional<Route> compute(const Vertex source,
-                               const Vertex destination) const {
-    const auto key = hash::CantorPairingFunction(source, destination);
-
-    const auto iterator = cache.find(key);
-
-    if (iterator != cache.end()) {
-      return iterator->second[0];
-    }
-
-    return std::nullopt;
-  }
 };
 
 Router::Router(const Graph& graph)
@@ -82,10 +61,5 @@ Router::Router(const Graph& graph)
 
 Router::~Router() = default;
 
-Route Router::compute(void) const { return pImpl->compute(); }
-
-std::optional<Route> Router::compute(const Vertex source,
-                                     const Vertex destination) const {
-  return pImpl->compute(source, destination);
-}
+Path Router::compute(void) const { return pImpl->compute(); }
 }  // namespace core

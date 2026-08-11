@@ -54,7 +54,7 @@ struct CommandLineInterface::Implementation {
         dirname = argv[3];
       }
 
-      if (!FileSystem::CreateDirectory(dirname)) {
+      if (!file_system::create_directory(dirname)) {
         return 1;
       }
 

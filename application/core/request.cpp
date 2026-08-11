@@ -1,12 +1,10 @@
 #include "request.h"
 
 #include <array>
-#include <cassert>
-#include <ranges>
 #include <utility>
 
 namespace core {
-Request::Request(const Route& route) : route{route} {}
+Request::Request(const Path& path) : path{path} {}
 
 PassbandModulation::PassbandModulation(double slotWidth,
                                        uint64_t spectralEfficiency)

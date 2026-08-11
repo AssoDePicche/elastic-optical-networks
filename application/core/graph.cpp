@@ -9,7 +9,7 @@
 
 namespace core {
 struct Graph::Implementation {
-  typedef boost::property<boost::edge_weight_t, Cost> EdgeWeightProperty;
+  typedef boost::property<boost::edge_weight_t, Edge::Cost> EdgeWeightProperty;
   typedef boost::adjacency_list<boost::listS, boost::vecS, boost::directedS,
                                 boost::no_property, EdgeWeightProperty>
       BoostGraph;
@@ -18,36 +18,17 @@ struct Graph::Implementation {
 
   Implementation(void) = default;
 
-  Implementation(const uint64_t vertices) : graph(vertices) {}
+  Implementation(const uint8_t vertices) : graph(vertices) {}
 
   Implementation(const BoostGraph& other_graph) : graph(other_graph) {}
 
-  uint64_t size() const { return boost::num_vertices(graph); }
+  uint8_t size() const { return boost::num_vertices(graph); }
 
-  Cost at(const Vertex source, const Vertex destination) const {
+  Edge::Cost at(const Vertex source, const Vertex destination) const {
     auto [edge, exists] = boost::edge(source, destination, graph);
 
-    return exists ? boost::get(boost::edge_weight, graph, edge) : Cost::min();
-  }
-
-  std::list<AdjacentVertex> at(const Vertex source) const {
-    std::list<AdjacentVertex> adjacents;
-
-    auto [begin, end] = boost::adjacent_vertices(source, graph);
-
-    for (auto iterator = begin; iterator != end; ++iterator) {
-      auto [edge, exists] = boost::edge(source, *iterator, graph);
-
-      if (!exists) {
-        continue;
-      }
-
-      Cost cost = boost::get(boost::edge_weight, graph, edge);
-
-      adjacents.emplace_back(*iterator, cost);
-    }
-
-    return adjacents;
+    return exists ? boost::get(boost::edge_weight, graph, edge)
+                  : Edge::MIN_COST;
   }
 
   bool is_adjacent(const Vertex source, const Vertex destination) const {
@@ -97,7 +78,7 @@ struct Graph::Implementation {
 
 Graph::Graph(void) : pImpl(std::make_unique<Implementation>()) {}
 
-Graph::Graph(const uint64_t vertices)
+Graph::Graph(const uint8_t vertices)
     : pImpl(std::make_unique<Implementation>(vertices)) {}
 
 Graph::~Graph() = default;
@@ -126,11 +107,11 @@ std::optional<Graph> Graph::from(const std::string& filename) noexcept {
 
   std::getline(file, line);
 
-  const auto size{static_cast<uint64_t>(atoi(line.c_str()))};
+  const auto size{static_cast<uint8_t>(atoi(line.c_str()))};
 
   Graph graph{size};
 
-  auto source{0u};
+  Vertex source = 0u;
 
   while (std::getline(file, line)) {
     std::stringstream stream{line};
@@ -140,10 +121,11 @@ std::optional<Graph> Graph::from(const std::string& filename) noexcept {
     for (const auto& destination : std::views::iota(0u, size)) {
       std::getline(stream, buffer, ' ');
 
-      const auto cost = static_cast<double>(atof(buffer.c_str()));
+      const Edge::Cost cost = static_cast<Edge::Cost>(atof(buffer.c_str()));
 
-      if (Cost::min().value != cost) {
-        graph.add({source, destination, cost});
+      if (Edge::MIN_COST != cost) {
+        graph.add({static_cast<Vertex>(source),
+                   static_cast<Vertex>(destination), cost});
       }
     }
 
@@ -153,25 +135,22 @@ std::optional<Graph> Graph::from(const std::string& filename) noexcept {
   return graph;
 }
 
-uint64_t Graph::size(void) const noexcept { return pImpl->size(); }
+uint8_t Graph::size(void) const noexcept { return pImpl->size(); }
 
-Cost Graph::at(const Vertex source, const Vertex destination) const {
+Graph::Edge::Cost Graph::at(const Vertex source,
+                            const Vertex destination) const {
   return pImpl->at(source, destination);
-}
-
-std::list<AdjacentVertex> Graph::at(const Vertex vertex) const {
-  return pImpl->at(vertex);
 }
 
 bool Graph::is_adjacent(const Vertex source, const Vertex destination) const {
   return pImpl->is_adjacent(source, destination);
 }
 
-std::set<Vertex> Graph::get_vertices(void) const noexcept {
+std::set<Graph::Vertex> Graph::get_vertices(void) const noexcept {
   return pImpl->get_vertices();
 }
 
-std::vector<Edge> Graph::get_edges(void) const noexcept {
+std::vector<Graph::Edge> Graph::get_edges(void) const noexcept {
   return pImpl->get_edges();
 }
 

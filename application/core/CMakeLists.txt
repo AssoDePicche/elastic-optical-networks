@@ -2,12 +2,12 @@ add_library(core STATIC
   agent.cpp
   cli.cpp
   configuration.cpp
-  cost.cpp
   dijkstra.cpp
   file_system.cpp
   flexgrid.cpp
   graph.cpp
   kernel.cpp
+  path.cpp
   request.cpp
   router.cpp
   spectrum.cpp

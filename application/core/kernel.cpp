@@ -6,7 +6,6 @@
 #include <ranges>
 
 #include "agent.h"
-#include "route.h"
 #include "router.h"
 
 namespace core {
@@ -125,12 +124,13 @@ struct Kernel::Implementation {
     Reset();
   }
 
-  uint64_t GenerateKeys(const Vertex source, const Vertex destination) const {
+  uint64_t GenerateKeys(const Graph::Vertex source,
+                        const Graph::Vertex destination) const {
     return hash::CantorPairingFunction(source, destination);
   }
 
-  std::unordered_set<uint64_t> GenerateKeys(const Route& route) const {
-    const auto& [vertices, cost] = route;
+  std::unordered_set<uint64_t> GenerateKeys(const Path& path) const {
+    const auto& [vertices, cost] = path;
 
     std::unordered_set<uint64_t> keys;
 
@@ -146,7 +146,7 @@ struct Kernel::Implementation {
   }
 
   bool Dispatch(Request& request) {
-    const auto keys = GenerateKeys(request.route);
+    const auto keys = request.path.keys();
 
     const auto first = *keys.begin();
 
@@ -176,7 +176,7 @@ struct Kernel::Implementation {
   }
 
   void Release(Request& request) {
-    const auto keys = GenerateKeys(request.route);
+    const auto keys = request.path.keys();
 
     std::for_each(keys.begin(), keys.end(), [&](const auto key) {
       carriers[key].deallocate(request.slice);

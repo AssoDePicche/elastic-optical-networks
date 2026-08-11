@@ -2,11 +2,8 @@
 
 #include <string>
 
-namespace core {
-class FileSystem final {
- public:
-  [[nodiscard]] static bool CreateDirectory(const std::string&);
+namespace core::file_system {
+[[nodiscard]] bool create_directory(const std::string&);
 
-  [[nodiscard]] static bool Exists(const std::string&);
-};
-}  // namespace core
+[[nodiscard]] bool exists(const std::string&);
+}  // namespace core::file_system

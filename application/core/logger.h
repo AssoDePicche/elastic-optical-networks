@@ -19,25 +19,21 @@ class Logger final {
   template <typename... Args>
   void Debug(const std::string& format, Args&&... args) {
     log(Logger::Level::Debug, format, args...);
-    ;
   }
 
   template <typename... Args>
   void Error(const std::string& format, Args&&... args) {
     log(Logger::Level::Error, format, args...);
-    ;
   }
 
   template <typename... Args>
   void Info(const std::string& format, Args&&... args) {
     log(Logger::Level::Info, format, args...);
-    ;
   }
 
   template <typename... Args>
   void Warning(const std::string& format, Args&&... args) {
     log(Logger::Level::Warning, format, args...);
-    ;
   }
 
  private:

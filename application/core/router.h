@@ -1,11 +1,9 @@
 #pragma once
 
 #include <memory>
-#include <optional>
-#include <unordered_map>
 
 #include "graph.h"
-#include "route.h"
+#include "path.h"
 
 namespace core {
 class Router final {
@@ -14,9 +12,7 @@ class Router final {
 
   ~Router();
 
-  [[nodiscard]] Route compute(void) const;
-
-  [[nodiscard]] std::optional<Route> compute(const Vertex, const Vertex) const;
+  [[nodiscard]] Path compute(void) const;
 
  private:
   struct Implementation;

@@ -12,8 +12,8 @@ using BoostGraph =
 using VertexDescriptor = boost::graph_traits<BoostGraph>::vertex_descriptor;
 
 Path reconstruct_path(const std::vector<VertexDescriptor>& predecessors,
-                      const std::vector<double>& distances, Vertex source,
-                      Vertex destination) {
+                      const std::vector<double>& distances,
+                      Graph::Vertex source, Graph::Vertex destination) {
   const auto num_nodes = distances.size();
   if (source >= num_nodes || destination >= num_nodes) {
     return {};
@@ -22,8 +22,8 @@ Path reconstruct_path(const std::vector<VertexDescriptor>& predecessors,
     return {};
   }
 
-  std::vector<Vertex> reverse_path;
-  for (Vertex v = destination; v != source; v = predecessors[v]) {
+  std::vector<Graph::Vertex> reverse_path;
+  for (Graph::Vertex v = destination; v != source; v = predecessors[v]) {
     reverse_path.push_back(v);
     if (predecessors[v] == v) return {};
   }
@@ -36,8 +36,9 @@ Path reconstruct_path(const std::vector<VertexDescriptor>& predecessors,
 }
 
 BoostGraph build_bgl_graph(
-    const Graph& g, const std::set<std::pair<Vertex, Vertex>>& disabled_edges,
-    const std::unordered_set<Vertex>& disabled_vertices) {
+    const Graph& g,
+    const std::set<std::pair<Graph::Vertex, Graph::Vertex>>& disabled_edges,
+    const std::unordered_set<Graph::Vertex>& disabled_vertices) {
   BoostGraph bg(g.size());
   for (const auto& [source, destination, cost] : g.get_edges()) {
     if (disabled_vertices.contains(source) ||
@@ -47,7 +48,7 @@ BoostGraph build_bgl_graph(
     if (disabled_edges.contains({source, destination})) {
       continue;
     }
-    boost::add_edge(source, destination, EdgeWeightProperty(cost.value), bg);
+    boost::add_edge(source, destination, EdgeWeightProperty(cost), bg);
   }
   return bg;
 }
@@ -57,13 +58,15 @@ struct Dijkstra::Implementation {
 
   Implementation(const Graph& graph) : graph{graph} {}
 
-  Path compute(const Vertex source, const Vertex destination) const {
+  Path compute(const Graph::Vertex source,
+               const Graph::Vertex destination) const {
     return compute(source, destination, {}, {});
   }
 
-  Path compute(const Vertex source, const Vertex destination,
-               const std::set<std::pair<Vertex, Vertex>>& disabled_edges,
-               const std::unordered_set<Vertex>& disabled_vertices) const {
+  Path compute(
+      const Graph::Vertex source, const Graph::Vertex destination,
+      const std::set<std::pair<Graph::Vertex, Graph::Vertex>>& disabled_edges,
+      const std::unordered_set<Graph::Vertex>& disabled_vertices) const {
     BoostGraph bg = build_bgl_graph(graph, disabled_edges, disabled_vertices);
 
     std::vector<VertexDescriptor> predecessors(boost::num_vertices(bg));
@@ -87,14 +90,15 @@ Dijkstra::Dijkstra(const Graph& graph)
 
 Dijkstra::~Dijkstra() = default;
 
-Path Dijkstra::compute(const Vertex source, const Vertex destination) const {
+Path Dijkstra::compute(const Graph::Vertex source,
+                       const Graph::Vertex destination) const {
   return pImpl->compute(source, destination);
 }
 
 Path Dijkstra::compute(
-    const Vertex source, const Vertex destination,
+    const Graph::Vertex source, const Graph::Vertex destination,
     const std::set<Edge>& disabled_edges,
-    const std::unordered_set<Vertex>& disabled_vertices) const {
+    const std::unordered_set<Graph::Vertex>& disabled_vertices) const {
   return pImpl->compute(source, destination, disabled_edges, disabled_vertices);
 }
 }  // namespace core

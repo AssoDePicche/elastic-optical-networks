@@ -1,11 +1,8 @@
 #include "agent.h"
 
-#include <hash/cantor.h>
+#include <algorithm>
+#include <vector>
 
-#include <ranges>
-#include <unordered_set>
-
-#include "router.h"
 #include "spectrum.h"
 
 namespace core {
@@ -15,7 +12,7 @@ struct ClassicAgent::Implementation {
       return false;
     }
 
-    const auto keys = GenerateKeys(environment.request.route);
+    const auto keys = environment.request.path.keys();
 
     const auto first = *keys.begin();
 
@@ -38,26 +35,6 @@ struct ClassicAgent::Implementation {
     }
 
     return true;
-  }
-
-  uint64_t GenerateKeys(const Vertex source, const Vertex destination) const {
-    return hash::CantorPairingFunction(source, destination);
-  }
-
-  std::unordered_set<uint64_t> GenerateKeys(const Route& route) const {
-    const auto& [vertices, cost] = route;
-
-    std::unordered_set<uint64_t> keys;
-
-    for (const auto& index : std::views::iota(1u, vertices.size())) {
-      const auto x = *std::next(vertices.begin(), index - 1);
-
-      const auto y = *std::next(vertices.begin(), index);
-
-      keys.insert(hash::CantorPairingFunction(x, y));
-    }
-
-    return keys;
   }
 };
 
@@ -82,7 +59,7 @@ struct QLearningAgent::Implementation {
       return false;
     }
 
-    const auto keys = GenerateKeys(environment.request.route);
+    const auto keys = environment.request.path.keys();
 
     const auto first = *keys.begin();
 
@@ -121,26 +98,6 @@ struct QLearningAgent::Implementation {
     meanFragmentation /= keys.size();
 
     return meanFragmentation < 0.75;
-  }
-
-  uint64_t GenerateKeys(const Vertex source, const Vertex destination) const {
-    return hash::CantorPairingFunction(source, destination);
-  }
-
-  std::unordered_set<uint64_t> GenerateKeys(const Route& route) const {
-    const auto& [vertices, cost] = route;
-
-    std::unordered_set<uint64_t> keys;
-
-    for (const auto& index : std::views::iota(1u, vertices.size())) {
-      const auto x = *std::next(vertices.begin(), index - 1);
-
-      const auto y = *std::next(vertices.begin(), index);
-
-      keys.insert(hash::CantorPairingFunction(x, y));
-    }
-
-    return keys;
   }
 };
 

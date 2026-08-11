@@ -2,17 +2,17 @@
 
 #include <vector>
 
-#include "vertex.h"
+#include "graph.h"
 
 namespace core {
 struct Path final {
-  double cost;
-  std::vector<Vertex> vertices;
+  std::vector<Graph::Vertex> vertices;
+  Graph::Edge::Cost cost;
 
-  [[nodiscard]] bool empty() const noexcept { return vertices.empty(); }
+  [[nodiscard]] bool empty() const noexcept;
 
-  [[nodiscard]] bool operator>(const Path& other) const {
-    return cost > other.cost;
-  }
+  [[nodiscard]] std::vector<uint64_t> keys() const noexcept;
+
+  [[nodiscard]] bool operator>(const Path&) const;
 };
 };  // namespace core

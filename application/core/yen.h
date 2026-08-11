@@ -14,7 +14,8 @@ class Yen {
 
   ~Yen();
 
-  [[nodiscard]] std::vector<Path> compute(const Vertex, const Vertex,
+  [[nodiscard]] std::vector<Path> compute(const Graph::Vertex,
+                                          const Graph::Vertex,
                                           const uint8_t) const;
 
  private:

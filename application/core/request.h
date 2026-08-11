@@ -3,7 +3,7 @@
 #include <memory>
 #include <string>
 
-#include "route.h"
+#include "path.h"
 #include "spectrum.h"
 
 namespace core {
@@ -19,13 +19,13 @@ struct RequestType final {
 
 struct Request final {
   RequestType type;
-  Route route;
+  Path path;
   Slice slice;
   bool accepted;
 
   Request(void) = default;
 
-  Request(const Route&);
+  Request(const Path&);
 };
 
 struct Modulation {

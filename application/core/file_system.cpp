@@ -3,13 +3,15 @@
 #include <filesystem>
 #include <iostream>
 
-namespace core {
-bool FileSystem::CreateDirectory(const std::string& pathname) {
+namespace core::file_system {
+bool create_directory(const std::string& pathname) {
   std::filesystem::path path = pathname;
 
   std::error_code errorCode;
 
   if (std::filesystem::exists(path)) {
+    std::cerr << "Failed to create directory" << std::endl;
+
     return false;
   }
 
@@ -23,7 +25,7 @@ bool FileSystem::CreateDirectory(const std::string& pathname) {
   return false;
 }
 
-bool FileSystem::Exists(const std::string& pathname) {
+bool exists(const std::string& pathname) {
   return std::filesystem::exists(pathname);
 }
-}  // namespace core
+}  // namespace core::file_system

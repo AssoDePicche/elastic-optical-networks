@@ -1,27 +1,30 @@
 #pragma once
 
 #include <cstdint>
-#include <list>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <vector>
-
-#include "cost.h"
-#include "edge.h"
-#include "vertex.h"
 
 namespace core {
 class Graph final {
-  struct Implementation;
-  std::unique_ptr<Implementation> pImpl;
-
  public:
+  using Vertex = uint8_t;
+
+  struct Edge {
+    using Cost = double;
+    static constexpr Cost MAX_COST = std::numeric_limits<Cost>::max();
+    static constexpr Cost MIN_COST = 0;
+    Vertex source;
+    Vertex destination;
+    Cost cost;
+  };
+
   Graph(void);
 
-  Graph(const uint64_t);
+  Graph(const uint8_t);
 
   ~Graph();
 
@@ -35,11 +38,9 @@ class Graph final {
 
   [[nodiscard]] static std::optional<Graph> from(const std::string&) noexcept;
 
-  [[nodiscard]] uint64_t size(void) const noexcept;
+  [[nodiscard]] uint8_t size(void) const noexcept;
 
-  [[nodiscard]] Cost at(const Vertex, const Vertex) const;
-
-  [[nodiscard]] std::list<AdjacentVertex> at(const Vertex) const;
+  [[nodiscard]] Edge::Cost at(const Vertex, const Vertex) const;
 
   [[nodiscard]] bool is_adjacent(const Vertex, const Vertex) const;
 
@@ -50,5 +51,9 @@ class Graph final {
   void add(const Vertex);
 
   void add(const Edge&);
+
+ private:
+  struct Implementation;
+  std::unique_ptr<Implementation> pImpl;
 };
 }  // namespace core

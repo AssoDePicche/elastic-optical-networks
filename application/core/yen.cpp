@@ -23,7 +23,8 @@ struct Yen::Implementation {
 
   Implementation(const Graph& graph) : graph(graph) {}
 
-  std::vector<Path> compute(const Vertex source, const Vertex destination,
+  std::vector<Path> compute(const Graph::Vertex source,
+                            const Graph::Vertex destination,
                             const uint8_t k) const {
     std::vector<Path> A;
     if (k == 0) return A;
@@ -50,13 +51,13 @@ struct Yen::Implementation {
       const Path& last_path = A.back();
 
       for (size_t i = 0; i < last_path.vertices.size() - 1; ++i) {
-        Vertex spur_node = last_path.vertices[i];
+        Graph::Vertex spur_node = last_path.vertices[i];
 
-        std::vector<Vertex> root_path_vec(last_path.vertices.begin(),
-                                          last_path.vertices.begin() + i + 1);
+        std::vector<Graph::Vertex> root_path_vec(
+            last_path.vertices.begin(), last_path.vertices.begin() + i + 1);
 
-        std::set<std::pair<Vertex, Vertex>> disabled_edges;
-        std::unordered_set<Vertex> disabled_vertices;
+        std::set<std::pair<Graph::Vertex, Graph::Vertex>> disabled_edges;
+        std::unordered_set<Graph::Vertex> disabled_vertices;
 
         for (const auto& path : A) {
           if (path.vertices.size() > i && shares_prefix(path, last_path, i)) {
@@ -80,10 +81,8 @@ struct Yen::Implementation {
 
           double total_cost = 0.0;
           for (size_t e = 0; e < total_candidate.vertices.size() - 1; ++e) {
-            total_cost += graph
-                              .at(total_candidate.vertices[e],
-                                  total_candidate.vertices[e + 1])
-                              .value;
+            total_cost += graph.at(total_candidate.vertices[e],
+                                   total_candidate.vertices[e + 1]);
           }
           total_candidate.cost = total_cost;
 
@@ -109,7 +108,8 @@ Yen::Yen(const Graph& graph) : pImpl(std::make_unique<Implementation>(graph)) {}
 
 Yen::~Yen() = default;
 
-std::vector<Path> Yen::compute(const Vertex source, const Vertex destination,
+std::vector<Path> Yen::compute(const Graph::Vertex source,
+                               const Graph::Vertex destination,
                                const uint8_t k) const {
   return pImpl->compute(source, destination, k);
 }
