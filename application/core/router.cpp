@@ -34,10 +34,7 @@ struct Router::Implementation {
         for (const auto& path : paths) {
           if (path.empty()) continue;
 
-          const auto route =
-              std::make_pair(std::unordered_set<Vertex>(path.vertices.begin(),
-                                                        path.vertices.end()),
-                             path.cost);
+          const auto route = std::make_pair(path.vertices, path.cost);
 
           cache[key].push_back(route);
         }

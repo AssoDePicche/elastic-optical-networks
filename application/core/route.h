@@ -1,9 +1,9 @@
 #pragma once
 
-#include <unordered_set>
+#include <vector>
 
 #include "graph.h"
 
 namespace core {
-using Route = std::pair<std::unordered_set<Vertex>, Cost>;
+using Route = std::pair<std::vector<Vertex>, Cost>;
 }  // namespace core
