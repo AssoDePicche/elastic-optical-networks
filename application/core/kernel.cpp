@@ -4,6 +4,7 @@
 
 #include <format>
 #include <ranges>
+#include <vector>
 
 #include "agent.h"
 #include "route.h"
@@ -129,17 +130,13 @@ struct Kernel::Implementation {
     return hash::CantorPairingFunction(source, destination);
   }
 
-  std::unordered_set<uint64_t> GenerateKeys(const Route& route) const {
+  std::vector<uint64_t> GenerateKeys(const Route& route) const {
     const auto& [vertices, cost] = route;
 
-    std::unordered_set<uint64_t> keys;
+    std::vector<uint64_t> keys;
 
     for (const auto& index : std::views::iota(1u, vertices.size())) {
-      const auto x = *std::next(vertices.begin(), index - 1);
-
-      const auto y = *std::next(vertices.begin(), index);
-
-      keys.insert(hash::CantorPairingFunction(x, y));
+      keys.push_back(hash::CantorPairingFunction(vertices[index - 1], vertices[index]));
     }
 
     return keys;
