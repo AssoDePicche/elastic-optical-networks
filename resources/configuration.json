@@ -1,13 +1,13 @@
 {
-  "enable-logging": true,
+  "enable-logging": false,
   "export-dataset": true,
   "params": {
     "agent": "classic",
     "arrival-rate": 1,
     "ignore-first": false,
-    "iterations": 1,
+    "iterations": 10,
     "sampling-time": 0,
-    "service-rate": 1,
+    "service-rate": 0.133138064,
     "modulation": "passband",
     "requests": [
       {
@@ -25,10 +25,10 @@
         "ratio": 0.5
       }
     ],
-    "simulation-duration": 1000,
+    "simulation-duration": 1000000,
     "slot-width": 12.5,
     "spectrum-width": 4000,
-    "topology": "nsfnet-full-mesh.txt"
+    "topology": "resources/graph/nsfnet.txt"
   },
   "modulation": [
     {
