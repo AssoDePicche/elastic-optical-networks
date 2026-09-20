@@ -13,3 +13,5 @@ docker build \
   --output type=local,dest=. \
   --progress=plain \
   .
+
+mv App App-linux-x86_64
