@@ -1,15 +1,10 @@
 #include "cli.h"
 
-#include <algorithm>
 #include <chrono>
-#include <ctime>
 #include <format>
-#include <fstream>
 #include <functional>
 #include <iostream>
-#include <optional>
 #include <ranges>
-#include <stacktrace>
 #include <string>
 
 #include "configuration.h"
@@ -103,7 +98,7 @@ struct CommandLineInterface::Implementation {
       return std::string(argv[1]);
     }
 
-    return "resources/configuration/configuration.json";
+    return "resources/configuration.json";
   }
 };
 
